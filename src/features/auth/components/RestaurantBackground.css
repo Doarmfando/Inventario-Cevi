@@ -1,0 +1,189 @@
+/* Animaciones para ingredientes flotantes */
+@keyframes floatIngredient {
+  0% {
+    transform: translateY(100vh) translateX(0) rotate(0deg) scale(0.8);
+    opacity: 0;
+  }
+  5% {
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(50vh) translateX(var(--drift-x, 0px)) rotate(180deg) scale(1);
+    opacity: 0.8;
+  }
+  95% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(var(--drift-x, 0px)) rotate(360deg) scale(1.2);
+    opacity: 0;
+  }
+}
+
+@keyframes floatGeometric {
+  0% {
+    transform: translateY(100vh) translateX(0) rotate(0deg);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.1;
+  }
+  50% {
+    transform: translateY(50vh) translateX(var(--drift-x, 0px)) rotate(90deg);
+    opacity: 0.15;
+  }
+  90% {
+    opacity: 0.1;
+  }
+  100% {
+    transform: translateY(-10vh) translateX(var(--drift-x, 0px)) rotate(180deg);
+    opacity: 0;
+  }
+}
+
+@keyframes gentleFloat {
+  0%, 100% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10px) rotate(5deg);
+  }
+  50% {
+    transform: translateY(0px) rotate(0deg);
+  }
+  75% {
+    transform: translateY(-5px) rotate(-5deg);
+  }
+}
+
+.restaurant-background {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+}
+
+.floating-ingredient {
+  position: fixed;
+  animation: floatIngredient linear infinite;
+  user-select: none;
+  filter: drop-shadow(2px 2px 4px rgba(0,0,0,0.1));
+  bottom: -100px;
+  will-change: transform, opacity;
+  z-index: 1;
+}
+
+/* Variaciones específicas para diferentes ingredientes - más rápidas */
+.ingredient-1, .ingredient-5 {
+  animation-duration: 8s;
+}
+
+.ingredient-2, .ingredient-6 {
+  animation-duration: 12s;
+}
+
+.ingredient-3, .ingredient-7 {
+  animation-duration: 6s;
+}
+
+.ingredient-4, .ingredient-8 {
+  animation-duration: 10s;
+}
+
+/* Elementos geométricos sutiles - más rápidos */
+.geometric-element {
+  position: fixed;
+  bottom: -50px;
+  width: 20px;
+  height: 20px;
+  background: linear-gradient(45deg, rgba(47, 80, 172, 0.05), rgba(47, 80, 172, 0.15));
+  border-radius: 50%;
+  animation: floatGeometric linear infinite;
+  will-change: transform, opacity;
+  z-index: 1;
+}
+
+.geo-1 {
+  width: 30px;
+  height: 30px;
+  border-radius: 20%;
+  background: linear-gradient(45deg, rgba(34, 197, 94, 0.05), rgba(34, 197, 94, 0.1));
+  animation-duration: 15s;
+}
+
+.geo-2 {
+  width: 15px;
+  height: 15px;
+  background: linear-gradient(45deg, rgba(239, 68, 68, 0.05), rgba(239, 68, 68, 0.1));
+  animation-duration: 18s;
+}
+
+.geo-3 {
+  width: 25px;
+  height: 25px;
+  border-radius: 0;
+  background: linear-gradient(45deg, rgba(245, 158, 11, 0.05), rgba(245, 158, 11, 0.1));
+  transform: rotate(45deg);
+  animation-duration: 12s;
+}
+
+.geo-4 {
+  width: 40px;
+  height: 40px;
+  border-radius: 30%;
+  background: linear-gradient(45deg, rgba(139, 69, 19, 0.05), rgba(139, 69, 19, 0.1));
+  animation-duration: 20s;
+}
+
+.geo-5 {
+  width: 35px;
+  height: 35px;
+  background: linear-gradient(45deg, rgba(168, 85, 247, 0.05), rgba(168, 85, 247, 0.1));
+  border-radius: 40%;
+  animation-duration: 14s;
+}
+
+.geo-6 {
+  width: 18px;
+  height: 18px;
+  background: linear-gradient(45deg, rgba(6, 182, 212, 0.05), rgba(6, 182, 212, 0.1));
+  border-radius: 10%;
+  animation-duration: 16s;
+}
+
+/* Hover effect para demo */
+.restaurant-background:hover .floating-ingredient {
+  animation-play-state: paused;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .floating-ingredient {
+    font-size: 0.8rem !important;
+  }
+  
+  .geometric-element {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .geo-1 { width: 20px; height: 20px; }
+  .geo-4 { width: 25px; height: 25px; }
+  .geo-5 { width: 22px; height: 22px; }
+}
+
+@media (max-width: 480px) {
+  .floating-ingredient {
+    font-size: 0.6rem !important;
+  }
+  
+  .ingredient-1, .ingredient-5 { animation-duration: 6s; }
+  .ingredient-2, .ingredient-6 { animation-duration: 9s; }
+  .ingredient-3, .ingredient-7 { animation-duration: 4s; }
+  .ingredient-4, .ingredient-8 { animation-duration: 7s; }
+}
