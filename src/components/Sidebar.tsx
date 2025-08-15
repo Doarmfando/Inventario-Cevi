@@ -42,7 +42,7 @@ const Sidebar: React.FC<SidebarProps> = ({ user, onLogout, open, onClose, onTogg
         <div className="flex items-center justify-between h-16 px-6 bg-slate-800">
           <div className="flex items-center space-x-2">
             <Package2 className="w-8 h-8 text-blue-400" />
-            <span className="text-xl font-bold text-white">InventoryPro</span>
+            <span className="text-xl font-bold text-white">Inventario</span>
           </div>
 
           <button onClick={close} className="lg:hidden text-white hover:text-gray-300">
