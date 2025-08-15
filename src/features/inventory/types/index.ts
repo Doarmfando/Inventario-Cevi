@@ -9,7 +9,7 @@ export interface Product {
   supplier: string;
   expiryDate: string; // Fecha de vencimiento
   entryDate: string; // Fecha de ingreso
-  container: string; // Contenedor/refrigerador asignado
+  // container: string; // Contenedor/refrigerador asignado - TEMPORALMENTE OCULTO
   state: 'fresco' | 'congelado' | 'por-vencer' | 'vencido';
   lastUpdated: string;
 }
@@ -23,7 +23,7 @@ export interface NewProduct {
   minStock: number;
   supplier: string;
   expiryDate: string;
-  container: string;
+  // container: string; // TEMPORALMENTE OCULTO
   state: 'fresco' | 'congelado';
 }
 
@@ -56,3 +56,17 @@ export type Container =
   | 'Congelador 3'
   | 'Congelador 4'
   | 'Almacén Seco';
+
+// TEMPORALMENTE OCULTO - FUNCIONALIDAD DE CONTENEDORES
+/*
+export type Container = 
+  | 'Frigider 1 - Causa'
+  | 'Frigider 2 - Pescado' 
+  | 'Frigider 3 - Yuca'
+  | 'Frigider 4 - Mariscos'
+  | 'Congelador 1'
+  | 'Congelador 2' 
+  | 'Congelador 3'
+  | 'Congelador 4'
+  | 'Almacén Seco';
+*/

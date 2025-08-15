@@ -28,12 +28,15 @@ const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
       {/* contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
-        <Header user={user} onToggleSidebar={() => setSidebarOpen((s) => !s)} />
-        <main className="flex-1 overflow-y-auto">{children}</main>
+        <main className="flex-1 overflow-y-auto">
+          <Header user={user} onToggleSidebar={() => setSidebarOpen((s) => !s)} />
+          {children}
+        </main>
       </div>
     </div>
   );
 };
+
 
 const App: React.FC = () => {
   return (

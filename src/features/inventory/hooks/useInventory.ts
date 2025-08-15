@@ -14,7 +14,7 @@ export const useInventory = () => {
       supplier: 'Mercado Pesquero Central',
       expiryDate: '2025-08-20',
       entryDate: '2025-08-16',
-      container: 'Frigider 2 - Pescado',
+      // container: 'Frigider 2 - Pescado', // TEMPORALMENTE OCULTO
       state: 'fresco',
       lastUpdated: '2025-08-15'
     },
@@ -29,7 +29,7 @@ export const useInventory = () => {
       supplier: 'Mariscos del Sur',
       expiryDate: '2025-09-10',
       entryDate: '2025-08-14',
-      container: 'Congelador 1',
+      // container: 'Congelador 1', // TEMPORALMENTE OCULTO
       state: 'congelado',
       lastUpdated: '2025-08-15'
     },
@@ -44,7 +44,7 @@ export const useInventory = () => {
       supplier: 'Distribuidora Los Andes',
       expiryDate: '2025-08-25',
       entryDate: '2025-08-15',
-      container: 'Frigider 3 - Yuca',
+      // container: 'Frigider 3 - Yuca', // TEMPORALMENTE OCULTO
       state: 'fresco',
       lastUpdated: '2025-08-15'
     },
@@ -59,7 +59,7 @@ export const useInventory = () => {
       supplier: 'Verduras San Juan',
       expiryDate: '2025-08-30',
       entryDate: '2025-08-14',
-      container: 'Frigider 1 - Causa',
+      // container: 'Frigider 1 - Causa', // TEMPORALMENTE OCULTO
       state: 'fresco',
       lastUpdated: '2025-08-15'
     },
@@ -74,7 +74,7 @@ export const useInventory = () => {
       supplier: 'Mariscos Premium',
       expiryDate: '2025-08-22',
       entryDate: '2025-08-15',
-      container: 'Frigider 4 - Mariscos',
+      // container: 'Frigider 4 - Mariscos', // TEMPORALMENTE OCULTO
       state: 'fresco',
       lastUpdated: '2025-08-15'
     },
@@ -89,7 +89,7 @@ export const useInventory = () => {
       supplier: 'Distribuidora Central',
       expiryDate: '2025-12-15',
       entryDate: '2025-08-10',
-      container: 'Almacén Seco',
+      // container: 'Almacén Seco', // TEMPORALMENTE OCULTO
       state: 'fresco',
       lastUpdated: '2025-08-15'
     },
@@ -104,7 +104,7 @@ export const useInventory = () => {
       supplier: 'Cítricos del Norte',
       expiryDate: '2025-08-18',
       entryDate: '2025-08-15',
-      container: 'Frigider 1 - Causa',
+      // container: 'Frigider 1 - Causa', // TEMPORALMENTE OCULTO
       state: 'por-vencer',
       lastUpdated: '2025-08-15'
     },
@@ -119,7 +119,7 @@ export const useInventory = () => {
       supplier: 'Granos Andinos',
       expiryDate: '2025-09-30',
       entryDate: '2025-08-12',
-      container: 'Almacén Seco',
+      // container: 'Almacén Seco', // TEMPORALMENTE OCULTO
       state: 'fresco',
       lastUpdated: '2025-08-15'
     }
@@ -218,6 +218,8 @@ export const useInventory = () => {
   };
 
   const getProductsByContainer = () => {
+    // TEMPORALMENTE OCULTO - FUNCIONALIDAD DE CONTENEDORES
+    /*
     const containers = [...new Set(products.map(item => item.container))];
     return containers.map(container => {
       const containerItems = products.filter(item => item.container === container);
@@ -227,6 +229,8 @@ export const useInventory = () => {
         items: containerItems
       };
     });
+    */
+    return [];
   };
 
   return { 
