@@ -1,97 +1,246 @@
-import React from "react";
-import { Package, TrendingUp, AlertTriangle, BarChart3 } from "lucide-react";
+import React, { useState } from "react";
 import { useInventory } from "../../inventory/hooks/useInventory";
+import DashboardStatsCards from "./DashboardStatsCards";
+import LowStockAlert from "./LowStockAlert";
+import CategorySummary from "./CategorySummary";
+import InventoryTrends from "./InventoryTrends";
+import { BarChart3, TrendingUp, Package, AlertCircle } from "lucide-react";
+
+type DashboardTab = 'overview' | 'trends' | 'categories' | 'alerts';
 
 const DashboardView: React.FC = () => {
-  const { getStats, getLowStockProducts, getProductsByCategory } = useInventory();
+  const { getStats, getLowStockProducts, getProductsByCategory, getExpiringProducts } = useInventory();
+  const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
+
   const stats = getStats();
   const lowStockProducts = getLowStockProducts();
+  const expiringProducts = getExpiringProducts();
   const categoryStats = getProductsByCategory();
 
+  const tabs = [
+    {
+      id: 'overview' as DashboardTab,
+      name: 'Resumen General',
+      icon: Package,
+      color: 'text-blue-600',
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200'
+    },
+    {
+      id: 'trends' as DashboardTab,
+      name: 'Tendencias',
+      icon: TrendingUp,
+      color: 'text-green-600',
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200'
+    },
+    {
+      id: 'categories' as DashboardTab,
+      name: 'Categorías',
+      icon: BarChart3,
+      color: 'text-purple-600',
+      bgColor: 'bg-purple-50',
+      borderColor: 'border-purple-200'
+    },
+    {
+      id: 'alerts' as DashboardTab,
+      name: 'Alertas',
+      icon: AlertCircle,
+      color: 'text-red-600',
+      bgColor: 'bg-red-50',
+      borderColor: 'border-red-200',
+      badge: (lowStockProducts.length + expiringProducts.length) || undefined
+    }
+  ];
+
   return (
-    <div className="p-6">
-      {/* Tarjetas de estadísticas */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <div className="bg-gradient-to-r from-blue-500 to-blue-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-blue-100 text-sm">Total Productos</p>
-              <p className="text-3xl font-bold">{stats.totalProducts}</p>
-            </div>
-            <Package className="w-8 h-8 text-blue-200" />
+    <div className="min-h-screen bg-gray-50">
+      <div className="p-6">
+            <div></div>
+
+        {/* Header */}
+        
+
+
+        {/* Estadísticas principales (siempre visibles) */}
+        <DashboardStatsCards stats={stats} />
+
+        {/* Navegación por pestañas */}
+        <div className="mb-6">
+          <div className="border-b border-gray-200">
+            <nav className="-mb-px flex space-x-8">
+              {tabs.map((tab) => {
+                const IconComponent = tab.icon;
+                const isActive = activeTab === tab.id;
+                
+                return (
+                  <button
+                    key={tab.id}
+                    onClick={() => setActiveTab(tab.id)}
+                    className={`group inline-flex items-center py-4 px-1 border-b-2 font-medium text-sm transition-colors ${
+                      isActive
+                        ? `border-blue-500 ${tab.color}`
+                        : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                    }`}
+                  >
+                    <IconComponent className={`w-5 h-5 mr-2 ${
+                      isActive ? tab.color : 'text-gray-400 group-hover:text-gray-500'
+                    }`} />
+                    {tab.name}
+                    {tab.badge && tab.badge > 0 && (
+                      <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+                        {tab.badge}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
+            </nav>
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-green-100 text-sm">Valor Total</p>
-              <p className="text-3xl font-bold">${stats.totalValue.toLocaleString()}</p>
-            </div>
-            <TrendingUp className="w-8 h-8 text-green-200" />
-          </div>
-        </div>
+        {/* Contenido de las pestañas */}
+        <div className="space-y-6">
+          {activeTab === 'overview' && (
+            <div className="space-y-6">
+              {/* Alertas rápidas */}
+              {(lowStockProducts.length > 0 || expiringProducts.length > 0) && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                  {lowStockProducts.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <AlertCircle className="w-5 h-5 text-red-500 mr-2" />
+                        Stock Bajo - Vista Rápida
+                      </h3>
+                      <div className="space-y-2">
+                        {lowStockProducts.slice(0, 3).map(product => (
+                          <div key={product.id} className="flex justify-between items-center p-2 bg-red-50 rounded">
+                            <span className="text-sm font-medium text-gray-800">{product.name}</span>
+                            <span className="text-xs text-red-600 font-medium">
+                              {product.quantity} / {product.minStock}
+                            </span>
+                          </div>
+                        ))}
+                        {lowStockProducts.length > 3 && (
+                          <button
+                            onClick={() => setActiveTab('alerts')}
+                            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Ver todos ({lowStockProducts.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
 
-        <div className="bg-gradient-to-r from-red-500 to-red-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-red-100 text-sm">Stock Bajo</p>
-              <p className="text-3xl font-bold">{stats.lowStockItems}</p>
-            </div>
-            <AlertTriangle className="w-8 h-8 text-red-200" />
-          </div>
-        </div>
-
-        <div className="bg-gradient-to-r from-purple-500 to-purple-600 p-6 rounded-xl text-white">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-purple-100 text-sm">Categorías</p>
-              <p className="text-3xl font-bold">{stats.categoriesCount}</p>
-            </div>
-            <BarChart3 className="w-8 h-8 text-purple-200" />
-          </div>
-        </div>
-      </div>
-
-      {/* Productos con stock bajo */}
-      {stats.lowStockItems > 0 && (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-          <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
-            <AlertTriangle className="w-5 h-5 text-red-500 mr-2" />
-            Productos con Stock Bajo
-          </h3>
-          <div className="space-y-3">
-            {lowStockProducts.map(item => (
-              <div key={item.id} className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
-                <div>
-                  <p className="font-medium text-gray-800">{item.name}</p>
-                  <p className="text-sm text-gray-600">Stock actual: {item.quantity} | Mínimo: {item.minStock}</p>
+                  {expiringProducts.length > 0 && (
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                      <h3 className="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+                        <AlertCircle className="w-5 h-5 text-orange-500 mr-2" />
+                        Próximos a Vencer
+                      </h3>
+                      <div className="space-y-2">
+                        {expiringProducts.slice(0, 3).map(product => (
+                          <div key={product.id} className="flex justify-between items-center p-2 bg-orange-50 rounded">
+                            <span className="text-sm font-medium text-gray-800">{product.name}</span>
+                            <span className="text-xs text-orange-600 font-medium">
+                              {new Date(product.expiryDate).toLocaleDateString()}
+                            </span>
+                          </div>
+                        ))}
+                        {expiringProducts.length > 3 && (
+                          <button
+                            onClick={() => setActiveTab('alerts')}
+                            className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                          >
+                            Ver todos ({expiringProducts.length})
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <span className="px-3 py-1 bg-red-500 text-white text-xs rounded-full">
-                  Crítico
-                </span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
+              )}
 
-      {/* Resumen de categorías */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Resumen por Categorías</h3>
-        <div className="space-y-4">
-          {categoryStats.map(({ category, count, value }) => (
-            <div key={category} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-              <div>
-                <p className="font-medium text-gray-800">{category}</p>
-                <p className="text-sm text-gray-600">{count} productos</p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold text-gray-800">${value.toLocaleString()}</p>
-                <p className="text-sm text-gray-600">Valor total</p>
-              </div>
+              {/* Resumen de categorías */}
+              <CategorySummary categoryStats={categoryStats} />
             </div>
-          ))}
+          )}
+
+          {activeTab === 'trends' && (
+            <InventoryTrends />
+          )}
+
+          {activeTab === 'categories' && (
+            <CategorySummary categoryStats={categoryStats} />
+          )}
+
+          {activeTab === 'alerts' && (
+            <div className="space-y-6">
+              <LowStockAlert lowStockProducts={lowStockProducts} />
+              
+              {expiringProducts.length > 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                  <div className="flex items-center justify-between mb-4">
+                    <h3 className="text-lg font-semibold text-gray-800 flex items-center">
+                      <AlertCircle className="w-5 h-5 text-orange-500 mr-2" />
+                      Productos Próximos a Vencer
+                    </h3>
+                    <span className="px-3 py-1 bg-orange-100 text-orange-800 text-sm rounded-full font-medium">
+                      {expiringProducts.length} productos
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    {expiringProducts.map(product => {
+                      const daysUntilExpiry = Math.ceil(
+                        (new Date(product.expiryDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                      );
+                      
+                      return (
+                        <div key={product.id} className="flex items-center justify-between p-4 bg-orange-50 rounded-lg border border-orange-100">
+                          <div>
+                            <p className="font-medium text-gray-800">{product.name}</p>
+                            <p className="text-sm text-gray-600">
+                              Vence: {new Date(product.expiryDate).toLocaleDateString()} 
+                              ({daysUntilExpiry === 0 ? 'Hoy' : `${daysUntilExpiry} días`})
+                            </p>
+                          </div>
+                          <span className={`px-3 py-1 text-xs rounded-full font-medium ${
+                            daysUntilExpiry <= 0 
+                              ? 'bg-red-600 text-white' 
+                              : daysUntilExpiry <= 3
+                              ? 'bg-orange-600 text-white'
+                              : 'bg-orange-500 text-white'
+                          }`}>
+                            {daysUntilExpiry <= 0 
+                              ? 'Vencido' 
+                              : daysUntilExpiry <= 3 
+                              ? 'Crítico' 
+                              : 'Por Vencer'}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {lowStockProducts.length === 0 && expiringProducts.length === 0 && (
+                <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
+                  <div className="mx-auto w-24 h-24 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                    <Package className="w-12 h-12 text-green-600" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                    ¡Todo en orden!
+                  </h3>
+                  <p className="text-gray-600">
+                    No hay productos con stock bajo ni próximos a vencer.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>

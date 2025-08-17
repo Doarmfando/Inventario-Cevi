@@ -5,6 +5,8 @@ import { useAuth } from "../features/auth/hooks/useAuth";
 import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
 import InventoryPage from "../pages/InventoryPage";
+import MovementPage from "../pages/MovementPage";
+import ReportsPage from "../pages/ReportsPage";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 
@@ -37,13 +39,12 @@ const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   );
 };
 
-
 const App: React.FC = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter basename="/Inventario-Cevi">
       <AuthProvider>
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" replace />} />
+          <Route path="/" element={<Navigate to="/login" replace />} />
           <Route path="/login" element={<LoginPage />} />
 
           <Route
@@ -64,7 +65,25 @@ const App: React.FC = () => {
             }
           />
 
-          <Route path="*" element={<Navigate to="/dashboard" replace />} />
+          <Route
+            path="/movements"
+            element={
+              <PrivateLayout>
+                <MovementPage />
+              </PrivateLayout>
+            }
+          />
+
+          <Route
+            path="/reports"
+            element={
+              <PrivateLayout>
+                <ReportsPage />
+              </PrivateLayout>
+            }
+          />
+
+          <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>
     </BrowserRouter>

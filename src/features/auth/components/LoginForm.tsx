@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User } from "lucide-react";
+import { User, Phone } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import type { Credentials } from "../types";
@@ -8,7 +8,7 @@ import InputWithIcon from "./InputWithIcon";
 import PasswordInput from "./PasswordInput";
 import RememberMe from "./RememberMe";
 import logo3 from "../../../assets/logo3.png";
-import RestaurantLogoAdvanced from "./RestaurantLogoAdvanced";
+import RestaurantLogo from "./RestaurantLogo";
 
 const LoginForm: React.FC = () => {
   const [credentials, setCredentials] = useState<Credentials>({ username: "", password: "" });
@@ -43,8 +43,8 @@ const LoginForm: React.FC = () => {
 
       <div className="flex h-screen w-screen relative flex-row z-10 login-wrapper">
         {/* Panel izquierdo azul */}
-        <div className="w-[16%] h-screen ml-5 bg-[#214480] rounded-tl-3xl rounded-bl-none shadow-[2px_0_10px_rgba(0,0,0,0.1)] flex items-start justify-center pt-16 animate-slideInLeftPanel z-20 login-left-panel">
-          <RestaurantLogoAdvanced  />
+        <div className="w-[16%] h-screen ml-5 bg-[#214480] rounded-tl-3xl rounded-bl-none shadow-[2px_0_10px_rgba(0,0,0,0.1)] flex items-start justify-center pt-16 z-20 login-left-panel">
+          <RestaurantLogo  />
         </div>
 
         {/* Contenido principal */}
@@ -91,33 +91,39 @@ const LoginForm: React.FC = () => {
         </div>
 
         {/* Banner inferior */}
-        <div className="absolute bottom-5 left-0 w-screen bg-[#F0F2F5]/90 backdrop-blur-sm py-4 px-6 flex items-center gap-2.5 font-bold text-sm z-40 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.15)] login-bottom-banner">
-          {/* Logo de Fortex */}
-          <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden">
-            <img 
-              src={logo3} 
-              alt="Fortex Logo" 
-              className="w-full h-full object-cover"
-            />
+        <div className="absolute bottom-5 left-0 w-screen bg-[#F0F2F5]/90 backdrop-blur-sm py-4 px-6 flex items-center justify-between font-bold text-sm z-40 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.15)] login-bottom-banner">
+          {/* Logo y powered by */}
+          <div className="flex items-center gap-2.5">
+            <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden">
+              <img 
+                src={logo3} 
+                alt="Fortex Logo" 
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <span className="text-[#2f50ac]">Powered by Fortex</span>
           </div>
-          <span className="text-[#2f50ac]">Powered by Fortex</span>
+
+          {/* Información de contacto */}
+          <div className="flex items-center gap-4">
+            <span className="text-gray-600 text-xs">Contacto:</span>
+            <div className="flex items-center gap-3">
+              <div className="flex items-center gap-1">
+                <Phone className="w-3 h-3 text-[#2f50ac]" />
+                <span className="text-[#2f50ac] text-xs">984 229 446</span>
+              </div>
+              <div className="flex items-center gap-1">
+                <Phone className="w-3 h-3 text-[#2f50ac]" />
+                <span className="text-[#2f50ac] text-xs">944 532 822</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Estilos globales para animaciones */}
       <style>
         {`
-          @keyframes slideInLeftPanel {
-            from {
-              transform: translateX(-100%);
-              opacity: 0;
-            }
-            to {
-              transform: translateX(0);
-              opacity: 1;
-            }
-          }
-
           @keyframes rayFlash {
             0% {
               background-position: 200% 0%;
@@ -125,10 +131,6 @@ const LoginForm: React.FC = () => {
             100% {
               background-position: -100% 0%;
             }
-          }
-
-          .animate-slideInLeftPanel {
-            animation: slideInLeftPanel 1s ease-out forwards;
           }
 
           .animate-rayFlash {
@@ -148,7 +150,6 @@ const LoginForm: React.FC = () => {
               border-radius: 0 !important;
               justify-content: center;
               padding: 20px 0;
-              animation: none !important;
             }
             
             .login-main-content {
@@ -169,6 +170,8 @@ const LoginForm: React.FC = () => {
               justify-content: center;
               text-align: center;
               font-size: 12px;
+              flex-direction: column !important;
+              gap: 10px !important;
             }
           }
         `}

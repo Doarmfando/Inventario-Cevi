@@ -1,6 +1,6 @@
 import React from "react";
 import { AlertTriangle, Clock, TrendingUp } from "lucide-react";
-import type { Product } from "../types";
+import type { Product } from "../../types";
 
 interface AlertsPanelProps {
   expiringProducts: Product[];
