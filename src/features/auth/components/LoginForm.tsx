@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { User, Phone } from "lucide-react";
+import { User } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import type { Credentials } from "../types";
@@ -8,7 +8,12 @@ import InputWithIcon from "./InputWithIcon";
 import PasswordInput from "./PasswordInput";
 import RememberMe from "./RememberMe";
 import logo3 from "../../../assets/logo3.png";
+//import OriginalLeftPanel from "./OriginalLeftPanel";
+import FooterBanner from "./FooterBanner";
+// Si quieres usar el panel con imagen, importa esto en su lugar:
+import LeftPanel from "./LeftPanel";
 import RestaurantLogo from "./RestaurantLogo";
+import leftPanelImage from "../../../assets/left-panel-bg.png"; // Ajusta la ruta según tu estructura
 
 const LoginForm: React.FC = () => {
   const [credentials, setCredentials] = useState<Credentials>({ username: "", password: "" });
@@ -42,10 +47,19 @@ const LoginForm: React.FC = () => {
       <CirclesBackground />
 
       <div className="flex h-screen w-screen relative flex-row z-10 login-wrapper">
-        {/* Panel izquierdo azul */}
-        <div className="w-[16%] h-screen ml-5 bg-[#214480] rounded-tl-3xl rounded-bl-none shadow-[2px_0_10px_rgba(0,0,0,0.1)] flex items-start justify-center pt-16 z-20 login-left-panel">
-          <RestaurantLogo  />
-        </div>
+        {/* Panel izquierdo azul original */}
+        {/* <OriginalLeftPanel>
+          <RestaurantLogo />
+        </OriginalLeftPanel>
+         */}
+        {/* Si quieres usar el panel con imagen, usa esto en su lugar: */}
+        <LeftPanel 
+          panelImage={leftPanelImage}
+          altText="Panel lateral del login"
+        >
+          <RestaurantLogo />
+        </LeftPanel>
+       
 
         {/* Contenido principal */}
         <div className="w-[80%] flex items-center justify-center bg-transparent relative z-20 login-main-content">
@@ -90,92 +104,18 @@ const LoginForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Banner inferior */}
-        <div className="absolute bottom-5 left-0 w-screen bg-[#F0F2F5]/90 backdrop-blur-sm py-4 px-6 flex items-center justify-between font-bold text-sm z-40 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.15)] login-bottom-banner">
-          {/* Logo y powered by */}
-          <div className="flex items-center gap-2.5">
-            <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden">
-              <img 
-                src={logo3} 
-                alt="Fortex Logo" 
-                className="w-full h-full object-cover"
-              />
-            </div>
-            <span className="text-[#2f50ac]">Powered by Fortex</span>
-          </div>
-
-          {/* Información de contacto */}
-          <div className="flex items-center gap-4">
-            <span className="text-gray-600 text-xs">Contacto:</span>
-            <div className="flex items-center gap-3">
-              <div className="flex items-center gap-1">
-                <Phone className="w-3 h-3 text-[#2f50ac]" />
-                <span className="text-[#2f50ac] text-xs">984 229 446</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Phone className="w-3 h-3 text-[#2f50ac]" />
-                <span className="text-[#2f50ac] text-xs">944 532 822</span>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Banner inferior como componente */}
+        <FooterBanner 
+          logo={logo3}
+          logoAlt="Fortex Logo"
+          companyName="Fortex"
+          contactLabel="Contacto:"
+          phoneNumbers={["984 229 446", "944 532 822"]}
+        />
       </div>
 
       {/* Estilos globales para animaciones */}
-      <style>
-        {`
-          @keyframes rayFlash {
-            0% {
-              background-position: 200% 0%;
-            }
-            100% {
-              background-position: -100% 0%;
-            }
-          }
 
-          .animate-rayFlash {
-            animation: rayFlash 3s infinite linear;
-          }
-
-          /* Responsive Design */
-          @media (max-width: 768px) {
-            .login-wrapper {
-              flex-direction: column;
-            }
-            
-            .login-left-panel {
-              width: 100% !important;
-              height: auto !important;
-              margin-left: 0 !important;
-              border-radius: 0 !important;
-              justify-content: center;
-              padding: 20px 0;
-            }
-            
-            .login-main-content {
-              width: 100% !important;
-              padding: 20px;
-            }
-            
-            .login-card {
-              max-width: 90% !important;
-              padding: 30px 20px !important;
-            }
-            
-            .login-bottom-banner {
-              position: relative !important;
-              bottom: 0;
-              width: 90% !important;
-              margin: 20px auto 0;
-              justify-content: center;
-              text-align: center;
-              font-size: 12px;
-              flex-direction: column !important;
-              gap: 10px !important;
-            }
-          }
-        `}
-      </style>
     </div>
   );
 };

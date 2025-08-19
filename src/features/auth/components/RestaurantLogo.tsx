@@ -1,19 +1,28 @@
 import React from "react";
 import logo1 from "../../../assets/logo1.png";
 import logo2 from "../../../assets/logo2.png";
+import logoblanco from "../../../assets/logo-blanco.png";
 
 const RestaurantLogo: React.FC = () => {
   return (
     <div className="flex flex-col items-center justify-center gap-6 w-full px-4">
       {/* Logo principal del restaurante */}
-      <div>
+      {/* <div>
         <img 
           src={logo1} 
           alt="Restaurant Logo" 
           className="w-40 h-40 object-contain"
         />
-      </div>
+      </div> */}
       
+      <div>
+        <img 
+          src={logoblanco} 
+          alt="Restaurant Logo" 
+          className="w-40 h-40 object-contain"
+        />
+      </div>
+
       {/* Logo secundario */}
       <div>
         <img 

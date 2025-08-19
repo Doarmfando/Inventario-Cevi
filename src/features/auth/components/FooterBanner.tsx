@@ -1,0 +1,68 @@
+import React from "react";
+import { Phone } from "lucide-react";
+
+interface FooterBannerProps {
+  logo: string;
+  logoAlt?: string;
+  companyName?: string;
+  contactLabel?: string;
+  phoneNumbers: string[];
+}
+
+const FooterBanner: React.FC<FooterBannerProps> = ({ 
+  logo,
+  logoAlt = "Company Logo",
+  companyName = "Fortex",
+  contactLabel = "Contacto:",
+  phoneNumbers = []
+}) => {
+  return (
+    <div className="absolute bottom-5 left-0 w-screen bg-[#F0F2F5]/90 backdrop-blur-sm py-4 px-6 flex items-center justify-between font-bold text-sm z-40 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.15)] login-bottom-banner">
+      {/* Logo y powered by */}
+      <div className="flex items-center gap-2.5">
+        <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden">
+          <img 
+            src={logo} 
+            alt={logoAlt} 
+            className="w-full h-full object-cover"
+          />
+        </div>
+        <span className="text-[#2f50ac]">Powered by {companyName}</span>
+      </div>
+
+      {/* Información de contacto */}
+      <div className="flex items-center gap-4">
+        <span className="text-gray-600 text-xs">{contactLabel}</span>
+        <div className="flex items-center gap-3">
+          {phoneNumbers.map((phone, index) => (
+            <div key={index} className="flex items-center gap-1">
+              <Phone className="w-3 h-3 text-[#2f50ac]" />
+              <span className="text-[#2f50ac] text-xs">{phone}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Estilos responsivos */}
+      <style>
+        {`
+          @media (max-width: 768px) {
+            .login-bottom-banner {
+              position: relative !important;
+              bottom: 0;
+              width: 90% !important;
+              margin: 20px auto 0;
+              justify-content: center;
+              text-align: center;
+              font-size: 12px;
+              flex-direction: column !important;
+              gap: 10px !important;
+            }
+          }
+        `}
+      </style>
+    </div>
+  );
+};
+
+export default FooterBanner;
