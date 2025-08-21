@@ -9,6 +9,8 @@ export interface Product {
   supplier: string;
   expiryDate: string; // Fecha de vencimiento
   entryDate: string; // Fecha de ingreso
+  estimatedDaysToExpiry: number; // Días estimados hasta vencimiento
+
   // container: string; // Contenedor/refrigerador asignado - TEMPORALMENTE OCULTO
   state: 'fresco' | 'congelado' | 'por-vencer' | 'vencido';
   lastUpdated: string;
@@ -22,9 +24,19 @@ export interface NewProduct {
   price: number;
   minStock: number;
   supplier: string;
+  estimatedDaysToExpiry: number; // Campo nuevo para días estimados
   expiryDate: string;
   // container: string; // TEMPORALMENTE OCULTO
   state: 'fresco' | 'congelado';
+}
+
+// Nuevo tipo para el estado de stock
+export type StockStatus = 'Sin Stock' | 'Stock Bajo' | 'Reponer Pronto' | 'Stock OK';
+
+// Interface para productos con datos calculados (lo que devuelve el hook)
+export interface ProductWithCalculatedData extends Product {
+  stockStatus: StockStatus;
+  totalValue: number; // precio × cantidad del producto individual
 }
 
 export type ViewType = 'dashboard' | 'inventory';

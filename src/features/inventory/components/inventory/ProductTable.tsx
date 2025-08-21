@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import type { Product } from "../../types";
+import type { Product, ProductWithCalculatedData, StockStatus } from "../../types";
 import TableFilters from "../table/TableFilters";
 import ProductTableRow from "../table/ProductTableRow";
 import TableSummary from "../table/TableSummary";
@@ -9,29 +9,63 @@ interface Props {
   products: Product[];
   onDelete: (id: number) => void;
   onAddProduct?: () => void;
+  onEdit?: (product: ProductWithCalculatedData) => void;
+  onView?: (product: ProductWithCalculatedData) => void;
 }
 
-const ProductTable: React.FC<Props> = ({ products, onDelete, onAddProduct }) => {
+const ProductTable: React.FC<Props> = ({ 
+  products, 
+  onDelete, 
+  onAddProduct,
+  onEdit,
+  onView 
+}) => {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedState, setSelectedState] = useState<string>('');
 
+  // Función para calcular el estado del stock
+  const getStockStatus = (quantity: number, minStock: number): StockStatus => {
+    if (quantity === 0) return 'Sin Stock';
+    if (quantity <= minStock * 0.5) return 'Stock Bajo';
+    if (quantity <= minStock) return 'Reponer Pronto';
+    return 'Stock OK';
+  };
+
+  // Función para calcular días hasta vencimiento
+  const calculateDaysToExpiry = (expiryDate: string): number => {
+    const today = new Date();
+    const expiry = new Date(expiryDate);
+    const diffTime = expiry.getTime() - today.getTime();
+    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  // Transformar productos a ProductWithCalculatedData
+  const productsWithCalculatedData = useMemo((): ProductWithCalculatedData[] => {
+    return products.map(product => ({
+      ...product,
+      stockStatus: getStockStatus(product.quantity, product.minStock),
+      totalValue: product.quantity * product.price,
+      estimatedDaysToExpiry: calculateDaysToExpiry(product.expiryDate)
+    }));
+  }, [products]);
+
   // Categorías únicas para el filtro
   const categories = useMemo(() => 
-    [...new Set(products.map(item => item.category))], 
-    [products]
+    [...new Set(productsWithCalculatedData.map(item => item.category))], 
+    [productsWithCalculatedData]
   );
 
   // Productos filtrados
   const filteredProducts = useMemo(() => {
-    return products.filter(item => {
+    return productsWithCalculatedData.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
       const matchesCategory = !selectedCategory || item.category === selectedCategory;
       const matchesState = !selectedState || item.state === selectedState;
       return matchesSearch && matchesCategory && matchesState;
     });
-  }, [products, searchTerm, selectedCategory, selectedState]);
+  }, [productsWithCalculatedData, searchTerm, selectedCategory, selectedState]);
 
   const hasFilters = Boolean(searchTerm || selectedCategory || selectedState);
 
@@ -53,33 +87,67 @@ const ProductTable: React.FC<Props> = ({ products, onDelete, onAddProduct }) => 
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 border-b-2 border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Producto
+                {/* Producto - Coincide con ProductTableRow línea 83 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <div className="flex items-center space-x-1">
+                    <span>Producto</span>
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                
+                {/* Categoría - Coincide con ProductTableRow línea 94 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Categoría
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                
+                {/* Unidad - Coincide con ProductTableRow línea 101 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Unidad
+                </th>
+                
+                {/* Cantidad - Coincide con ProductTableRow línea 107 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Cantidad
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Precio Unit.
+
+                {/* Estado Stock - Coincide con ProductTableRow línea 114 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Estado Stock
                 </th>
-                {/* TEMPORALMENTE OCULTO - COLUMNA DE CONTENEDORES */}
-                {/*
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contenedor
+                
+                {/* Precio Unitario - Coincide con ProductTableRow línea 122 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Precio Unitario
+                </th>
+
+                {/* Precio Total - Coincide con ProductTableRow línea 131 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Precio Total
+                </th>
+
+                {/* CONTENEDORES - COLUMNA FUTURA (comentada pero mantenida) */}
+                {/* 
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  Contenedores
                 </th>
                 */}
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Vencimiento
+                
+                {/* Días para Vencimiento - Coincide con ProductTableRow línea 142 */}
+                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                  <div className="flex flex-col">
+                    <span>Productos por</span>
+                    <span>Vencer</span>
+                  </div>
                 </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                
+                {/* Estado del Producto - Coincide con ProductTableRow línea 163 */}
+                {/* <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Estado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                </th> */}
+                
+                {/* Acciones - Coincide con ProductTableRow línea 171 */}
+                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Acciones
                 </th>
               </tr>
@@ -90,6 +158,8 @@ const ProductTable: React.FC<Props> = ({ products, onDelete, onAddProduct }) => 
                   key={product.id}
                   product={product}
                   onDelete={onDelete}
+                  onEdit={onEdit}
+                  onView={onView}
                 />
               ))}
             </tbody>

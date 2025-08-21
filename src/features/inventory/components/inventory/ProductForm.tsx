@@ -16,13 +16,13 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
   const [form, setForm] = useState<NewProduct>({
     name: "",
     category: "Pescados",
-    quantity: 0,
+    quantity: 1, // CAMBIAR DE 0 A 1
     unit: "kg",
     price: 0,
     minStock: 0,
     supplier: "",
     expiryDate: "",
-    // container: "Frigider 2 - Pescado", // TEMPORALMENTE OCULTO
+    estimatedDaysToExpiry: 0,
     state: "fresco"
   });
 
@@ -31,7 +31,7 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
   const handleChange = (field: keyof NewProduct) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const value = field === "quantity" || field === "price" || field === "minStock" 
+    const value = field === "quantity" || field === "price" || field === "minStock" || field === "estimatedDaysToExpiry"
       ? Number(e.target.value) 
       : e.target.value;
     
@@ -47,17 +47,17 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
     const newErrors: Record<string, string> = {};
 
     if (!form.name.trim()) newErrors.name = "El nombre es requerido";
-    if (form.quantity <= 0) newErrors.quantity = "La cantidad debe ser mayor a 0";
+    // COMENTADA: if (form.quantity <= 0) newErrors.quantity = "La cantidad debe ser mayor a 0";
     if (form.price <= 0) newErrors.price = "El precio debe ser mayor a 0";
     if (form.minStock < 0) newErrors.minStock = "El stock mínimo no puede ser negativo";
-    if (!form.supplier.trim()) newErrors.supplier = "El proveedor es requerido";
-    if (!form.expiryDate) newErrors.expiryDate = "La fecha de vencimiento es requerida";
+    if (form.estimatedDaysToExpiry < 0) newErrors.estimatedDaysToExpiry = "Los días para vencer no pueden ser negativos";
+    // if (!form.expiryDate) newErrors.expiryDate = "La fecha de vencimiento es requerida";
 
-    // Validar que la fecha de vencimiento sea futura
-    const today = new Date().toISOString().split('T')[0];
-    if (form.expiryDate && form.expiryDate <= today) {
-      newErrors.expiryDate = "La fecha de vencimiento debe ser futura";
-    }
+    // // Validar que la fecha de vencimiento sea futura
+    // const today = new Date().toISOString().split('T')[0];
+    // if (form.expiryDate && form.expiryDate <= today) {
+    //   newErrors.expiryDate = "La fecha de vencimiento debe ser futura";
+    // }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -68,6 +68,7 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
     
     if (validateForm()) {
       onSubmit(form);
+      onClose();
     }
   };
 

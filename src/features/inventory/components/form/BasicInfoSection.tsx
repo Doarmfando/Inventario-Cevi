@@ -1,3 +1,4 @@
+// form/BasicInfoSection.tsx - ACTUALIZADO
 import React from "react";
 import FormField from "./FormField";
 import type { NewProduct, ProductCategory } from "../../types";

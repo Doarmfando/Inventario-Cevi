@@ -1,8 +1,12 @@
 // src/features/movements/components/MovementForm.tsx
 
 import React, { useState } from 'react';
-import { X, Package, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
-import type { MovementFormData, MovementType } from '../types/movement.types';
+import { X, Package, Calendar, AlertTriangle } from 'lucide-react';
+import type { MovementFormData } from '../types/movement.types';
+import { mockProducts } from '../data/mockData';
+import { movementTypes, productStates } from '../constants/formConstants';
+import { calculateDaysToExpiry, getExpiryStatus, getTodayDate } from '../utils/formUtils';
+import { validateMovementForm, type FormErrors } from '../utils/formValidation';
 
 interface MovementFormProps {
   onSubmit: (data: MovementFormData) => void;
@@ -17,39 +21,18 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
     reason: '',
     documentNumber: '',
     unitPrice: undefined,
+    expiryDate: '',
+    state: 'fresco',
   });
 
-  const [errors, setErrors] = useState<Partial<Record<keyof MovementFormData, string>>>({});
+  const [errors, setErrors] = useState<FormErrors>({});
 
-  // Mock data - En tu app real, esto vendría de tu estado/API
-  const products = [
-    { id: '1', name: 'Lenguado Filetes', code: 'LF001', currentStock: 15 },
-    { id: '2', name: 'Pulpo', code: 'P001', currentStock: 8 },
-    { id: '3', name: 'Yuca', code: 'Y001', currentStock: 25 },
-    { id: '4', name: 'Rocoto', code: 'R001', currentStock: 5 },
-  ];
-
-  const movementTypes = [
-    { value: 'entrada' as MovementType, label: 'Entrada', icon: ArrowUp, color: 'text-green-600' },
-    { value: 'salida' as MovementType, label: 'Salida', icon: ArrowDown, color: 'text-red-600' },
-    { value: 'ajuste' as MovementType, label: 'Ajuste', icon: RotateCcw, color: 'text-yellow-600' },
-  ];
+  const daysToExpiry = calculateDaysToExpiry(formData.expiryDate || '');
+  const expiryStatus = getExpiryStatus(daysToExpiry);
+  const today = getTodayDate();
 
   const validateForm = (): boolean => {
-    const newErrors: Partial<Record<keyof MovementFormData, string>> = {};
-
-    if (!formData.productId) {
-      newErrors.productId = 'Selecciona un producto';
-    }
-
-    if (formData.quantity <= 0) {
-      newErrors.quantity = 'La cantidad debe ser mayor a 0';
-    }
-
-    if (!formData.reason.trim()) {
-      newErrors.reason = 'El motivo es requerido';
-    }
-
+    const newErrors = validateMovementForm(formData);
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -64,16 +47,18 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
   const handleInputChange = (field: keyof MovementFormData, value: any) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     // Limpiar error del campo cuando el usuario empiece a escribir
-    if (errors[field]) {
+    if (errors[field as keyof FormErrors]) {
       setErrors(prev => ({ ...prev, [field]: undefined }));
     }
   };
 
-  const selectedProduct = products.find(p => p.id === formData.productId);
+  const selectedProduct = mockProducts.find(p => p.id === formData.productId);
+
+  // Obtener la fecha mínima (hoy)
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -136,7 +121,7 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
               }`}
             >
               <option value="">Selecciona un producto...</option>
-              {products.map((product) => (
+              {mockProducts.map((product) => (
                 <option key={product.id} value={product.id}>
                   {product.name} - {product.code} (Stock: {product.currentStock})
                 </option>
@@ -211,6 +196,65 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
             </div>
           </div>
 
+          {/* Fecha de Vencimiento y Estado */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Fecha de Vencimiento */}
+            <div>
+              <label htmlFor="expiryDate" className="flex items-center text-sm font-medium text-gray-700 mb-2">
+                <Calendar className="w-4 h-4 mr-2" />
+                Fecha de Vencimiento (Opcional)
+              </label>
+              <input
+                type="date"
+                id="expiryDate"
+                value={formData.expiryDate || ''}
+                min={today}
+                onChange={(e) => handleInputChange('expiryDate', e.target.value)}
+                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                  errors.expiryDate ? 'border-red-500' : 'border-gray-300'
+                }`}
+              />
+              {errors.expiryDate && (
+                <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>
+              )}
+              
+              {/* Indicador de días hasta vencimiento */}
+              {expiryStatus && (
+                <div className={`mt-2 flex items-center text-sm ${expiryStatus.color}`}>
+                  <span className="mr-2">{expiryStatus.icon}</span>
+                  <span className="font-medium">{expiryStatus.message}</span>
+                </div>
+              )}
+            </div>
+
+            {/* Estado del Producto */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Estado del Producto
+              </label>
+              <div className="space-y-2">
+                {productStates.map((state) => (
+                  <label key={state.value} className="flex items-center cursor-pointer">
+                    <input
+                      type="radio"
+                      name="state"
+                      value={state.value}
+                      checked={formData.state === state.value}
+                      onChange={(e) => handleInputChange('state', e.target.value)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <div className="ml-3 flex items-center">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${state.color}`}>
+                        {state.label}
+                      </span>
+                      <span className="ml-2 text-xs text-gray-500">{state.description}</span>
+                    </div>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </div>
+
           {/* Número de Documento */}
           <div>
             <label htmlFor="documentNumber" className="block text-sm font-medium text-gray-700 mb-2">
@@ -249,7 +293,7 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
           {/* Preview del Nuevo Stock */}
           {selectedProduct && formData.quantity > 0 && (
             <div className="bg-blue-50 p-4 rounded-lg">
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between mb-2">
                 <span className="text-sm text-blue-700">Nuevo Stock (Estimado):</span>
                 <span className="text-lg font-semibold text-blue-900">
                   {formData.type === 'entrada'
@@ -260,14 +304,40 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
                   } unidades
                 </span>
               </div>
+              
               {formData.unitPrice && (
-                <div className="flex items-center justify-between mt-2">
+                <div className="flex items-center justify-between mb-2">
                   <span className="text-sm text-blue-700">Valor Total:</span>
                   <span className="text-lg font-semibold text-blue-900">
                     S/ {(formData.quantity * formData.unitPrice).toFixed(2)}
                   </span>
                 </div>
               )}
+
+              {formData.expiryDate && (
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-blue-700">Fecha de Vencimiento:</span>
+                  <span className="text-sm font-medium text-blue-900">
+                    {new Date(formData.expiryDate).toLocaleDateString('es-PE')}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Alerta si el producto está por vencer o vencido */}
+          {expiryStatus && (expiryStatus.color === 'text-red-600' || expiryStatus.color === 'text-orange-600') && (
+            <div className="bg-orange-50 border border-orange-200 p-4 rounded-lg">
+              <div className="flex items-start">
+                <AlertTriangle className="w-5 h-5 text-orange-600 mt-0.5 mr-3 flex-shrink-0" />
+                <div>
+                  <h4 className="text-sm font-medium text-orange-800">Atención</h4>
+                  <p className="text-sm text-orange-700 mt-1">
+                    Este producto {daysToExpiry && daysToExpiry < 0 ? 'está vencido' : 'está próximo a vencer'}. 
+                    Verifica que sea correcto registrar este movimiento.
+                  </p>
+                </div>
+              </div>
             </div>
           )}
 

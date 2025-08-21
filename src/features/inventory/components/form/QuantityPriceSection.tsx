@@ -1,3 +1,4 @@
+// form/QuantityPriceSection.tsx - ACTUALIZADO
 import React from "react";
 import { Scale, DollarSign } from "lucide-react";
 import FormField from "./FormField";
@@ -20,30 +21,12 @@ const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({
 
   return (
     <>
-      {/* Cantidad y unidad */}
+      {/* Unidad de medida */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <FormField
-          label="Cantidad"
-          error={errors.quantity}
-          required
-          icon={Scale}
-        >
-          <input
-            type="number"
-            value={form.quantity}
-            onChange={onChange("quantity")}
-            min="0"
-            step="0.01"
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-              errors.quantity ? 'border-red-300' : 'border-gray-300'
-            }`}
-            placeholder="0"
-          />
-        </FormField>
-
         <FormField
           label="Unidad de Medida"
           required
+          icon={Scale}
         >
           <select
             value={form.unit}
@@ -55,12 +38,10 @@ const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({
             ))}
           </select>
         </FormField>
-      </div>
 
-      {/* Precio y stock mínimo */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Precio unitario */}
         <FormField
-          label="Precio Unitario (S/)"
+          label="Precio (S/)"
           error={errors.price}
           required
           icon={DollarSign}
@@ -77,17 +58,21 @@ const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({
             placeholder="0.00"
           />
         </FormField>
+      </div>
 
+      {/* Stock mínimo */}
+      <div className="grid grid-cols-1 gap-4">
         <FormField
           label="Stock Mínimo"
           error={errors.minStock}
-          required
+          // Removido required ya que 0 es un valor válido
         >
           <input
             type="number"
             value={form.minStock}
             onChange={onChange("minStock")}
             min="0"
+            step="1"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
               errors.minStock ? 'border-red-300' : 'border-gray-300'
             }`}

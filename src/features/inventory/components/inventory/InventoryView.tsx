@@ -17,6 +17,8 @@ const InventoryView: React.FC = () => {
     getLowStockProducts 
   } = useInventory();
   
+  console.log("🔧 InventoryView renderizado, addProduct type:", typeof addProduct);
+  
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Actualizar estados de productos cada vez que se carga el componente
@@ -25,7 +27,10 @@ const InventoryView: React.FC = () => {
   }, []);
 
   const handleAddProduct = (product: NewProduct) => {
+    console.log("🎯 handleAddProduct ejecutado con:", product);
+    console.log("📤 Llamando addProduct...");
     addProduct(product);
+    console.log("✅ addProduct ejecutado, cerrando modal");
     setIsModalOpen(false);
   };
 
@@ -52,7 +57,10 @@ const InventoryView: React.FC = () => {
         <ProductTable 
           products={products} 
           onDelete={deleteProduct}
-          onAddProduct={() => setIsModalOpen(true)}
+          onAddProduct={() => {
+            console.log("🔥 Abriendo modal");
+            setIsModalOpen(true);
+          }}
         />
       </div>
 
@@ -60,7 +68,10 @@ const InventoryView: React.FC = () => {
       {isModalOpen && (
         <ProductForm
           onSubmit={handleAddProduct}
-          onClose={() => setIsModalOpen(false)}
+          onClose={() => {
+            console.log("🚪 Cerrando modal");
+            setIsModalOpen(false);
+          }}
         />
       )}
     </div>

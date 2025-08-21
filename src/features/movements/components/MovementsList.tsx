@@ -2,7 +2,7 @@
 
 import React from 'react';
 import { Eye, ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
-import type { Movement } from '../types/movement.types';
+import type { Movement, MovementType, ProductState } from '../types/movement.types';
 
 interface MovementsListProps {
   movements: Movement[];
@@ -49,6 +49,36 @@ const MovementsList: React.FC<MovementsListProps> = ({ movements, onViewKardex }
     }
   };
 
+  const getStateClass = (state: Movement['state']) => {
+    switch (state) {
+      case 'fresco':
+        return 'bg-green-100 text-green-800';
+      case 'congelado':
+        return 'bg-blue-100 text-blue-800';
+      case 'por-vencer':
+        return 'bg-orange-100 text-orange-800';
+      case 'vencido':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStateName = (state: Movement['state']) => {
+    switch (state) {
+      case 'fresco':
+        return 'Fresco';
+      case 'congelado':
+        return 'Congelado';
+      case 'por-vencer':
+        return 'Por Vencer';
+      case 'vencido':
+        return 'Vencido';
+      default:
+        return state;
+    }
+  };
+
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('es-PE', {
       day: '2-digit',
@@ -57,6 +87,15 @@ const MovementsList: React.FC<MovementsListProps> = ({ movements, onViewKardex }
       hour: '2-digit',
       minute: '2-digit',
     }).format(new Date(date));
+  };
+
+  const formatSimpleDate = (dateString?: string) => {
+    if (!dateString) return '-';
+    return new Intl.DateTimeFormat('es-PE', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+    }).format(new Date(dateString));
   };
 
   const formatCurrency = (amount: number) => {
@@ -78,7 +117,7 @@ const MovementsList: React.FC<MovementsListProps> = ({ movements, onViewKardex }
         </div>
       </div>
     );
-  }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -109,6 +148,12 @@ const MovementsList: React.FC<MovementsListProps> = ({ movements, onViewKardex }
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Motivo
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Fecha de Vencimiento
+              </th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Estado
               </th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Acciones
@@ -178,6 +223,16 @@ const MovementsList: React.FC<MovementsListProps> = ({ movements, onViewKardex }
                   </div>
                 </td>
                 
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  {formatSimpleDate(movement.expiryDate)}
+                </td>
+                
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStateClass(movement.state)}`}>
+                    {getStateName(movement.state)}
+                  </span>
+                </td>
+                
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                   <button
                     onClick={() => onViewKardex(movement.productId)}
@@ -205,3 +260,33 @@ const MovementsList: React.FC<MovementsListProps> = ({ movements, onViewKardex }
 };
 
 export default MovementsList;
+
+export interface MovementFormData {
+  productId: string;
+  type: MovementType;
+  quantity: number;
+  reason: string;
+  documentNumber?: string;
+  unitPrice?: number;
+  
+  // NUEVOS CAMPOS SOLICITADOS
+  expiryDate?: string; // Fecha de vencimiento
+  state: ProductState; // Estado
+}
+
+export interface MovementFilters {
+  type?: MovementType | 'all';
+  productId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  createdBy?: string;
+  
+  // NUEVOS FILTROS PARA LOS CAMPOS AGREGADOS
+  state?: ProductState | 'all'; // Filtro por estado
+  expiryFrom?: string; // Filtro por fecha de vencimiento desde
+  expiryTo?: string; // Filtro por fecha de vencimiento hasta
+}
+
+export interface KardexEntry extends Movement {
+  runningBalance: number;
+}

@@ -1,9 +1,7 @@
 import React from "react";
-import { Calendar } from "lucide-react";
-// import { Refrigerator } from "lucide-react"; // TEMPORALMENTE OCULTO
+import { Truck, Calendar, Clock } from "lucide-react";
 import FormField from "./FormField";
 import type { NewProduct } from "../../types";
-// import type { Container } from "../types"; // TEMPORALMENTE OCULTO
 
 interface SupplierDateSectionProps {
   form: NewProduct;
@@ -16,35 +14,13 @@ const SupplierDateSection: React.FC<SupplierDateSectionProps> = ({
   errors, 
   onChange 
 }) => {
-  // const containers: Container[] = [
-    // TEMPORALMENTE OCULTO - FUNCIONALIDAD DE CONTENEDORES
-    /*
-    'Frigider 1 - Causa',
-    'Frigider 2 - Pescado', 
-    'Frigider 3 - Yuca',
-    'Frigider 4 - Mariscos',
-    'Congelador 1',
-    'Congelador 2', 
-    'Congelador 3',
-    'Congelador 4',
-    'Almacén Seco'
-    */
-  // ];
-
-  // Obtener fecha mínima (mañana)
-  const getMinDate = () => {
-    const tomorrow = new Date();
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    return tomorrow.toISOString().split('T')[0];
-  };
-
   return (
-    <>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       {/* Proveedor */}
       <FormField
         label="Proveedor"
         error={errors.supplier}
-        required
+        icon={Truck}
       >
         <input
           type="text"
@@ -57,45 +33,27 @@ const SupplierDateSection: React.FC<SupplierDateSectionProps> = ({
         />
       </FormField>
 
-      {/* Fecha de vencimiento */}
-      <div className="grid grid-cols-1 gap-4">
-        <FormField
-          label="Fecha de Vencimiento"
-          error={errors.expiryDate}
-          required
-          icon={Calendar}
-        >
-          <input
-            type="date"
-            value={form.expiryDate}
-            onChange={onChange("expiryDate")}
-            min={getMinDate()}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-              errors.expiryDate ? 'border-red-300' : 'border-gray-300'
-            }`}
-          />
-        </FormField>
+      {/* Días estimados para vencimiento */}
+      <FormField
+        label="Días Estimados para Vencimiento"
+        error={errors.estimatedDaysToExpiry}
+        required
+        icon={Clock}
+      >
+        <input
+          type="number"
+          value={form.estimatedDaysToExpiry}
+          onChange={onChange("estimatedDaysToExpiry")}
+          min="0"
+          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+            errors.estimatedDaysToExpiry ? 'border-red-300' : 'border-gray-300'
+          }`}
+          placeholder="12"
+        />
+      </FormField>
 
-        {/* TEMPORALMENTE OCULTO - FUNCIONALIDAD DE CONTENEDORES */}
-        {/*
-        <FormField
-          label="Contenedor"
-          required
-          icon={Refrigerator}
-        >
-          <select
-            value={form.container}
-            onChange={onChange("container")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-          >
-            {containers.map(container => (
-              <option key={container} value={container}>{container}</option>
-            ))}
-          </select>
-        </FormField>
-        */}
-      </div>
-    </>
+
+    </div>
   );
 };
 

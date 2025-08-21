@@ -2,6 +2,9 @@
 
 export type MovementType = 'entrada' | 'salida' | 'ajuste';
 
+// Reutilizando el tipo de estado del inventario
+export type ProductState = 'fresco' | 'congelado' | 'por-vencer' | 'vencido';
+
 export interface Movement {
   id: string;
   productId: string;
@@ -18,6 +21,10 @@ export interface Movement {
   createdBy: string;
   createdAt: Date;
   updatedAt?: Date;
+  
+  // NUEVOS CAMPOS SOLICITADOS
+  expiryDate?: string; // Fecha de vencimiento
+  state: ProductState; // Estado (fresco, congelado, por-vencer, vencido)
 }
 
 export interface MovementFormData {
@@ -27,6 +34,10 @@ export interface MovementFormData {
   reason: string;
   documentNumber?: string;
   unitPrice?: number;
+  
+  // NUEVOS CAMPOS SOLICITADOS
+  expiryDate?: string; // Fecha de vencimiento
+  state: ProductState; // Estado
 }
 
 export interface MovementFilters {
@@ -35,6 +46,11 @@ export interface MovementFilters {
   dateFrom?: string;
   dateTo?: string;
   createdBy?: string;
+  
+  // NUEVOS FILTROS PARA LOS CAMPOS AGREGADOS
+  state?: ProductState | 'all'; // Filtro por estado
+  expiryFrom?: string; // Filtro por fecha de vencimiento desde
+  expiryTo?: string; // Filtro por fecha de vencimiento hasta
 }
 
 export interface KardexEntry extends Movement {
