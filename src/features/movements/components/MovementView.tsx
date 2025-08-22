@@ -6,9 +6,34 @@ import MovementsList from './MovementsList';
 import MovementForm from './MovementForm';
 import MovementFilters from './MovementFilters';
 import KardexModal from './KardexModal';
-import type { Movement, MovementFilters as Filters, MovementFormData } from '../types/movement.types';
-import { mockProducts, mockMovements } from '../data/mockData';
+import type { Movement, MovementFilters as Filters, MovementFormData, Product } from '../types/movement.types';
+import { mockMovements } from '../data/mockData';
 import { createMovement, applyMovementFilters, getLastMovementForProduct } from '../utils/movementUtils';
+
+// Mock products data - puedes mover esto a mockData.ts más tarde
+const mockProducts: Product[] = [
+  {
+    id: '1',
+    name: 'Producto Ejemplo 1',
+    sku: 'SKU001',
+    currentStock: 100,
+    minStock: 10,
+    maxStock: 500,
+    price: 25.99,
+    category: 'Categoría A'
+  },
+  {
+    id: '2',
+    name: 'Producto Ejemplo 2',
+    sku: 'SKU002',
+    currentStock: 50,
+    minStock: 5,
+    maxStock: 200,
+    price: 15.50,
+    category: 'Categoría B'
+  }
+  // Agrega más productos según necesites
+];
 
 const MovementView: React.FC = () => {
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -29,7 +54,7 @@ const MovementView: React.FC = () => {
 
   // Función para agregar nuevo movimiento
   const handleAddMovement = (formData: MovementFormData) => {
-    const selectedProduct = mockProducts.find(p => p.id === formData.productId);
+    const selectedProduct = mockProducts.find((p: Product) => p.id === formData.productId);
     
     if (!selectedProduct) {
       console.error('Producto no encontrado');

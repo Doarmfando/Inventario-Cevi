@@ -3,6 +3,8 @@ import DashboardPage from "../pages/DashboardPage";
 import InventoryPage from "../pages/InventoryPage";
 import MovementPage from "../pages/MovementPage";
 import ReportsPage from "../pages/ReportsPage";
+import ContainersPage from "../pages/ContainerPage/ContainersPage";
+import ContainerProductsPage from "../pages/ContainerPage/ContainerProductsPage";
 
 export const AppRoutes = () => (
   <Routes>
@@ -11,5 +13,9 @@ export const AppRoutes = () => (
     <Route path="/inventory" element={<InventoryPage />} />
     <Route path="/movements" element={<MovementPage />} />
     <Route path="/reports" element={<ReportsPage />} />
+    
+    {/* ✅ Nuevas rutas */}
+    <Route path="/containers" element={<ContainersPage />} />
+    <Route path="/containers/:id/products" element={<ContainerProductsPage />} />
   </Routes>
 );

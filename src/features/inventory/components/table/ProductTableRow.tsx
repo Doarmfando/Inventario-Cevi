@@ -1,4 +1,4 @@
-// table/ProductTableRow.tsx - VERSIÓN MEJORADA
+// table/ProductTableRow.tsx - ACTUALIZADO SEGÚN IMAGEN
 import React from "react";
 import { Eye, Edit3, Trash2, AlertTriangle, Clock } from "lucide-react";
 import type { ProductWithCalculatedData, StockStatus } from "../../types";
@@ -16,21 +16,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   onEdit, 
   onView 
 }) => {
-  // Función para obtener color del estado del producto
-  const getStateColor = (state: string, estimatedDays: number) => {
-    if (state === 'vencido' || estimatedDays <= 0) return 'bg-red-100 text-red-800 border-red-200';
-    if (state === 'por-vencer' || estimatedDays <= 3) return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-    if (state === 'congelado') return 'bg-blue-100 text-blue-800 border-blue-200';
-    return 'bg-green-100 text-green-800 border-green-200';
-  };
 
-  // Función para obtener texto del estado
-  const getStateText = (state: string, estimatedDays: number) => {
-    if (state === 'vencido' || estimatedDays <= 0) return 'Vencido';
-    if (state === 'por-vencer' || estimatedDays <= 3) return 'Por Vencer';
-    if (state === 'congelado') return 'Congelado';
-    return 'Fresco';
-  };
 
   // Función para obtener color del estado de stock
   const getStockStatusColor = (status: StockStatus) => {
@@ -93,7 +79,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
 
   return (
     <tr className={getRowClassName()}>
-      {/* Producto */}
+      {/* 1. Producto */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="flex items-center space-x-3">
           <div className="flex-1">
@@ -106,20 +92,26 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         </div>
       </td>
       
-      {/* Categoría */}
+      {/* 2. Contenedor */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm text-gray-900 font-medium">{product.container}</div>
+        <div className="text-xs text-gray-500">Ubicación</div>
+      </td>
+      
+      {/* 3. Categoría */}
       <td className="px-6 py-4 whitespace-nowrap">
         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 border border-blue-200">
           {product.category}
         </span>
       </td>
       
-      {/* Unidad */}
+      {/* 4. Unidad */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900 font-medium">{product.unit}</div>
         <div className="text-xs text-gray-500">Mín: {product.minStock}</div>
       </td>
       
-      {/* Cantidad */}
+      {/* 5. Stock Total */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-semibold text-gray-900">
           {product.quantity.toLocaleString('es-PE')}
@@ -127,7 +119,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         <div className="text-xs text-gray-500">{product.unit}</div>
       </td>
 
-      {/* Estado Stock */}
+      {/* 6. Estado Stock */}
       <td className="px-6 py-4 whitespace-nowrap">
         <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
           getStockStatusColor(product.stockStatus)
@@ -136,7 +128,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         </span>
       </td>
       
-      {/* Precio Unitario */}
+      {/* 7. Precio Unitario */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-medium text-gray-900">
           S/ {product.price.toLocaleString("es-PE", { 
@@ -147,7 +139,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         <div className="text-xs text-gray-500">por {product.unit}</div>
       </td>
 
-      {/* Total */}
+      {/* 8. Valor Total */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-semibold text-gray-900">
           S/ {product.totalValue.toLocaleString("es-PE", { 
@@ -159,40 +151,35 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           {product.quantity} × S/ {product.price.toFixed(2)}
         </div>
       </td>
+
+      {/* 9. Empaquetados */}
+      <td className="px-6 py-4 whitespace-nowrap">
+        <div className="text-sm font-medium text-gray-900">
+          {product.empaquetados || "0 emp."}
+        </div>
+        <div className="text-xs text-gray-500">
+          {product.packagedUnits > 0 ? `${product.packagedWeight}kg total` : "Sin empaquetado"}
+        </div>
+      </td>
       
-      {/* Días para Vencimiento */}
+      {/* 10. # Por Vencer */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className={`text-sm font-medium ${
-          product.estimatedDaysToExpiry <= 0 ? 'text-red-600' : 
-          product.estimatedDaysToExpiry <= 3 ? 'text-yellow-600' : 
-          product.estimatedDaysToExpiry <= 7 ? 'text-blue-600' :
-          'text-gray-900'
+          product.nearExpiryPackages > 0 ? 'text-orange-600' : 'text-gray-900'
         }`}>
-          {product.estimatedDaysToExpiry <= 0 ? '¡VENCIDO!' : `${product.estimatedDaysToExpiry} días`}
+          {product.porVencer || "0 emp."}
         </div>
         <div className={`text-xs ${
-          product.estimatedDaysToExpiry <= 0 ? 'text-red-600' : 
-          product.estimatedDaysToExpiry <= 3 ? 'text-yellow-600' : 
-          'text-gray-500'
+          product.nearExpiryPackages > 0 ? 'text-orange-600' : 'text-gray-500'
         }`}>
-          {product.estimatedDaysToExpiry <= 0 ? 'Revisar inmediatamente' :
-           product.estimatedDaysToExpiry <= 1 ? 'Vence mañana' :
-           product.estimatedDaysToExpiry <= 3 ? 'Próximo a vencer' :
-           product.estimatedDaysToExpiry <= 7 ? 'Vence esta semana' :
-           'En buen estado'}
+          {product.nearExpiryPackages > 0 ? 
+            `${product.packagedExpiryDays <= 0 ? 'Vencidos' : `${product.packagedExpiryDays} días`}` : 
+            "Todo OK"
+          }
         </div>
       </td>
       
-      {/* Estado del Producto */}
-      {/* <td className="px-6 py-4 whitespace-nowrap">
-        <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${
-          getStateColor(product.state, product.estimatedDaysToExpiry)
-        }`}>
-          {getStateText(product.state, product.estimatedDaysToExpiry)}
-        </span>
-      </td>
-       */}
-      {/* Acciones */}
+      {/* 11. Acciones */}
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
         <div className="flex items-center space-x-1">
           <button 

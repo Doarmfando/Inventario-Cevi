@@ -7,6 +7,8 @@ import DashboardPage from "../pages/DashboardPage";
 import InventoryPage from "../pages/InventoryPage";
 import MovementPage from "../pages/MovementPage";
 import ReportsPage from "../pages/ReportsPage";
+import ContainersPage from "../pages/ContainerPage/ContainersPage";
+import ContainerProductsPage from "../pages/ContainerPage/ContainerProductsPage";
 import Sidebar from "../components/Sidebar";
 import Header from "../components/Header";
 
@@ -70,6 +72,25 @@ const App: React.FC = () => {
             element={
               <PrivateLayout>
                 <MovementPage />
+              </PrivateLayout>
+            }
+          />
+
+          {/* 🆕 RUTAS DE CONTENEDORES */}
+          <Route
+            path="/containers"
+            element={
+              <PrivateLayout>
+                <ContainersPage />
+              </PrivateLayout>
+            }
+          />
+
+          <Route
+            path="/containers/:containerId/products"
+            element={
+              <PrivateLayout>
+                <ContainerProductsPage />
               </PrivateLayout>
             }
           />

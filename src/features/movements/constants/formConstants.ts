@@ -1,7 +1,7 @@
 // src/features/movements/constants/formConstants.ts
 
 import { ArrowUp, ArrowDown, RotateCcw } from 'lucide-react';
-import type { MovementType, ProductState } from '../types/movement.types';
+import type { MovementType, EntryReason, ExitReason } from '../types/movement.types';
 
 export const movementTypes = [
   { value: 'entrada' as MovementType, label: 'Entrada', icon: ArrowUp, color: 'text-green-600' },
@@ -9,9 +9,40 @@ export const movementTypes = [
   { value: 'ajuste' as MovementType, label: 'Ajuste', icon: RotateCcw, color: 'text-yellow-600' },
 ];
 
-export const productStates = [
-  { value: 'fresco' as ProductState, label: 'Fresco', color: 'bg-green-100 text-green-800', description: 'Producto en estado óptimo' },
-  { value: 'congelado' as ProductState, label: 'Congelado', color: 'bg-blue-100 text-blue-800', description: 'Producto conservado en frío' },
-  { value: 'por-vencer' as ProductState, label: 'Por Vencer', color: 'bg-orange-100 text-orange-800', description: 'Próximo a vencer' },
-  { value: 'vencido' as ProductState, label: 'Vencido', color: 'bg-red-100 text-red-800', description: 'Producto vencido' },
+// MOTIVOS PARA ENTRADAS
+export const entryReasons = [
+  { value: 'compra' as EntryReason, label: 'Compra' },
+  { value: 'reposicion' as EntryReason, label: 'Reposición' },
+  { value: 'ajuste-positivo' as EntryReason, label: 'Ajuste Positivo' },
+  { value: 'devolucion' as EntryReason, label: 'Devolución' },
+  { value: 'transferencia-entrada' as EntryReason, label: 'Transferencia de Entrada' },
+  { value: 'donacion' as EntryReason, label: 'Donación' },
+  { value: 'produccion-interna' as EntryReason, label: 'Producción Interna' },
 ];
+
+// MOTIVOS PARA SALIDAS
+export const exitReasons = [
+  { value: 'venta' as ExitReason, label: 'Venta' },
+  { value: 'perdida' as ExitReason, label: 'Pérdida' },
+  { value: 'roto' as ExitReason, label: 'Roto/Dañado' },
+  { value: 'vencido' as ExitReason, label: 'Producto Vencido' },
+  { value: 'ajuste-negativo' as ExitReason, label: 'Ajuste Negativo' },
+  { value: 'transferencia-salida' as ExitReason, label: 'Transferencia de Salida' },
+  { value: 'consumo-interno' as ExitReason, label: 'Consumo Interno' },
+  { value: 'merma' as ExitReason, label: 'Merma' },
+  { value: 'degustacion' as ExitReason, label: 'Degustación' },
+];
+
+// FUNCIÓN PARA OBTENER MOTIVOS SEGÚN EL TIPO
+export const getReasonsByType = (type: MovementType) => {
+  switch (type) {
+    case 'entrada':
+      return entryReasons;
+    case 'salida':
+      return exitReasons;
+    case 'ajuste':
+      return [...entryReasons, ...exitReasons]; // Para ajustes se pueden usar ambos
+    default:
+      return [];
+  }
+};

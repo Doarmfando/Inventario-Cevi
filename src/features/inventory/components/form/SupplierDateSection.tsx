@@ -1,5 +1,5 @@
 import React from "react";
-import { Truck, Calendar, Clock } from "lucide-react";
+import { Truck, Clock } from "lucide-react";
 import FormField from "./FormField";
 import type { NewProduct } from "../../types";
 

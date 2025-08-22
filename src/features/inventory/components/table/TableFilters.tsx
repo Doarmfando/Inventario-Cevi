@@ -1,5 +1,5 @@
 import React from "react";
-import { Search, Filter, Clock, Plus } from "lucide-react";
+import { Search, Filter, Clock, Plus, Package } from "lucide-react";
 
 interface TableFiltersProps {
   searchTerm: string;
@@ -8,7 +8,10 @@ interface TableFiltersProps {
   setSelectedCategory: (value: string) => void;
   selectedState: string;
   setSelectedState: (value: string) => void;
+  selectedContainer: string; // NUEVA PROP
+  setSelectedContainer: (value: string) => void; // NUEVA PROP
   categories: string[];
+  containers: string[]; // NUEVA PROP
   onAddProduct?: () => void;
 }
 
@@ -19,7 +22,10 @@ const TableFilters: React.FC<TableFiltersProps> = ({
   setSelectedCategory,
   selectedState,
   setSelectedState,
+  selectedContainer,
+  setSelectedContainer,
   categories,
+  containers,
   onAddProduct
 }) => {
   const states = ['fresco', 'congelado', 'por-vencer', 'vencido'];
@@ -52,6 +58,21 @@ const TableFilters: React.FC<TableFiltersProps> = ({
                 <option value="">Todas las categorías</option>
                 {categories.map(category => (
                   <option key={category} value={category}>{category}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Container Filter - NUEVO */}
+            <div className="relative min-w-[160px]">
+              <Package className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+              <select
+                value={selectedContainer}
+                onChange={(e) => setSelectedContainer(e.target.value)}
+                className="appearance-none pl-9 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent bg-white text-sm"
+              >
+                <option value="">Todos los contenedores</option>
+                {containers.map(container => (
+                  <option key={container} value={container}>{container}</option>
                 ))}
               </select>
             </div>

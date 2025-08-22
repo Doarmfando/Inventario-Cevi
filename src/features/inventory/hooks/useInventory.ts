@@ -1,163 +1,14 @@
-// hooks/useInventory.ts - ACTUALIZADO CON DIVERSOS ESTADOS DE STOCK
+// hooks/useInventory.ts - LIMPIO Y CORREGIDO PARA SISTEMA DE EMPAQUETADO GASTRONÓMICO + PRECIO REAL
+
 import { useState } from "react";
-import type { Product, NewProduct, ProductWithCalculatedData } from "../types";
+import type { Product, NewProduct, ProductWithCalculatedData, StockStatus } from "../types";
+import { mockProducts, calculateNearExpiryPackages, formatPackagedText } from "../components/data/mockData";
 
 export const useInventory = () => {
-  const [products, setProducts] = useState<Product[]>([
-    {
-      id: 1,
-      name: 'Lenguado Filetes',
-      category: 'Pescados',
-      quantity: 4, // CAMBIADO: 4 ≤ 5 (minStock) = Stock Bajo
-      unit: 'kg',
-      price: 28.50,
-      minStock: 5,
-      supplier: 'Mercado Pesquero Central',
-      expiryDate: '2025-08-23',
-      estimatedDaysToExpiry: 4,
-      entryDate: '2025-08-16',
-      state: 'fresco',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 2,
-      name: 'Pulpo',
-      category: 'Mariscos',
-      quantity: 8,
-      unit: 'kg',
-      price: 45.00,
-      minStock: 3,
-      supplier: 'Mariscos del Sur',
-      expiryDate: '2025-09-13',
-      estimatedDaysToExpiry: 25,
-      entryDate: '2025-08-14',
-      state: 'congelado',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 3,
-      name: 'Yuca',
-      category: 'Verduras',
-      quantity: 10, // CAMBIADO: 12 ≤ 15 (10 × 1.5) = Reponer Pronto
-      unit: 'bolsa',
-      price: 3.50,
-      minStock: 10,
-      supplier: 'Distribuidora Los Andes',
-      expiryDate: '2025-08-26',
-      estimatedDaysToExpiry: 7,
-      entryDate: '2025-08-15',
-      state: 'fresco',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 4,
-      name: 'Rocoto',
-      category: 'Condimentos',
-      quantity: 0, // CAMBIADO: 0 = Sin Stock
-      unit: 'kg',
-      price: 8.00,
-      minStock: 2,
-      supplier: 'Verduras San Juan',
-      expiryDate: '2025-08-30',
-      estimatedDaysToExpiry: 11,
-      entryDate: '2025-08-14',
-      state: 'fresco',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 5,
-      name: 'Langostinos',
-      category: 'Mariscos',
-      quantity: 3, // CAMBIADO: 3 ≤ 4 (minStock) = Stock Bajo
-      unit: 'kg',
-      price: 35.00,
-      minStock: 4,
-      supplier: 'Mariscos Premium',
-      expiryDate: '2025-08-21',
-      estimatedDaysToExpiry: 2,
-      entryDate: '2025-08-15',
-      state: 'por-vencer',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 6,
-      name: 'Aceite Vegetal',
-      category: 'Insumos',
-      quantity: 20, // Stock OK: 20 > 12 (8 × 1.5)
-      unit: 'litro',
-      price: 4.20,
-      minStock: 8,
-      supplier: 'Distribuidora Central',
-      expiryDate: '2025-12-17',
-      estimatedDaysToExpiry: 120,
-      entryDate: '2025-08-10',
-      state: 'fresco',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 7,
-      name: 'Limones',
-      category: 'Condimentos',
-      quantity: 10, // CAMBIADO: 10 ≤ 22.5 (15 × 1.5) = Reponer Pronto
-      unit: 'kg',
-      price: 2.80,
-      minStock: 15,
-      supplier: 'Cítricos del Norte',
-      expiryDate: '2025-08-20',
-      estimatedDaysToExpiry: 1,
-      entryDate: '2025-08-15',
-      state: 'por-vencer',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 8,
-      name: 'Cancha Serrana',
-      category: 'Verduras',
-      quantity: 6, // CAMBIADO: 6 ≤ 8 (minStock) = Stock Bajo
-      unit: 'bolsa',
-      price: 4.50,
-      minStock: 8,
-      supplier: 'Granos Andinos',
-      expiryDate: '2025-10-02',
-      estimatedDaysToExpiry: 44,
-      entryDate: '2025-08-12',
-      state: 'fresco',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 9,
-      name: 'Camarones',
-      category: 'Mariscos',
-      quantity: 25, // Stock OK: 25 > 4.5 (3 × 1.5)
-      unit: 'kg',
-      price: 42.00,
-      minStock: 3,
-      supplier: 'Mariscos Premium',
-      expiryDate: '2025-09-15',
-      estimatedDaysToExpiry: 27,
-      entryDate: '2025-08-18',
-      state: 'congelado',
-      lastUpdated: '2025-08-19'
-    },
-    {
-      id: 10,
-      name: 'Ají Amarillo',
-      category: 'Condimentos',
-      quantity: 1, // CAMBIADO: 1 ≤ 5 (minStock) = Stock Bajo
-      unit: 'kg',
-      price: 6.50,
-      minStock: 5,
-      supplier: 'Verduras San Juan',
-      expiryDate: '2025-08-19',
-      estimatedDaysToExpiry: 0, // VENCIDO HOY
-      entryDate: '2025-08-10',
-      state: 'vencido',
-      lastUpdated: '2025-08-19'
-    }
-  ]);
+  const [products, setProducts] = useState<Product[]>(mockProducts);
 
-  // Función para calcular el estado del stock - CORREGIDA
-  const getStockStatus = (quantity: number, minStock: number): 'Sin Stock' | 'Stock Bajo' | 'Reponer Pronto' | 'Stock OK' => {
+  // Función para calcular el estado del stock
+  const getStockStatus = (quantity: number, minStock: number): StockStatus => {
     if (quantity === 0) return 'Sin Stock';
     if (quantity <= minStock) return 'Stock Bajo';
     if (quantity <= minStock * 1.5) return 'Reponer Pronto';
@@ -165,26 +16,55 @@ export const useInventory = () => {
   };
 
   // Función para calcular el estado del producto basado en los días estimados
-  const calculateProductState = (estimatedDays: number, currentState: string) => {
+  const calculateProductState = (estimatedDays: number, currentState: string): Product['state'] => {
     if (currentState === 'congelado') return 'congelado';
     if (estimatedDays <= 0) return 'vencido';
     if (estimatedDays <= 3) return 'por-vencer';
     return 'fresco';
   };
 
-  // Función para obtener productos con datos calculados
+  // FUNCIÓN PRINCIPAL - Productos con datos calculados para la tabla
   const getProductsWithCalculatedData = (): ProductWithCalculatedData[] => {
-    return products.map(product => ({
-      ...product,
-      stockStatus: getStockStatus(product.quantity, product.minStock),
-      totalValue: product.price * product.quantity
-    }));
+    return products.map(product => {
+      const packagedWeight = product.packagedUnits * product.weightPerPackage;
+      const availableStock = Math.max(0, product.quantity - packagedWeight);
+      
+      // Recalcular empaquetados por vencer
+      const nearExpiryPackages = calculateNearExpiryPackages(
+        product.packagedUnits,
+        product.packagedExpiryDays,
+        product.state,
+        product.category
+      );
+      
+      return {
+        ...product,
+        stockStatus: getStockStatus(product.quantity, product.minStock),
+        totalValue: product.price * product.quantity, // Valor con precio estimado
+        realTotalValue: product.realPrice ? product.realPrice * product.quantity : undefined, // Valor con precio real (si existe)
+        availableStock,
+        packagedWeight,
+        empaquetados: formatPackagedText(product.packagedUnits, product.weightPerPackage),
+        porVencer: formatPackagedText(nearExpiryPackages, product.weightPerPackage),
+        nearExpiryPackages
+      };
+    });
   };
 
+  // CRUD Operations
   const addProduct = (productData: NewProduct) => {
     const newProduct: Product = {
       id: Date.now(),
       ...productData,
+      packagedUnits: productData.packagedUnits || 0,
+      weightPerPackage: productData.weightPerPackage || 1,
+      packagedExpiryDays: productData.packagedExpiryDays || productData.estimatedDaysToExpiry,
+      nearExpiryPackages: calculateNearExpiryPackages(
+        productData.packagedUnits || 0,
+        productData.packagedExpiryDays || productData.estimatedDaysToExpiry,
+        productData.state,
+        productData.category
+      ),
       entryDate: new Date().toISOString().split('T')[0],
       state: calculateProductState(productData.estimatedDaysToExpiry, productData.state),
       lastUpdated: new Date().toISOString().split('T')[0]
@@ -202,7 +82,14 @@ export const useInventory = () => {
       p.id === id 
         ? { 
             ...p, 
-            ...updates, 
+            ...updates,
+            nearExpiryPackages: updates.packagedUnits !== undefined || updates.packagedExpiryDays !== undefined ? 
+              calculateNearExpiryPackages(
+                updates.packagedUnits || p.packagedUnits,
+                updates.packagedExpiryDays || p.packagedExpiryDays,
+                updates.state || p.state,
+                updates.category || p.category
+              ) : p.nearExpiryPackages,
             state: updates.estimatedDaysToExpiry ? 
               calculateProductState(updates.estimatedDaysToExpiry, updates.state || p.state) : p.state,
             lastUpdated: new Date().toISOString().split('T')[0] 
@@ -211,15 +98,21 @@ export const useInventory = () => {
     ));
   };
 
-  // Actualizar estados de productos basado en días estimados
+  // Actualizar estados de productos y empaquetados por vencer
   const updateProductStates = () => {
     setProducts(prev => prev.map(p => ({
       ...p,
-      state: calculateProductState(p.estimatedDaysToExpiry, p.state)
+      state: calculateProductState(p.estimatedDaysToExpiry, p.state),
+      nearExpiryPackages: calculateNearExpiryPackages(
+        p.packagedUnits,
+        p.packagedExpiryDays,
+        p.state,
+        p.category
+      )
     })));
   };
 
-  // Estadísticas calculadas
+  // ESTADÍSTICAS PARA TARJETAS SUPERIORES
   const getStats = () => {
     const productsWithData = getProductsWithCalculatedData();
     const totalProducts = products.length;
@@ -228,20 +121,44 @@ export const useInventory = () => {
     ).length;
     const expiringItems = products.filter(item => item.state === 'por-vencer').length;
     const expiredItems = products.filter(item => item.state === 'vencido').length;
+    
+    // Valores calculados con precio estimado y precio real
     const totalInventoryValue = productsWithData.reduce((sum, item) => sum + item.totalValue, 0);
+    const totalRealInventoryValue = productsWithData.reduce((sum, item) => 
+      sum + (item.realTotalValue || item.totalValue), 0
+    );
+    
+    // Estadísticas de empaquetado gastronómico
+    const totalPackagedUnits = products.reduce((sum, item) => sum + item.packagedUnits, 0);
+    const totalPackagedWeight = productsWithData.reduce((sum, item) => sum + item.packagedWeight, 0);
+    const totalNearExpiryPackages = productsWithData.reduce((sum, item) => sum + item.nearExpiryPackages, 0);
+    const totalNearExpiryWeight = productsWithData.reduce((sum, item) => 
+      sum + (item.nearExpiryPackages * item.weightPerPackage), 0
+    );
+    
     const categories = [...new Set(products.map(item => item.category))];
+    const containers = [...new Set(products.map(item => item.container))];
 
     return {
       totalProducts,
       lowStockItems,
       expiringItems,
       expiredItems,
-      totalValue: totalInventoryValue,
+      totalValue: totalInventoryValue, // Valor estimado
+      totalRealValue: totalRealInventoryValue, // Valor real
+      // Estadísticas de empaquetado
+      totalPackagedUnits,
+      totalPackagedWeight,
+      totalNearExpiryPackages,
+      totalNearExpiryWeight,
       categoriesCount: categories.length,
-      categories
+      containersCount: containers.length,
+      categories,
+      containers
     };
   };
 
+  // FUNCIONES DE FILTRADO Y AGRUPACIÓN
   const getLowStockProducts = () => {
     const productsWithData = getProductsWithCalculatedData();
     return productsWithData.filter(item => 
@@ -253,24 +170,68 @@ export const useInventory = () => {
     return products.filter(item => item.state === 'por-vencer' || item.state === 'vencido');
   };
 
+  // Productos con empaquetados por vencer (específico para negocio gastronómico)
+  const getPackagesNearExpiry = () => {
+    const productsWithData = getProductsWithCalculatedData();
+    return productsWithData.filter(item => item.nearExpiryPackages > 0);
+  };
+
   const getProductsByCategory = () => {
     const categories = [...new Set(products.map(item => item.category))];
     return categories.map(category => {
       const categoryItems = products.filter(item => item.category === category);
+      const productsWithData = getProductsWithCalculatedData().filter(item => item.category === category);
+      
+      // Valores con precio estimado y precio real
       const categoryValue = categoryItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const categoryRealValue = categoryItems.reduce((sum, item) => 
+        sum + ((item.realPrice || item.price) * item.quantity), 0
+      );
+      
+      const categoryPackagedUnits = categoryItems.reduce((sum, item) => sum + item.packagedUnits, 0);
+      const categoryPackagedWeight = productsWithData.reduce((sum, item) => sum + item.packagedWeight, 0);
+      const categoryNearExpiry = productsWithData.reduce((sum, item) => sum + item.nearExpiryPackages, 0);
       
       return {
         category,
         count: categoryItems.length,
-        value: categoryValue,
+        value: categoryValue, // Valor estimado
+        realValue: categoryRealValue, // Valor real
+        packagedUnits: categoryPackagedUnits,
+        packagedWeight: categoryPackagedWeight,
+        nearExpiryPackages: categoryNearExpiry,
         items: categoryItems
       };
     });
   };
 
   const getProductsByContainer = () => {
-    // TEMPORALMENTE OCULTO - FUNCIONALIDAD DE CONTENEDORES
-    return [];
+    const containers = [...new Set(products.map(item => item.container))];
+    return containers.map(container => {
+      const containerItems = products.filter(item => item.container === container);
+      const productsWithData = getProductsWithCalculatedData().filter(item => item.container === container);
+      
+      // Valores con precio estimado y precio real
+      const containerValue = containerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+      const containerRealValue = containerItems.reduce((sum, item) => 
+        sum + ((item.realPrice || item.price) * item.quantity), 0
+      );
+      
+      const containerPackagedUnits = containerItems.reduce((sum, item) => sum + item.packagedUnits, 0);
+      const containerPackagedWeight = productsWithData.reduce((sum, item) => sum + item.packagedWeight, 0);
+      const containerNearExpiry = productsWithData.reduce((sum, item) => sum + item.nearExpiryPackages, 0);
+      
+      return {
+        container,
+        count: containerItems.length,
+        value: containerValue, // Valor estimado
+        realValue: containerRealValue, // Valor real
+        packagedUnits: containerPackagedUnits,
+        packagedWeight: containerPackagedWeight,
+        nearExpiryPackages: containerNearExpiry,
+        items: containerItems
+      };
+    });
   };
 
   return { 
@@ -282,6 +243,7 @@ export const useInventory = () => {
     getStats,
     getLowStockProducts,
     getExpiringProducts,
+    getPackagesNearExpiry, // NUEVA: Específica para empaquetados por vencer
     getProductsByCategory,
     getProductsByContainer
   };

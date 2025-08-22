@@ -1,46 +1,65 @@
+// types/index.ts - ACTUALIZADO PARA COINCIDIR CON EL DISEÑO DE LA IMAGEN + PRECIO REAL
+
 export interface Product {
   id: number;
   name: string;
+  container: string; // ACTIVADO: Necesario según la imagen
   category: string;
-  quantity: number;
   unit: string; // kg, bolsa, litro, unidad, etc.
-  price: number;
+  quantity: number; // Stock Total (en la unidad base)
+  price: number; // PRECIO ESTIMADO - Precio de referencia/estimado para cálculos internos
+  realPrice?: number; // PRECIO REAL - Precio real de compra/venta del producto
   minStock: number;
   supplier: string;
   expiryDate: string; // Fecha de vencimiento
   entryDate: string; // Fecha de ingreso
-  estimatedDaysToExpiry: number; // Días estimados hasta vencimiento
-
-  // container: string; // Contenedor/refrigerador asignado - TEMPORALMENTE OCULTO
+  estimatedDaysToExpiry: number; // Días hasta vencimiento del stock general
+  
+  // EMPAQUETADO - Sistema gastronómico específico
+  packagedUnits: number; // Número de empaquetados (ej: 3 empaquetados)
+  weightPerPackage: number; // Peso por empaquetado (ej: 2kg c/u)
+  packagedExpiryDays: number; // Días hasta vencimiento de empaquetados
+  nearExpiryPackages: number; // # Por Vencer - SOLO empaquetados vencidos/próximos a vencer
+  
   state: 'fresco' | 'congelado' | 'por-vencer' | 'vencido';
   lastUpdated: string;
 }
 
 export interface NewProduct {
   name: string;
+  container: string; // ACTIVADO
   category: string;
-  quantity: number;
   unit: string;
-  price: number;
+  quantity: number;
+  price: number; // PRECIO ESTIMADO - Para cálculos de inventario
+  realPrice?: number; // PRECIO REAL - Precio real del producto (opcional en creación)
   minStock: number;
   supplier: string;
-  estimatedDaysToExpiry: number; // Campo nuevo para días estimados
+  estimatedDaysToExpiry: number;
   expiryDate: string;
-  // container: string; // TEMPORALMENTE OCULTO
+  packagedUnits?: number; // Número de empaquetados, default 0
+  weightPerPackage?: number; // Peso por empaquetado, default 1
+  packagedExpiryDays?: number; // Días vencimiento empaquetados, default estimatedDaysToExpiry
   state: 'fresco' | 'congelado';
 }
 
-// Nuevo tipo para el estado de stock
+// Estados de stock según la imagen
 export type StockStatus = 'Sin Stock' | 'Stock Bajo' | 'Reponer Pronto' | 'Stock OK';
 
-// Interface para productos con datos calculados (lo que devuelve el hook)
+// Interface para productos con datos calculados (coincide con las columnas de la imagen)
 export interface ProductWithCalculatedData extends Product {
-  stockStatus: StockStatus;
-  totalValue: number; // precio × cantidad del producto individual
+  stockStatus: StockStatus; // Estado Stock
+  totalValue: number; // Valor Total (precio × cantidad) - Usando precio estimado
+  realTotalValue?: number; // Valor Total Real (precio real × cantidad) - Si existe precio real
+  availableStock: number; // Stock Total - Empaquetados
+  packagedWeight: number; // Peso total de empaquetados (packagedUnits * weightPerPackage)
+  empaquetados: string; // Texto formateado: "3 emp. (6kg)"
+  porVencer: string; // Texto formateado de empaquetados por vencer: "2 emp. (4kg)"
 }
 
 export type ViewType = 'dashboard' | 'inventory';
 
+// Categorías actualizadas según tus datos
 export type ProductCategory = 
   | 'Pescados' 
   | 'Mariscos' 
@@ -58,6 +77,7 @@ export type ProductUnit =
   | 'atado' 
   | 'caja';
 
+// Contenedores según la imagen y tus comentarios
 export type Container = 
   | 'Frigider 1 - Causa'
   | 'Frigider 2 - Pescado' 
@@ -69,16 +89,18 @@ export type Container =
   | 'Congelador 4'
   | 'Almacén Seco';
 
-// TEMPORALMENTE OCULTO - FUNCIONALIDAD DE CONTENEDORES
-/*
-export type Container = 
-  | 'Frigider 1 - Causa'
-  | 'Frigider 2 - Pescado' 
-  | 'Frigider 3 - Yuca'
-  | 'Frigider 4 - Mariscos'
-  | 'Congelador 1'
-  | 'Congelador 2' 
-  | 'Congelador 3'
-  | 'Congelador 4'
-  | 'Almacén Seco';
-*/
+// Filtros para la tabla
+export interface TableFilters {
+  category?: ProductCategory | 'all';
+  stockStatus?: StockStatus | 'all';
+  container?: Container | 'all';
+  searchTerm?: string;
+}
+
+// Configuración de columnas de la tabla
+export interface TableColumn {
+  key: keyof ProductWithCalculatedData | 'actions';
+  label: string;
+  sortable?: boolean;
+  width?: string;
+}
