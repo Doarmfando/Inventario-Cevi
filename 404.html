@@ -3,39 +3,39 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Página no encontrada - Inventario CEVI</title>
+  <title>Página no encontrada - Inventario CEVICHERIA-NOEMI</title>
   <link rel="icon" type="image/svg+xml" href="/Inventario-Cevi/vite.svg" />
-  
+
   <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  
+
   <!-- Lottie Player -->
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-  
+
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap');
-    
+
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     }
-    
+
     .countdown {
       font-variant-numeric: tabular-nums;
     }
-    
+
     .fade-in {
       animation: fadeIn 0.6s ease-out;
     }
-    
+
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
-    
+
     .pulse {
       animation: pulse 2s infinite;
     }
-    
+
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
       50% { transform: scale(1.05); }
@@ -46,7 +46,17 @@
   <div class="max-w-md mx-auto text-center p-8 fade-in">
     <!-- Lottie Animation -->
     <div class="mb-8">
-    
+      <lottie-player
+        id="lottie-404"
+        src="./404.json"  <!-- 🔹 Asegúrate que el JSON está en la misma carpeta que este HTML -->
+        background="transparent"
+        speed="1"
+        style="width: 250px; height: 250px; margin: auto;"
+        loop
+        autoplay
+      ></lottie-player>
+    </div>
+
     <!-- Error Message -->
     <div class="mb-8">
       <p class="text-gray-600 text-lg mb-6">
@@ -56,7 +66,7 @@
         Serás redirigido al inicio en <span id="countdown" class="font-bold text-blue-600 countdown">5</span> segundos...
       </p>
     </div>
-    
+
     <!-- Actions -->
     <div class="space-y-4">
       <button
@@ -66,7 +76,7 @@
       >
         Ir al Inicio Ahora
       </button>
-      
+
       <p class="text-xs text-gray-400">
         Sistema de Inventario CEVI
       </p>
@@ -78,39 +88,34 @@
     const HOME_URL = 'https://doarmfando.github.io/Inventario-Cevi/';
     const REDIRECT_DELAY = 5000; // 5 segundos
 
-    // Función para redireccionar al inicio
     function redirectToHome() {
       window.location.href = HOME_URL;
     }
-    
-    // Countdown timer - empezar en 5 segundos
+
+    // Countdown
     let countdown = 5;
     const countdownElement = document.getElementById('countdown');
-    
     const timer = setInterval(() => {
       countdown--;
       countdownElement.textContent = countdown;
-      
       if (countdown <= 0) {
         clearInterval(timer);
         redirectToHome();
       }
     }, 1000);
-    
-    // Auto-redirect después de 5 segundos
+
     setTimeout(() => {
       redirectToHome();
     }, REDIRECT_DELAY);
-    
-    // Fallback: si Lottie no carga, mostrar emoji
+
+    // Fallback si Lottie no carga
     const lottiePlayer = document.getElementById('lottie-404');
     let lottieLoaded = false;
-    
+
     lottiePlayer.addEventListener('ready', () => {
       lottieLoaded = true;
     });
-    
-    // Detectar si Lottie no carga en 3 segundos
+
     setTimeout(() => {
       if (!lottieLoaded) {
         lottiePlayer.style.display = 'none';
