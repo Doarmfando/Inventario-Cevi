@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Página no encontrada - Inventario CEVI</title>
+  <link rel="icon" type="image/svg+xml" href="/Inventario-Cevi/vite.svg" />
+  
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap');
+    
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    
+    .countdown {
+      font-variant-numeric: tabular-nums;
+    }
+    
+    .fade-in {
+      animation: fadeIn 0.8s ease-in-out;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .pulse {
+      animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .bounce {
+      animation: bounce 2s infinite;
+    }
+    
+    @keyframes bounce {
+      0%, 20%, 50%, 80%, 100% { transform: translateY(0); }
+      40% { transform: translateY(-10px); }
+      60% { transform: translateY(-5px); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen flex items-center justify-center">
+  <div class="max-w-md mx-auto text-center p-8 fade-in">
+    <!-- Animation Container -->
+    <div class="mb-8" id="animation-container">
+      <!-- Fallback Content (se muestra inmediatamente) -->
+      <div id="fallback-animation" class="text-center">
+        <div class="text-8xl mb-4 bounce">🔍</div>
+        <div class="text-6xl text-gray-400 font-bold">404</div>
+      </div>
+      
+      <!-- Lottie Animation (se carga después) -->
+      <div id="lottie-container" style="display: none;">
+        <div id="lottie-404" style="width: 280px; height: 280px; margin: 0 auto;"></div>
+      </div>
+    </div>
+    
+    <!-- Error Message -->
+    <div class="mb-8">
+      <h1 class="text-4xl font-bold text-gray-800 mb-4">
+        ¡Oops! Página no encontrada
+      </h1>
+      <p class="text-gray-600 text-lg mb-6">
+        La página que buscas no existe o ha sido movida.
+      </p>
+      <p class="text-sm text-gray-500 mb-4">
+        Serás redirigido al login en <span id="countdown" class="font-bold text-blue-600 countdown">5</span> segundos...
+      </p>
+    </div>
+    
+    <!-- Actions -->
+    <div class="space-y-4">
+      <button
+        id="redirectBtn"
+        class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300 pulse"
+        onclick="redirectToLogin()"
+      >
+        Ir al Login Ahora
+      </button>
+      
+      <p class="text-xs text-gray-400">
+        Sistema de Inventario CEVI
+      </p>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script>
+    console.log('404 Page Loaded');
+    
+    // Configuración
+    const REPO_NAME = 'Inventario-Cevi';
+    const REDIRECT_DELAY = 5000; // 5 segundos
+    
+    // Función para redireccionar al login
+    function redirectToLogin() {
+      console.log('Redirecting to login...');
+      const loginUrl = `${window.location.protocol}//${window.location.host}/${REPO_NAME}/login`;
+      console.log('Login URL:', loginUrl);
+      window.location.href = loginUrl;
+    }
+    
+    // Countdown timer
+    let countdown = 5;
+    const countdownElement = document.getElementById('countdown');
+    
+    const timer = setInterval(() => {
+      countdown--;
+      countdownElement.textContent = countdown;
+      console.log('Countdown:', countdown);
+      
+      if (countdown <= 0) {
+        clearInterval(timer);
+        redirectToLogin();
+      }
+    }, 1000);
+    
+    // Intentar cargar Lottie
+    function loadLottie() {
+      console.log('Attempting to load Lottie...');
+      
+      // Cargar lottie-player dinámicamente
+      const script = document.createElement('script');
+      script.src = 'https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js';
+      script.onload = function() {
+        console.log('Lottie player loaded successfully');
+        
+        // Intentar cargar la animación local
+        const lottieContainer = document.getElementById('lottie-container');
+        const fallbackContainer = document.getElementById('fallback-animation');
+        
+        // Crear el elemento lottie-player
+        const lottiePlayer = document.createElement('lottie-player');
+        lottiePlayer.setAttribute('src', '/Inventario-Cevi/404.json');
+        lottiePlayer.setAttribute('background', 'transparent');
+        lottiePlayer.setAttribute('speed', '1');
+        lottiePlayer.setAttribute('loop', '');
+        lottiePlayer.setAttribute('autoplay', '');
+        lottiePlayer.style.width = '280px';
+        lottiePlayer.style.height = '280px';
+        
+        // Eventos de carga
+        lottiePlayer.addEventListener('ready', function() {
+          console.log('Lottie animation loaded successfully');
+          fallbackContainer.style.display = 'none';
+          lottieContainer.style.display = 'block';
+        });
+        
+        lottiePlayer.addEventListener('error', function(e) {
+          console.error('Lottie animation failed to load:', e);
+          // Mantener el fallback
+        });
+        
+        // Añadir al contenedor
+        document.getElementById('lottie-404').appendChild(lottiePlayer);
+      };
+      
+      script.onerror = function() {
+        console.error('Failed to load lottie-player script');
+        // Mantener el fallback
+      };
+      
+      document.head.appendChild(script);
+    }
+    
+    // Cargar Lottie después de que la página esté lista
+    document.addEventListener('DOMContentLoaded', function() {
+      console.log('DOM loaded, attempting to load Lottie...');
+      setTimeout(loadLottie, 500); // Pequeño delay para asegurar que todo esté cargado
+    });
+    
+    // GitHub Pages SPA redirect logic
+    (function() {
+      const l = window.location;
+      const pathArray = l.pathname.split('/');
+      console.log('Current path:', l.pathname);
+      
+      if (pathArray[1] === REPO_NAME) {
+        const validRoutes = [
+          'dashboard', 'inventory', 'movements', 'reports', 
+          'containers', 'login'
+        ];
+        
+        const attemptedRoute = pathArray[2];
+        console.log('Attempted route:', attemptedRoute);
+        
+        if (validRoutes.includes(attemptedRoute)) {
+          console.log('Valid route detected, redirecting faster...');
+          setTimeout(redirectToLogin, 1500);
+        }
+      }
+    })();
+  </script>
+</body>
+</html>
