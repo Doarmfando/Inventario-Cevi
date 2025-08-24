@@ -125,6 +125,8 @@ const LoginForm: React.FC = () => {
           companyName="Fortex"
           contactLabel="Contacto:"
           phoneNumbers={["984 229 446", "944 532 822"]}
+          version="1.0.0"  // 👈 Agregar esta línea
+
         />
       </div>
 

@@ -24,14 +24,18 @@ const KardexModal: React.FC<KardexModalProps> = ({ productId, onClose }) => {
       id: '1',
       productId: productId,
       productName: product.name,
+      container: 'Congelador-001',
       type: 'entrada',
       quantity: 20,
+      packagedUnits: 4,
       previousStock: 0,
       newStock: 20,
       runningBalance: 20,
+      runningPackagedBalance: 4,
       unitPrice: 28.50,
       totalValue: 570.00,
-      reason: 'Compra inicial de inventario',
+      reason: 'compra',
+      observations: 'Compra inicial de inventario',
       documentNumber: 'FAC-001-001',
       createdBy: 'admin',
       createdAt: new Date('2024-08-01T10:00:00'),
@@ -40,14 +44,18 @@ const KardexModal: React.FC<KardexModalProps> = ({ productId, onClose }) => {
       id: '2',
       productId: productId,
       productName: product.name,
+      container: 'Congelador-001',
       type: 'salida',
       quantity: 5,
+      packagedUnits: 1,
       previousStock: 20,
       newStock: 15,
       runningBalance: 15,
+      runningPackagedBalance: 3,
       unitPrice: 28.50,
       totalValue: 142.50,
-      reason: 'Venta a cliente',
+      reason: 'venta',
+      observations: 'Venta a cliente',
       documentNumber: 'BOL-001-001',
       createdBy: 'admin',
       createdAt: new Date('2024-08-02T14:30:00'),
@@ -56,12 +64,16 @@ const KardexModal: React.FC<KardexModalProps> = ({ productId, onClose }) => {
       id: '3',
       productId: productId,
       productName: product.name,
+      container: 'Congelador-001',
       type: 'ajuste',
       quantity: 2,
+      packagedUnits: 0,
       previousStock: 15,
       newStock: 17,
       runningBalance: 17,
-      reason: 'Ajuste por inventario físico',
+      runningPackagedBalance: 3,
+      reason: 'ajuste-positivo',
+      observations: 'Ajuste por inventario físico',
       createdBy: 'admin',
       createdAt: new Date('2024-08-03T09:15:00'),
     },
@@ -69,14 +81,18 @@ const KardexModal: React.FC<KardexModalProps> = ({ productId, onClose }) => {
       id: '4',
       productId: productId,
       productName: product.name,
+      container: 'Congelador-001',
       type: 'salida',
       quantity: 2,
+      packagedUnits: 0,
       previousStock: 17,
       newStock: 15,
       runningBalance: 15,
+      runningPackagedBalance: 3,
       unitPrice: 28.50,
       totalValue: 57.00,
-      reason: 'Venta mostrador',
+      reason: 'venta',
+      observations: 'Venta mostrador',
       createdBy: 'admin',
       createdAt: new Date('2024-08-04T16:45:00'),
     },
@@ -119,6 +135,28 @@ const KardexModal: React.FC<KardexModalProps> = ({ productId, onClose }) => {
       default:
         return type;
     }
+  };
+
+  const getReasonLabel = (reason: string) => {
+    const reasonLabels: Record<string, string> = {
+      compra: 'Compra',
+      reposicion: 'Reposición',
+      'ajuste-positivo': 'Ajuste Positivo',
+      devolucion: 'Devolución',
+      'transferencia-entrada': 'Transferencia Entrada',
+      donacion: 'Donación',
+      'produccion-interna': 'Producción Interna',
+      venta: 'Venta',
+      perdida: 'Pérdida',
+      roto: 'Roto',
+      vencido: 'Vencido',
+      'ajuste-negativo': 'Ajuste Negativo',
+      'transferencia-salida': 'Transferencia Salida',
+      'consumo-interno': 'Consumo Interno',
+      merma: 'Merma',
+      degustacion: 'Degustación',
+    };
+    return reasonLabels[reason] || reason;
   };
 
   const formatDate = (date: Date) => {
@@ -326,7 +364,12 @@ const KardexModal: React.FC<KardexModalProps> = ({ productId, onClose }) => {
                   
                   <td className="px-6 py-4 text-sm text-gray-900">
                     <div className="max-w-xs">
-                      {entry.reason}
+                      <div className="font-medium">{getReasonLabel(entry.reason)}</div>
+                      {entry.observations && (
+                        <div className="text-xs text-gray-500 mt-1">
+                          {entry.observations}
+                        </div>
+                      )}
                       {entry.documentNumber && (
                         <div className="text-xs text-gray-500 mt-1">
                           Doc: {entry.documentNumber}

@@ -1,8 +1,11 @@
 // src/components/Sidebar/utils/sidebarUtils.tsx
 import React from "react";
-import { Container } from "lucide-react";
 import { CONTAINER_ICONS, CONTAINER_STATUS_COLORS, CONTAINER_TYPE_LABELS } from "../constants/sidebarConstants";
-import type { ContainerSummary, ContainersByType } from "../types/sidebar.types";
+import type { ContainerSummary } from "../../../features/containers/types/container.types";
+import type { ContainersByType } from "../types/sidebar.types";
+
+// Agregar export:
+export type { ContainerSummary } from "../../../features/containers/types/container.types";
 
 export const getContainerIcon = (type: string): React.ReactNode => {
   const iconConfig = CONTAINER_ICONS[type as keyof typeof CONTAINER_ICONS] || CONTAINER_ICONS.default;

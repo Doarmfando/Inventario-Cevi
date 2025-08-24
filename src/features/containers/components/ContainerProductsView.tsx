@@ -11,7 +11,6 @@ import {
   Edit,
   Trash2,
   Calendar,
-  AlertTriangle,
   CheckCircle,
   Clock,
   XCircle,
@@ -19,7 +18,7 @@ import {
 } from 'lucide-react';
 import type { ContainerProduct, Container, ProductFormData } from '../types/container.types';
 import type { InventoryProduct } from '../data/mockProductData';
-import { mockContainers, getContainerProducts, mockContainerProducts, calculateProductState } from '../data/mockContainerData';
+import { mockContainers, getContainerProducts, calculateProductState } from '../data/mockContainerData';
 import { mockInventoryProducts } from '../data/mockProductData';
 import ProductForm from './ProductForm';
 

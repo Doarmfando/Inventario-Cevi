@@ -17,7 +17,6 @@ import {
 import type { ProductFormData, Container } from '../types/container.types';
 import type { InventoryProduct } from '../data/mockProductData';
 import { 
-  mockInventoryProducts, 
   getRecommendedProducts, 
   searchProducts, 
   getCategories 
