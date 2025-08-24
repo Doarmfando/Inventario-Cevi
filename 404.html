@@ -48,7 +48,7 @@
     <div class="mb-8">
       <lottie-player
         id="lottie-404"
-        src="./404.json"  <!-- 🔹 Asegúrate que el JSON está en la misma carpeta que este HTML -->
+        src="https://lottie.host/embed/9cf0b7b3-5bb7-4b39-a56f-f4b0c2b3b3b3.json"
         background="transparent"
         speed="1"
         style="width: 250px; height: 250px; margin: auto;"
@@ -108,23 +108,42 @@
       redirectToHome();
     }, REDIRECT_DELAY);
 
-    // Fallback si Lottie no carga
+    // URLs de animaciones Lottie que SÍ funcionan
+    const lottieUrls = [
+      'https://assets5.lottiefiles.com/packages/lf20_bhw1ul4g.json',
+      'https://assets9.lottiefiles.com/packages/lf20_0s6tfbuc.json',
+      'https://assets1.lottiefiles.com/packages/lf20_qq5b0dbz.json'
+    ];
+
     const lottiePlayer = document.getElementById('lottie-404');
     let lottieLoaded = false;
+    let currentUrlIndex = 0;
+
+    function tryNextLottieUrl() {
+      if (currentUrlIndex < lottieUrls.length && !lottieLoaded) {
+        lottiePlayer.src = lottieUrls[currentUrlIndex];
+        currentUrlIndex++;
+      } else if (!lottieLoaded) {
+        // Mostrar fallback si no carga ninguna animación
+        lottiePlayer.outerHTML = '<div class="text-8xl mb-4">🔍</div><div class="text-6xl text-gray-400">404</div>';
+      }
+    }
 
     lottiePlayer.addEventListener('ready', () => {
       lottieLoaded = true;
     });
 
+    lottiePlayer.addEventListener('error', () => {
+      tryNextLottieUrl();
+    });
+
+    // Intentar cargar primera URL
+    tryNextLottieUrl();
+
+    // Fallback después de 3 segundos
     setTimeout(() => {
       if (!lottieLoaded) {
-        lottiePlayer.style.display = 'none';
-        const fallbackDiv = document.createElement('div');
-        fallbackDiv.innerHTML = '<div class="text-8xl mb-4">🔍</div><div class="text-6xl text-gray-400">404</div>';
-        fallbackDiv.className = 'mb-8';
-        lottiePlayer.parentNode.replaceChild(fallbackDiv, lottiePlayer);
+        lottiePlayer.outerHTML = '<div class="text-8xl mb-4">🔍</div><div class="text-6xl text-gray-400">404</div>';
       }
     }, 3000);
   </script>
-</body>
-</html>
