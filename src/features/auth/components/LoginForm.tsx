@@ -8,12 +8,10 @@ import InputWithIcon from "./InputWithIcon";
 import PasswordInput from "./PasswordInput";
 import RememberMe from "./RememberMe";
 import logo3 from "../../../assets/logo3.png";
-//import OriginalLeftPanel from "./OriginalLeftPanel";
 import FooterBanner from "./FooterBanner";
-// Si quieres usar el panel con imagen, importa esto en su lugar:
 import LeftPanel from "./LeftPanel";
 import RestaurantLogo from "./RestaurantLogo";
-import leftPanelImage from "../../../assets/left-panel-bg.png"; // Ajusta la ruta según tu estructura
+import leftPanelImage from "../../../assets/left-panel-bg.png";
 
 const LoginForm: React.FC = () => {
   const [credentials, setCredentials] = useState<Credentials>({ username: "", password: "" });
@@ -46,13 +44,8 @@ const LoginForm: React.FC = () => {
       {/* Fondo animado - FIJO para toda la pantalla */}
       <CirclesBackground />
 
-      <div className="flex h-screen w-screen relative flex-row z-10 login-wrapper">
-        {/* Panel izquierdo azul original */}
-        {/* <OriginalLeftPanel>
-          <RestaurantLogo />
-        </OriginalLeftPanel>
-         */}
-        {/* Si quieres usar el panel con imagen, usa esto en su lugar: */}
+      <div className="flex h-screen w-screen relative z-10 login-wrapper">
+        {/* Panel izquierdo - Mantiene su ancho original en desktop, se oculta en móvil */}
         <LeftPanel 
           panelImage={leftPanelImage}
           altText="Panel lateral del login"
@@ -61,31 +54,20 @@ const LoginForm: React.FC = () => {
         </LeftPanel>
        
         {/* Contenido principal */}
-        <div className="w-[80%] flex items-center justify-center bg-transparent relative z-20 login-main-content">
+        <div className="flex-1 flex items-center justify-center bg-transparent relative z-20 login-main-content px-4 md:px-0">
           {/* Tarjeta de login */}
-          <div className="w-full max-w-[400px] bg-white/95 backdrop-blur-sm p-12 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.08)] flex flex-col gap-8 z-30 login-card">
+          <div className="w-full max-w-[400px] bg-white/95 backdrop-blur-sm p-8 md:p-12 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.08)] flex flex-col gap-6 md:gap-8 z-30 login-card">
             {/* Header con título animado */}
             <div className="flex flex-col items-center">
               <h1
-                className="text-4xl font-extrabold text-center 
+                className="text-3xl md:text-4xl font-extrabold text-center 
                   bg-gradient-to-r from-[#2f50ac] via-[#fff212] to-[#2f50ac]
                   bg-[length:200%_100%] bg-clip-text text-transparent animate-rayFlash"
               >
                 Inicia Sesión
               </h1>
-
-
-              {/* 
-              <h1
-                className="text-4xl font-extrabold text-center 
-                  bg-gradient-to-r from-[#2f50ac] via-[#fff212] to-[#2f50ac]
-                  bg-clip-text text-transparent"
-              >
-                Inicia Sesión
-              </h1>
-              */}
-
             </div>
+
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <InputWithIcon
@@ -118,44 +100,84 @@ const LoginForm: React.FC = () => {
           </div>
         </div>
 
-        {/* Banner inferior como componente */}
+        {/* Banner inferior - Solo visible en desktop */}
         <FooterBanner 
           logo={logo3}
           logoAlt="Fortex Logo"
           companyName="Fortex"
           contactLabel="Contacto:"
           phoneNumbers={["984 229 446", "944 532 822"]}
-          version="1.0.0"  // 👈 Agregar esta línea
-
+          version="1.0.0"
         />
       </div>
 
       <style>
-            {`
-              @keyframes rayFlash {
-                0% {
-                  background-position: 0% 50%;
-                }
-                100% {
-                  background-position: 200% 50%;
-                }
-              }
+        {`
+          @keyframes rayFlash {
+            0% {
+              background-position: 0% 50%;
+            }
+            100% {
+              background-position: 200% 50%;
+            }
+          }
 
-              .animate-rayFlash {
-                animation: rayFlash 3s linear infinite alternate;
-              }
+          .animate-rayFlash {
+            animation: rayFlash 3s linear infinite alternate;
+          }
 
-              /* Ocultar iconos nativos del navegador en campos de contraseña */
-              .password-input::-ms-reveal,
-              .password-input::-webkit-textfield-decoration-container,
-              .password-input::-webkit-credentials-auto-fill-button,
-              .password-input::-webkit-strong-password-auto-fill-button {
-                display: none !important;
-              }
-            `}
-            </style>
+          /* Ocultar iconos nativos del navegador en campos de contraseña */
+          .password-input::-ms-reveal,
+          .password-input::-webkit-textfield-decoration-container,
+          .password-input::-webkit-credentials-auto-fill-button,
+          .password-input::-webkit-strong-password-auto-fill-button {
+            display: none !important;
+          }
 
+          /* Responsive styles */
+          @media (max-width: 768px) {
+            /* Ocultar el panel izquierdo en móvil */
+            .left-panel {
+              display: none !important;
+            }
+            
+            /* Ocultar el banner en móvil */
+            .login-bottom-banner {
+              display: none !important;
+            }
+            
+            .login-main-content {
+              height: 100vh;
+              width: 100% !important;
+              padding: 20px;
+            }
 
+            .login-card {
+              margin: auto;
+              max-width: 350px;
+              padding: 24px;
+            }
+
+            /* Asegurar que el fondo cubra toda la pantalla en móvil */
+            .min-h-screen {
+              min-height: 100vh;
+              min-height: 100svh; /* Para navegadores que soportan viewport units */
+            }
+          }
+
+          @media (max-width: 480px) {
+            .login-card {
+              max-width: 320px;
+              padding: 20px;
+              gap: 20px;
+            }
+            
+            .login-main-content {
+              padding: 16px;
+            }
+          }
+        `}
+      </style>
     </div>
   );
 };
