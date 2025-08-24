@@ -30,6 +30,7 @@ const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         onToggle={() => setSidebarOpen((s) => !s)}
       />
 
+      {/* contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
           <Header user={user} onToggleSidebar={() => setSidebarOpen((s) => !s)} />
@@ -45,13 +46,9 @@ const App: React.FC = () => {
     <BrowserRouter basename="/Inventario-Cevi">
       <AuthProvider>
         <Routes>
-          {/* Ruta raíz - redirige a login */}
           <Route path="/" element={<Navigate to="/login" replace />} />
-          
-          {/* Ruta de login - pública */}
           <Route path="/login" element={<LoginPage />} />
 
-          {/* Rutas privadas - requieren autenticación */}
           <Route
             path="/dashboard"
             element={
@@ -79,15 +76,6 @@ const App: React.FC = () => {
             }
           />
 
-          <Route
-            path="/reports"
-            element={
-              <PrivateLayout>
-                <ReportsPage />
-              </PrivateLayout>
-            }
-          />
-
           {/* 🆕 RUTAS DE CONTENEDORES */}
           <Route
             path="/containers"
@@ -98,9 +86,8 @@ const App: React.FC = () => {
             }
           />
 
-          {/* 🔧 CORREGIDO: usar :id consistentemente */}
           <Route
-            path="/containers/:id/products"
+            path="/containers/:containerId/products"
             element={
               <PrivateLayout>
                 <ContainerProductsPage />
@@ -108,7 +95,15 @@ const App: React.FC = () => {
             }
           />
 
-          {/* Ruta catch-all - cualquier ruta no encontrada va a login */}
+          <Route
+            path="/reports"
+            element={
+              <PrivateLayout>
+                <ReportsPage />
+              </PrivateLayout>
+            }
+          />
+
           <Route path="*" element={<Navigate to="/login" replace />} />
         </Routes>
       </AuthProvider>

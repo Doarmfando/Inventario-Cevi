@@ -313,7 +313,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio Base *
+                    Precio Unitario
                   </label>
                   <div className="relative">
                     <DollarSign className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
@@ -349,7 +349,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     <option value="cajas">Cajas</option>
                   </select>
                 </div>
-
+{/* 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     ¿Es Perecedero?
@@ -363,7 +363,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     <option value="true">Sí, es perecedero</option>
                     <option value="false">No, no es perecedero</option>
                   </select>
-                </div>
+                </div> */}
 
                 <div className="md:col-span-2">
                   <label className="block text-sm font-medium text-gray-700 mb-2">
