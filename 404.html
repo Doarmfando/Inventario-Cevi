@@ -5,49 +5,23 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Página no encontrada - Inventario CEVICHERIA-NOEMI</title>
   <link rel="icon" type="image/svg+xml" href="/Inventario-Cevi/vite.svg" />
-
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- Lottie Player -->
   <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
-
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Segoe+UI:wght@300;400;600;700&display=swap');
-
-    body {
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-
-    .countdown {
-      font-variant-numeric: tabular-nums;
-    }
-
-    .fade-in {
-      animation: fadeIn 0.6s ease-out;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(20px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .pulse {
-      animation: pulse 2s infinite;
-    }
-
-    @keyframes pulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.05); }
-    }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+    .countdown { font-variant-numeric: tabular-nums; }
+    .fade-in { animation: fadeIn 0.6s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .pulse { animation: pulse 2s infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.05); } }
   </style>
 </head>
 <body class="bg-white min-h-screen flex items-center justify-center">
   <div class="max-w-md mx-auto text-center p-8 fade-in">
-    <!-- Lottie Animation -->
     <div class="mb-8">
       <lottie-player
-        src="/404.json"   <!-- 👈 usa tu archivo local -->
+        src="https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json"
         background="transparent"
         speed="1"
         style="width: 250px; height: 250px; margin: auto;"
@@ -55,8 +29,6 @@
         autoplay
       ></lottie-player>
     </div>
-
-    <!-- Error Message -->
     <div class="mb-8">
       <p class="text-gray-600 text-lg mb-6">
         La página que buscas no existe o ha sido movida.
@@ -65,8 +37,6 @@
         Serás redirigido al inicio en <span id="countdown" class="font-bold text-blue-600 countdown">5</span> segundos...
       </p>
     </div>
-
-    <!-- Actions -->
     <div class="space-y-4">
       <button
         id="redirectBtn"
@@ -75,23 +45,17 @@
       >
         Ir al Inicio Ahora
       </button>
-
       <p class="text-xs text-gray-400">
         Sistema de Inventario CEVI
       </p>
     </div>
   </div>
-
   <script>
-    // Configuración
     const HOME_URL = 'https://doarmfando.github.io/Inventario-Cevi/';
-    const REDIRECT_DELAY = 5000; // 5 segundos
-
+    const REDIRECT_DELAY = 5000;
     function redirectToHome() {
       window.location.href = HOME_URL;
     }
-
-    // Countdown
     let countdown = 5;
     const countdownElement = document.getElementById('countdown');
     const timer = setInterval(() => {
@@ -102,7 +66,6 @@
         redirectToHome();
       }
     }, 1000);
-
     setTimeout(() => {
       redirectToHome();
     }, REDIRECT_DELAY);
