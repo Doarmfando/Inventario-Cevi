@@ -9,7 +9,7 @@ import MovementPage from "../pages/MovementPage";
 import ReportsPage from "../pages/ReportsPage";
 import ContainersPage from "../pages/ContainerPage/ContainersPage";
 import ContainerProductsPage from "../pages/ContainerPage/ContainerProductsPage";
-import Sidebar from "../components/Sidebar";
+import Sidebar from "../components/Sidebar/Sidebar";
 import Header from "../components/Header";
 
 const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {

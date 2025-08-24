@@ -1,7 +1,7 @@
 // src/features/containers/components/ContainersView.tsx
 
 import React, { useState, useEffect } from 'react';
-import { Plus, Container, Package, TrendingUp, AlertTriangle, Search } from 'lucide-react';
+import { Plus, Container, Package, TrendingUp, AlertTriangle, Search, Filter, Clock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import type { ContainerSummary, ContainerFormData } from '../types/container.types';
 import { getContainersSummary } from '../data/mockContainerData';
@@ -16,6 +16,21 @@ const ContainersView: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+
+  const containerTypes = [
+    { value: '', label: 'Todos los tipos' },
+    { value: 'frigider', label: 'Refrigeradores' },
+    { value: 'congelador', label: 'Congeladores' },
+    { value: 'almacen-seco', label: 'Almacén Seco' },
+    { value: 'almacen-humedo', label: 'Almacén Húmedo' },
+  ];
+
+  const containerStates = [
+    { value: '', label: 'Todos los estados' },
+    { value: 'activo', label: 'Activos' },
+    { value: 'mantenimiento', label: 'En Mantenimiento' },
+    { value: 'inactivo', label: 'Inactivos' },
+  ];
 
   useEffect(() => {
     const containerData = getContainersSummary();
@@ -68,6 +83,16 @@ const ContainersView: React.FC = () => {
     // TODO: Implementar lógica de creación
   };
 
+  const clearFilters = () => {
+    setSearchTerm('');
+    setTypeFilter('');
+    setStatusFilter('');
+  };
+
+  const hasActiveFilters = () => {
+    return searchTerm !== '' || typeFilter !== '' || statusFilter !== '';
+  };
+
   // Calcular estadísticas generales
   const totalStats = filteredContainers.reduce(
     (acc, container) => ({
@@ -91,23 +116,6 @@ const ContainersView: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Gestión de Contenedores</h1>
-            <p className="text-gray-600">Administra tus espacios de almacenamiento y productos</p>
-          </div>
-          <div className="mt-4 sm:mt-0">
-            <button
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Añadir Contenedor</span>
-            </button>
-          </div>
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -166,47 +174,75 @@ const ContainersView: React.FC = () => {
           </div>
         </div>
 
-        {/* Filtros */}
-        <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-          <div className="flex flex-col sm:flex-row gap-4">
-            {/* Búsqueda */}
-            <div className="flex-1 max-w-md">
-              <div className="relative">
-                <Search className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+        {/* Filtros estilo TableFilters */}
+        <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200 mb-6">
+          <div className="flex flex-col lg:flex-row gap-4 items-start lg:items-center justify-between">
+            <div className="flex flex-col lg:flex-row gap-4 flex-1">
+              {/* Search Input */}
+              <div className="relative flex-1 max-w-md">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
                 <input
                   type="text"
                   placeholder="Buscar contenedor..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
-            </div>
+              
+              <div className="flex flex-wrap gap-3">
+                {/* Type Filter */}
+                <div className="relative min-w-[140px]">
+                  <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <select
+                    value={typeFilter}
+                    onChange={(e) => setTypeFilter(e.target.value)}
+                    className="appearance-none pl-9 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                  >
+                    {containerTypes.map((type) => (
+                      <option key={type.value} value={type.value}>
+                        {type.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
 
-            {/* Filtro por tipo */}
-            <select 
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-            >
-              <option value="">Todos los tipos</option>
-              <option value="frigider">Refrigeradores</option>
-              <option value="congelador">Congeladores</option>
-              <option value="almacen-seco">Almacén Seco</option>
-              <option value="almacen-humedo">Almacén Húmedo</option>
-            </select>
+                {/* Status Filter */}
+                <div className="relative min-w-[160px]">
+                  <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="appearance-none pl-9 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                  >
+                    {containerStates.map((state) => (
+                      <option key={state.value} value={state.value}>
+                        {state.label}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {/* Clear Filters Button */}
+                {hasActiveFilters() && (
+                  <button
+                    onClick={clearFilters}
+                    className="flex items-center space-x-2 px-3 py-2 text-sm text-gray-600 hover:text-gray-800 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    <span>Limpiar</span>
+                  </button>
+                )}
+              </div>
+            </div>
             
-            {/* Filtro por estado */}
-            <select 
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+            {/* Add Container Button */}
+            <button
+              onClick={() => setShowForm(true)}
+              className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors whitespace-nowrap"
             >
-              <option value="">Todos los estados</option>
-              <option value="activo">Activos</option>
-              <option value="mantenimiento">En Mantenimiento</option>
-              <option value="inactivo">Inactivos</option>
-            </select>
+              <Plus className="w-4 h-4" />
+              <span>Añadir Contenedor</span>
+            </button>
           </div>
         </div>
 
@@ -232,11 +268,7 @@ const ContainersView: React.FC = () => {
               No hay contenedores que coincidan con los filtros seleccionados.
             </p>
             <button
-              onClick={() => {
-                setSearchTerm('');
-                setTypeFilter('');
-                setStatusFilter('');
-              }}
+              onClick={clearFilters}
               className="text-blue-600 hover:text-blue-700"
             >
               Limpiar filtros

@@ -100,23 +100,6 @@ const MovementView: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-900">Movimientos de Inventario</h1>
-            <p className="text-gray-600">Gestiona las entradas, salidas y ajustes de tu inventario</p>
-          </div>
-          <div className="mt-4 sm:mt-0">
-            <button
-              onClick={() => setShowForm(true)}
-              className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm"
-            >
-              <Plus className="w-5 h-5" />
-              <span>Nuevo Movimiento</span>
-            </button>
-          </div>
-        </div>
-
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
@@ -174,9 +157,12 @@ const MovementView: React.FC = () => {
           </div>
         </div>
 
-        {/* Filtros */}
+        {/* Filtros con botón incluido */}
         <div className="mb-6">
-          <MovementFilters onFilter={handleFiltersChange} />
+          <MovementFilters 
+            onFilter={handleFiltersChange} 
+            onNewMovement={() => setShowForm(true)}
+          />
         </div>
 
         {/* Lista de movimientos */}

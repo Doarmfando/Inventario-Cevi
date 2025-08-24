@@ -7,6 +7,7 @@ interface FooterBannerProps {
   companyName?: string;
   contactLabel?: string;
   phoneNumbers: string[];
+  version: string;
 }
 
 const FooterBanner: React.FC<FooterBannerProps> = ({ 
@@ -14,11 +15,12 @@ const FooterBanner: React.FC<FooterBannerProps> = ({
   logoAlt = "Company Logo",
   companyName = "Fortex",
   contactLabel = "Contacto:",
-  phoneNumbers = []
+  phoneNumbers = [],
+  version = "1.0.0",
 }) => {
   return (
     <div className="absolute bottom-5 left-0 w-screen bg-[#F0F2F5]/90 backdrop-blur-sm py-4 px-6 flex items-center justify-between font-bold text-sm z-40 rounded-lg shadow-[0_4px_12px_rgba(0,0,0,0.15)] login-bottom-banner">
-      {/* Logo y powered by */}
+      {/* Logo + powered by + versión */}
       <div className="flex items-center gap-2.5">
         <div className="h-6 w-6 rounded-full flex items-center justify-center overflow-hidden">
           <img 
@@ -27,7 +29,10 @@ const FooterBanner: React.FC<FooterBannerProps> = ({
             className="w-full h-full object-cover"
           />
         </div>
-        <span className="text-[#2f50ac]">Powered by {companyName}</span>
+        <span className="text-[#2f50ac]">
+          Powered by {companyName}{" "}
+          <span className="text-gray-500 text-sm font-normal italic">v{version}</span>
+        </span>
       </div>
 
       {/* Información de contacto */}
@@ -52,11 +57,16 @@ const FooterBanner: React.FC<FooterBannerProps> = ({
               bottom: 0;
               width: 90% !important;
               margin: 20px auto 0;
-              justify-content: center;
               text-align: center;
               font-size: 12px;
               flex-direction: column !important;
               gap: 10px !important;
+            }
+            .login-bottom-banner > div {
+              flex-direction: column !important;
+              gap: 6px !important;
+              text-align: center;
+              align-items: center;
             }
           }
         `}

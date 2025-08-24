@@ -12,8 +12,8 @@
 }
 
 .circle {
-  animation: animate 25s linear infinite;
-  background: rgba(90, 90, 90, 0.15);
+  animation: animate 30s linear infinite;
+  background: rgba(90, 90, 90, 0.30);
 }
 
 .circle:nth-child(1) {

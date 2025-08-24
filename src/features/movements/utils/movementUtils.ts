@@ -22,7 +22,7 @@ export const calculateNewStock = (
 
 export const createMovement = (
   formData: MovementFormData,
-  selectedProduct: { id: string; name: string; code?: string },
+  selectedProduct: { id: string; name: string; code?: string; container?: string },
   previousStock: number
 ): Movement => {
   const newStock = calculateNewStock(formData.type, previousStock, formData.quantity);
@@ -32,18 +32,21 @@ export const createMovement = (
     productId: formData.productId,
     productName: selectedProduct.name,
     productCode: selectedProduct.code,
+    container: selectedProduct.container || '', // ⭐ NUEVO: Contenedor del producto
     type: formData.type,
     quantity: formData.quantity,
+    packagedUnits: formData.packagedUnits || 0, // ⭐ NUEVO: Unidades empaquetadas
     previousStock,
     newStock,
     unitPrice: formData.unitPrice,
     totalValue: formData.unitPrice ? formData.quantity * formData.unitPrice : undefined,
     reason: formData.reason,
+    observations: formData.observations, // ⭐ NUEVO: Observaciones
     documentNumber: formData.documentNumber,
     createdBy: 'admin', // En tu app real, obtener del contexto de usuario
     createdAt: new Date(),
     expiryDate: formData.expiryDate,
-    state: formData.state,
+    state: formData.state || 'completed', // ⭐ NUEVO: Estado por defecto
   };
 };
 
@@ -58,8 +61,26 @@ export const applyMovementFilters = (movements: Movement[], filters: Filters): M
     filtered = filtered.filter(movement => movement.productId === filters.productId);
   }
 
+  if (filters.container) {
+    filtered = filtered.filter(movement => movement.container === filters.container);
+  }
+
+  if (filters.reason && filters.reason !== 'all') {
+    filtered = filtered.filter(movement => movement.reason === filters.reason);
+  }
+
   if (filters.state && filters.state !== 'all') {
     filtered = filtered.filter(movement => movement.state === filters.state);
+  }
+  
+  if (filters.searchTerm) {
+    const term = filters.searchTerm.toLowerCase();
+    filtered = filtered.filter(movement => 
+      movement.productName.toLowerCase().includes(term) ||
+      movement.container.toLowerCase().includes(term) ||
+      movement.observations?.toLowerCase().includes(term) ||
+      movement.documentNumber?.toLowerCase().includes(term)
+    );
   }
   
   if (filters.dateFrom) {
@@ -97,4 +118,55 @@ export const getLastMovementForProduct = (movements: Movement[], productId: stri
   return movements
     .filter(m => m.productId === productId)
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
+};
+
+// ⭐ NUEVA: Función para obtener el stock actual de un producto basado en sus movimientos
+export const getCurrentStock = (movements: Movement[], productId: string): number => {
+  const productMovements = movements
+    .filter(m => m.productId === productId)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  if (productMovements.length === 0) return 0;
+
+  // El último movimiento tiene el stock actual
+  const lastMovement = productMovements[productMovements.length - 1];
+  return lastMovement.newStock;
+};
+
+// ⭐ NUEVA: Función para obtener las unidades empaquetadas actuales de un producto
+export const getCurrentPackagedUnits = (movements: Movement[], productId: string): number => {
+  const productMovements = movements
+    .filter(m => m.productId === productId)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+
+  if (productMovements.length === 0) return 0;
+
+  // Sumar todas las unidades empaquetadas (entradas positivas, salidas negativas)
+  return productMovements.reduce((total, movement) => {
+    if (movement.type === 'entrada') {
+      return total + movement.packagedUnits;
+    } else if (movement.type === 'salida') {
+      return total - movement.packagedUnits;
+    }
+    return total; // Para ajustes, mantener el total
+  }, 0);
+};
+
+// ⭐ NUEVA: Función para validar si hay suficiente stock para una salida
+export const validateStockForExit = (
+  movements: Movement[], 
+  productId: string, 
+  quantityToExit: number
+): { isValid: boolean; currentStock: number; message?: string } => {
+  const currentStock = getCurrentStock(movements, productId);
+  
+  if (currentStock < quantityToExit) {
+    return {
+      isValid: false,
+      currentStock,
+      message: `Stock insuficiente. Stock actual: ${currentStock}, cantidad solicitada: ${quantityToExit}`
+    };
+  }
+  
+  return { isValid: true, currentStock };
 };

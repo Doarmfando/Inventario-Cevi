@@ -60,18 +60,32 @@ const LoginForm: React.FC = () => {
           <RestaurantLogo />
         </LeftPanel>
        
-
         {/* Contenido principal */}
         <div className="w-[80%] flex items-center justify-center bg-transparent relative z-20 login-main-content">
           {/* Tarjeta de login */}
           <div className="w-full max-w-[400px] bg-white/95 backdrop-blur-sm p-12 rounded-2xl shadow-[0_10px_25px_rgba(0,0,0,0.08)] flex flex-col gap-8 z-30 login-card">
             {/* Header con título animado */}
             <div className="flex flex-col items-center">
-              <h1 className="text-4xl font-extrabold text-center bg-gradient-to-r from-[#2f50ac] via-[#2f50ac] via-[#fff212] via-[#2f50ac] to-[#2f50ac] bg-[length:300%_100%] bg-clip-text text-transparent animate-rayFlash">
+              <h1
+                className="text-4xl font-extrabold text-center 
+                  bg-gradient-to-r from-[#2f50ac] via-[#fff212] to-[#2f50ac]
+                  bg-[length:200%_100%] bg-clip-text text-transparent animate-rayFlash"
+              >
                 Inicia Sesión
               </h1>
-            </div>
 
+
+              {/* 
+              <h1
+                className="text-4xl font-extrabold text-center 
+                  bg-gradient-to-r from-[#2f50ac] via-[#fff212] to-[#2f50ac]
+                  bg-clip-text text-transparent"
+              >
+                Inicia Sesión
+              </h1>
+              */}
+
+            </div>
             {/* Formulario */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
               <InputWithIcon
@@ -96,7 +110,7 @@ const LoginForm: React.FC = () => {
               <button
                 type="submit"
                 disabled={isLoading}
-                className="bg-gradient-to-br from-[#2f50ac] to-[#1d3d8d] text-white p-3 text-base font-semibold border-none rounded-lg cursor-pointer transition-all duration-300 outline-none hover:brightness-110 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="bg-[#1E3A8A] text-white p-3 text-base font-semibold rounded-lg cursor-pointer transition-all duration-300 outline-none hover:bg-[#2A4FB0] disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isLoading ? "Iniciando sesión..." : "Acceder"}
               </button>
@@ -114,7 +128,31 @@ const LoginForm: React.FC = () => {
         />
       </div>
 
-      {/* Estilos globales para animaciones */}
+      <style>
+            {`
+              @keyframes rayFlash {
+                0% {
+                  background-position: 0% 50%;
+                }
+                100% {
+                  background-position: 200% 50%;
+                }
+              }
+
+              .animate-rayFlash {
+                animation: rayFlash 3s linear infinite alternate;
+              }
+
+              /* Ocultar iconos nativos del navegador en campos de contraseña */
+              .password-input::-ms-reveal,
+              .password-input::-webkit-textfield-decoration-container,
+              .password-input::-webkit-credentials-auto-fill-button,
+              .password-input::-webkit-strong-password-auto-fill-button {
+                display: none !important;
+              }
+            `}
+            </style>
+
 
     </div>
   );

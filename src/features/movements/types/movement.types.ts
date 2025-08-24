@@ -1,6 +1,7 @@
 // src/features/movements/types/movement.types.ts - ACTUALIZADO SEGÚN REQUERIMIENTOS
 
 export type MovementType = 'entrada' | 'salida' | 'ajuste';
+export type MovementState = 'pending' | 'completed' | 'cancelled' | 'all';
 
 // MOTIVOS PREDEFINIDOS PARA ENTRADAS
 export type EntryReason = 
@@ -67,6 +68,8 @@ export interface Movement {
   createdBy: string;
   createdAt: Date;
   updatedAt?: Date;
+  expiryDate?: string; // ⭐ NUEVO: Fecha de vencimiento
+  state?: MovementState; // ⭐ NUEVO: Estado del movimiento
 }
 
 export interface MovementFormData {
@@ -78,6 +81,8 @@ export interface MovementFormData {
   observations?: string; // ⭐ NUEVO: Observaciones
   documentNumber?: string;
   unitPrice?: number;
+  expiryDate?: string; // ⭐ NUEVO: Fecha de vencimiento
+  state?: MovementState; // ⭐ NUEVO: Estado del movimiento
 }
 
 export interface MovementFilters {
@@ -89,6 +94,9 @@ export interface MovementFilters {
   dateTo?: string;
   createdBy?: string;
   searchTerm?: string; // ⭐ NUEVO: Búsqueda general
+  state?: MovementState; // ⭐ NUEVO: Filtro por estado
+  expiryFrom?: string; // ⭐ NUEVO: Filtro por fecha de vencimiento desde
+  expiryTo?: string; // ⭐ NUEVO: Filtro por fecha de vencimiento hasta
 }
 
 export interface KardexEntry extends Movement {

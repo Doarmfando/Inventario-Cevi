@@ -21,13 +21,13 @@ const PasswordInput: React.FC<PasswordInputProps> = ({
           placeholder={placeholder}
           value={value}
           onChange={onChange}
-          className="flex-1 bg-white text-black border-none outline-none text-base px-3 py-2 rounded-full pr-10"
+          className="flex-1 bg-white text-black border-none outline-none text-base px-3 py-2 rounded-full pr-10 password-input"
         />
 
         <button
           type="button"
           onClick={() => setShowPassword(!showPassword)}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 bg-transparent border-none p-0 cursor-pointer text-[#2f50ac] flex items-center justify-center text-xl hover:text-[#2f50ac] focus:outline-none focus:shadow-none active:outline-none"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-transparent border-none p-1 cursor-pointer text-[#2f50ac] flex items-center justify-center hover:text-[#1a3a7a] focus:outline-none transition-colors duration-200"
         >
           {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
         </button>

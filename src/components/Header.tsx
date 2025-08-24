@@ -18,6 +18,8 @@ const Header: React.FC<HeaderProps> = ({ user, onToggleSidebar }) => {
     title = "Movimientos";
   } else if (location.pathname.includes("/reports")) {
     title = "Reportes";
+    } else if (location.pathname.includes("/containers")) {
+    title = "Contenedores";
   }
 
   return (
