@@ -23,14 +23,18 @@
       font-variant-numeric: tabular-nums;
     }
     
-
+    .fade-in {
+      animation: fadeIn 0.6s ease-out;
+    }
     
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
     
-
+    .pulse {
+      animation: pulse 2s infinite;
+    }
     
     @keyframes pulse {
       0%, 100% { transform: scale(1); }
@@ -62,7 +66,7 @@
         La página que buscas no existe o ha sido movida.
       </p>
       <p class="text-sm text-gray-500 mb-4">
-        Serás redirigido al login en <span id="countdown" class="font-bold text-blue-600 countdown">5</span> segundos...
+        Serás redirigido al inicio en <span id="countdown" class="font-bold text-blue-600 countdown">5</span> segundos...
       </p>
     </div>
     
@@ -71,9 +75,9 @@
       <button
         id="redirectBtn"
         class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors duration-300 pulse"
-        onclick="redirectToLogin()"
+        onclick="redirectToHome()"
       >
-        Ir al Login Ahora
+        Ir al Inicio Ahora
       </button>
       
       <p class="text-xs text-gray-400">
@@ -84,17 +88,16 @@
 
   <script>
     // Configuración
-    const REPO_NAME = 'Inventario-Cevi';
-    const REDIRECT_DELAY = 10000; // 10 segundos
+    const HOME_URL = 'https://doarmfando.github.io/Inventario-Cevi/';
+    const REDIRECT_DELAY = 5000; // 5 segundos
 
-    // Función para redireccionar al login
-    function redirectToLogin() {
-      const loginUrl = `${window.location.protocol}//${window.location.host}/${REPO_NAME}/login`;
-      window.location.href = loginUrl;
+    // Función para redireccionar al inicio
+    function redirectToHome() {
+      window.location.href = HOME_URL;
     }
     
-    // Countdown timer
-    let countdown = 10;
+    // Countdown timer - empezar en 5 segundos
+    let countdown = 5;
     const countdownElement = document.getElementById('countdown');
     
     const timer = setInterval(() => {
@@ -103,31 +106,14 @@
       
       if (countdown <= 0) {
         clearInterval(timer);
-        redirectToLogin();
+        redirectToHome();
       }
     }, 1000);
     
-    // GitHub Pages SPA redirect logic (en caso de que vengan de una ruta válida)
-    (function() {
-      const l = window.location;
-      const pathArray = l.pathname.split('/');
-      
-      // Si estamos en una ruta del repo, intentar redirigir al login
-      if (pathArray[1] === REPO_NAME) {
-        // Opcional: detectar si era una ruta válida de la app
-        const validRoutes = [
-          'dashboard', 'inventory', 'movements', 'reports', 
-          'containers', 'login'
-        ];
-        
-        const attemptedRoute = pathArray[2];
-        
-        // Si era una ruta válida, redirigir inmediatamente
-        if (validRoutes.includes(attemptedRoute)) {
-          setTimeout(redirectToLogin, 15000); // Dar tiempo a ver la animación
-        }
-      }
-    })();
+    // Auto-redirect después de 5 segundos
+    setTimeout(() => {
+      redirectToHome();
+    }, REDIRECT_DELAY);
     
     // Fallback: si Lottie no carga, mostrar emoji
     const lottiePlayer = document.getElementById('lottie-404');
@@ -137,6 +123,7 @@
       lottieLoaded = true;
     });
     
+    // Detectar si Lottie no carga en 3 segundos
     setTimeout(() => {
       if (!lottieLoaded) {
         lottiePlayer.style.display = 'none';
