@@ -68,69 +68,60 @@ const ProductTable: React.FC<Props> = ({
         onAddProduct={onAddProduct}
       />
 
-      {/* Tabla */}
+      {/* Tabla optimizada para pantalla completa */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full">
+          <table className="w-full min-w-full table-fixed">
+            <colgroup>
+              {/* Anchos optimizados para 8 columnas en 16.5" */}
+              <col className="w-[22%]" /> {/* Producto - Más ancho por ser principal */}
+              <col className="w-[14%]" /> {/* Contenedor */}
+              <col className="w-[10%]" /> {/* Categoría */}
+              <col className="w-[9%]" />  {/* Stock Total */}
+              <col className="w-[11%]" /> {/* Estado Stock */}
+              <col className="w-[12%]" /> {/* Valor Total */}
+              <col className="w-[12%]" /> {/* Empaquetados */}
+              <col className="w-[10%]" /> {/* Acciones */}
+            </colgroup>
             <thead className="bg-gray-50 border-b-2 border-gray-200">
               <tr>
                 {/* 1. Producto */}
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  <div className="flex items-center space-x-1">
-                    <span>Producto</span>
-                  </div>
+                <th className="px-3 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Producto
                 </th>
                 
                 {/* 2. Contenedor */}
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                   Contenedor
                 </th>
                 
                 {/* 3. Categoría */}
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                <th className="px-2 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
                   Categoría
                 </th>
                 
-                {/* 4. Unidad
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Unidad
-                </th> */}
-                
-                {/* 5. Stock Total */}
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Stock Total
+                {/* 4. Stock Total */}
+                <th className="px-2 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Stock
                 </th>
 
-                {/* 6. Estado Stock */}
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Estado Stock
-                </th>
-                
-                {/* 7. Precio Unitario
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Precio Unitario
-                </th> */}
-
-                {/* 8. Valor Total */}
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Valor Total
+                {/* 5. Estado Stock */}
+                <th className="px-2 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Estado
                 </th>
 
-                {/* 9. Empaquetados */}
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  Empaquetados
+                {/* 6. Valor Total */}
+                <th className="px-2 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Valor
+                </th>
+
+                {/* 7. Empaquetados */}
+                <th className="px-2 py-3 text-left text-xs font-semibold text-gray-700 uppercase tracking-wide">
+                  Empaque
                 </th>
                 
-                {/* 10. # Por Vencer
-                <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
-                  <div className="flex flex-col">
-                    <span># Por</span>
-                    <span>Vencer</span>
-                  </div>
-                </th> */}
-                
-                {/* 11. Acciones */}
-                <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
+                {/* 8. Acciones */}
+                <th className="px-2 py-3 text-center text-xs font-semibold text-gray-700 uppercase tracking-wide">
                   Acciones
                 </th>
               </tr>
