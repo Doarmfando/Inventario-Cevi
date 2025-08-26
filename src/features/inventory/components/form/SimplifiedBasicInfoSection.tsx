@@ -1,26 +1,30 @@
-// form/SimplifiedBasicInfoSection.tsx - VERSIÓN SUPER SIMPLIFICADA
+// form/SimplifiedBasicInfoSection.tsx - CON CONTENEDORES RECOMENDADOS
 import React from "react";
-import { Package, DollarSign, Scale, AlertTriangle } from "lucide-react";
+import { Package, DollarSign, Scale, AlertTriangle, MapPin, CheckSquare } from "lucide-react";
 import FormField from "./FormField";
 import type { ProductCategory, Container, ProductUnit } from "../../types";
+import { CONTAINER_RECOMMENDATIONS } from "../../types";
 
 interface SimplifiedBasicInfoSectionProps {
   form: {
     name: string;
     category: ProductCategory;
     container: string;
+    recommendedContainers: Container[];
     unit: ProductUnit;
     minStock: number;
     price: number;
   };
   errors: Record<string, string>;
   onChange: (field: keyof SimplifiedBasicInfoSectionProps['form']) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onRecommendedContainersChange: (containers: Container[]) => void;
 }
 
 const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({ 
   form, 
   errors, 
-  onChange 
+  onChange,
+  onRecommendedContainersChange
 }) => {
   const categories: ProductCategory[] = [
     'Pescados', 'Mariscos', 'Verduras', 'Condimentos', 'Insumos', 'Suministros'
@@ -41,6 +45,26 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
     'Congelador 4',
     'Almacén Seco'
   ];
+
+  // Contenedores recomendados por categoría
+  const recommendedContainers = CONTAINER_RECOMMENDATIONS[form.category] || [];
+  const currentRecommended = form.recommendedContainers || recommendedContainers;
+
+  const handleContainerToggle = (container: Container) => {
+    const updated = currentRecommended.includes(container)
+      ? currentRecommended.filter(c => c !== container)
+      : [...currentRecommended, container];
+    
+    onRecommendedContainersChange(updated);
+  };
+
+  const selectAllRecommended = () => {
+    onRecommendedContainersChange(recommendedContainers);
+  };
+
+  const clearAll = () => {
+    onRecommendedContainersChange([]);
+  };
 
   return (
     <div className="space-y-6">
@@ -80,10 +104,10 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
         </FormField>
 
         <FormField
-          label="Contenedor/Ubicación"
+          label="Ubicación Principal"
           error={errors.container}
           required
-          icon={Package}
+          icon={MapPin}
         >
           <select
             value={form.container}
@@ -92,7 +116,7 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
               errors.container ? 'border-red-300' : 'border-gray-300'
             }`}
           >
-            <option value="">Seleccionar contenedor</option>
+            <option value="">Seleccionar ubicación principal</option>
             {containers.map(container => (
               <option key={container} value={container}>{container}</option>
             ))}
@@ -161,6 +185,85 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
             Cantidad mínima antes de mostrar alerta de stock bajo.
           </p>
         </FormField>
+      </div>
+
+      {/* Sección: Contenedores Recomendados - COMPACTA */}
+      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-gray-900 flex items-center">
+            <Package className="w-4 h-4 mr-2 text-purple-600" />
+            Contenedores para Distribución
+            <span className="text-xs font-normal text-gray-500 ml-2">(Opcional)</span>
+          </h3>
+          <div className="space-x-2">
+            <button
+              type="button"
+              onClick={selectAllRecommended}
+              className="text-xs text-purple-600 hover:text-purple-700 underline"
+            >
+              Sugeridos
+            </button>
+            <button
+              type="button"
+              onClick={clearAll}
+              className="text-xs text-gray-500 hover:text-gray-600 underline"
+            >
+              Limpiar
+            </button>
+          </div>
+        </div>
+
+        <p className="text-xs text-purple-700 mb-3">
+          Basado en "{form.category}", sugerimos: {recommendedContainers.join(', ')}.
+        </p>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {containers.map(container => {
+            const isSelected = currentRecommended.includes(container);
+            const isRecommended = recommendedContainers.includes(container);
+            const isPrimary = form.container === container;
+            
+            return (
+              <div
+                key={container}
+                className={`relative flex items-center p-2 rounded border cursor-pointer transition-colors text-xs ${
+                  isPrimary 
+                    ? 'bg-green-100 border-green-300 cursor-not-allowed'
+                    : isSelected
+                      ? 'bg-purple-100 border-purple-300'
+                      : isRecommended
+                        ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                        : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
+                onClick={() => !isPrimary && handleContainerToggle(container)}
+              >
+                <CheckSquare 
+                  className={`w-3 h-3 mr-2 ${
+                    isPrimary
+                      ? 'text-green-600'
+                      : isSelected 
+                        ? 'text-purple-600' 
+                        : 'text-gray-400'
+                  }`}
+                  fill={isSelected || isPrimary ? "currentColor" : "none"}
+                />
+                <span className={`flex-1 ${
+                  isPrimary 
+                    ? 'text-green-800 font-medium'
+                    : isSelected 
+                      ? 'text-purple-800' 
+                      : 'text-gray-700'
+                }`}>
+                  {container}
+                </span>
+                
+                {isPrimary && (
+                  <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">P</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
       </div>
     </div>
   );

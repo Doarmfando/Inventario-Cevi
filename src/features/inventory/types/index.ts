@@ -1,11 +1,12 @@
-// types/index.ts - ACTUALIZADO PARA COINCIDIR CON EL DISEÑO DE LA IMAGEN + PRECIO REAL
+// types/index.ts - ACTUALIZADO CON CONTENEDORES RECOMENDADOS
 
 export interface Product {
   id: number;
   name: string;
-  container: string; // ACTIVADO: Necesario según la imagen
-  category: string;
-  unit: string; // kg, bolsa, litro, unidad, etc.
+  container: string; // ACTIVADO: Necesario según la imagen - Ubicación principal
+  recommendedContainers?: Container[]; // NUEVO: Contenedores recomendados para distribución
+  category: ProductCategory; // ACTUALIZADO: Usar ProductCategory en lugar de string
+  unit: ProductUnit; // ACTUALIZADO: Usar ProductUnit en lugar de string
   quantity: number; // Stock Total (en la unidad base)
   price: number; // PRECIO ESTIMADO - Precio de referencia/estimado para cálculos internos
   realPrice?: number; // PRECIO REAL - Precio real de compra/venta del producto
@@ -27,9 +28,10 @@ export interface Product {
 
 export interface NewProduct {
   name: string;
-  container: string; // ACTIVADO
-  category: string;
-  unit: string;
+  container: string; // ACTIVADO - Ubicación principal
+  recommendedContainers?: Container[]; // NUEVO: Contenedores recomendados para distribución
+  category: ProductCategory; // ACTUALIZADO: Usar ProductCategory en lugar de string
+  unit: ProductUnit; // ACTUALIZADO: Usar ProductUnit en lugar de string
   quantity: number;
   price: number; // PRECIO ESTIMADO - Para cálculos de inventario
   realPrice?: number; // PRECIO REAL - Precio real del producto (opcional en creación)
@@ -89,6 +91,16 @@ export type Container =
   | 'Congelador 4'
   | 'Almacén Seco';
 
+// NUEVO: Recomendaciones de contenedores por categoría
+export const CONTAINER_RECOMMENDATIONS: Record<ProductCategory, Container[]> = {
+  'Pescados': ['Frigider 2 - Pescado', 'Congelador 1', 'Congelador 2'],
+  'Mariscos': ['Frigider 4 - Mariscos', 'Congelador 3', 'Congelador 4'],
+  'Verduras': ['Frigider 1 - Causa', 'Frigider 3 - Yuca'],
+  'Condimentos': ['Almacén Seco', 'Frigider 1 - Causa'],
+  'Insumos': ['Almacén Seco', 'Congelador 1'],
+  'Suministros': ['Almacén Seco']
+};
+
 // Filtros para la tabla
 export interface TableFilters {
   category?: ProductCategory | 'all';
@@ -103,4 +115,32 @@ export interface TableColumn {
   label: string;
   sortable?: boolean;
   width?: string;
+}
+
+// NUEVO: Interface para movimientos de distribución
+export interface DistributionMovement {
+  id: number;
+  productId: number;
+  fromContainer: Container;
+  toContainer: Container;
+  quantity: number;
+  unit: string;
+  packagedUnits?: number;
+  weightPerPackage?: number;
+  movementType: 'distribution' | 'packaging' | 'transfer';
+  notes?: string;
+  createdAt: string;
+  createdBy?: string;
+}
+
+// NUEVO: Interface para planificación de distribución
+export interface DistributionPlan {
+  productId: number;
+  totalQuantity: number;
+  distributions: {
+    container: Container;
+    quantity: number;
+    packagedUnits?: number;
+    weightPerPackage?: number;
+  }[];
 }

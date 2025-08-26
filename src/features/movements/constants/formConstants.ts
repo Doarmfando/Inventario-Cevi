@@ -13,24 +13,16 @@ export const movementTypes = [
 export const entryReasons = [
   { value: 'compra' as EntryReason, label: 'Compra' },
   { value: 'reposicion' as EntryReason, label: 'Reposición' },
-  { value: 'ajuste-positivo' as EntryReason, label: 'Ajuste Positivo' },
-  { value: 'devolucion' as EntryReason, label: 'Devolución' },
-  { value: 'transferencia-entrada' as EntryReason, label: 'Transferencia de Entrada' },
-  { value: 'donacion' as EntryReason, label: 'Donación' },
   { value: 'produccion-interna' as EntryReason, label: 'Producción Interna' },
 ];
-
+ 
 // MOTIVOS PARA SALIDAS
 export const exitReasons = [
   { value: 'venta' as ExitReason, label: 'Venta' },
   { value: 'perdida' as ExitReason, label: 'Pérdida' },
-  { value: 'roto' as ExitReason, label: 'Roto/Dañado' },
+  { value: 'roto' as ExitReason, label: 'Roto' },
   { value: 'vencido' as ExitReason, label: 'Producto Vencido' },
-  { value: 'ajuste-negativo' as ExitReason, label: 'Ajuste Negativo' },
-  { value: 'transferencia-salida' as ExitReason, label: 'Transferencia de Salida' },
   { value: 'consumo-interno' as ExitReason, label: 'Consumo Interno' },
-  { value: 'merma' as ExitReason, label: 'Merma' },
-  { value: 'degustacion' as ExitReason, label: 'Degustación' },
 ];
 
 // FUNCIÓN PARA OBTENER MOTIVOS SEGÚN EL TIPO

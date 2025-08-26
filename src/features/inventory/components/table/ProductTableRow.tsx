@@ -105,12 +105,12 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         </span>
       </td>
       
-      {/* 4. Unidad */}
+      {/* 4. Unidad
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm text-gray-900 font-medium">{product.unit}</div>
         <div className="text-xs text-gray-500">Mín: {product.minStock}</div>
       </td>
-      
+       */}
       {/* 5. Stock Total */}
       <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-semibold text-gray-900">
@@ -129,7 +129,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
       </td>
       
       {/* 7. Precio Unitario */}
-      <td className="px-6 py-4 whitespace-nowrap">
+      {/* <td className="px-6 py-4 whitespace-nowrap">
         <div className="text-sm font-medium text-gray-900">
           S/ {product.price.toLocaleString("es-PE", { 
             minimumFractionDigits: 2,
@@ -137,7 +137,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
           })}
         </div>
         <div className="text-xs text-gray-500">por {product.unit}</div>
-      </td>
+      </td> */}
 
       {/* 8. Valor Total */}
       <td className="px-6 py-4 whitespace-nowrap">
@@ -163,7 +163,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
       </td>
       
       {/* 10. # Por Vencer */}
-      <td className="px-6 py-4 whitespace-nowrap">
+      {/* <td className="px-6 py-4 whitespace-nowrap">
         <div className={`text-sm font-medium ${
           product.nearExpiryPackages > 0 ? 'text-orange-600' : 'text-gray-900'
         }`}>
@@ -177,7 +177,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
             "Todo OK"
           }
         </div>
-      </td>
+      </td> */}
       
       {/* 11. Acciones */}
       <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">

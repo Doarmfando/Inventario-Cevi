@@ -91,10 +91,10 @@ const ProductTable: React.FC<Props> = ({
                   Categoría
                 </th>
                 
-                {/* 4. Unidad */}
+                {/* 4. Unidad
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Unidad
-                </th>
+                </th> */}
                 
                 {/* 5. Stock Total */}
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -106,10 +106,10 @@ const ProductTable: React.FC<Props> = ({
                   Estado Stock
                 </th>
                 
-                {/* 7. Precio Unitario */}
+                {/* 7. Precio Unitario
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   Precio Unitario
-                </th>
+                </th> */}
 
                 {/* 8. Valor Total */}
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
@@ -121,13 +121,13 @@ const ProductTable: React.FC<Props> = ({
                   Empaquetados
                 </th>
                 
-                {/* 10. # Por Vencer */}
+                {/* 10. # Por Vencer
                 <th className="px-6 py-4 text-left text-xs font-semibold text-gray-700 uppercase tracking-wider">
                   <div className="flex flex-col">
                     <span># Por</span>
                     <span>Vencer</span>
                   </div>
-                </th>
+                </th> */}
                 
                 {/* 11. Acciones */}
                 <th className="px-6 py-4 text-center text-xs font-semibold text-gray-700 uppercase tracking-wider">
