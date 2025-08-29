@@ -1,4 +1,4 @@
-// src/features/movements/utils/movementUtils.ts
+// src/features/movements/utils/movementUtils.ts - ACTUALIZADO
 
 import type { Movement, MovementFormData, MovementFilters as Filters } from '../types/movement.types';
 
@@ -20,6 +20,7 @@ export const calculateNewStock = (
   }
 };
 
+// ⭐ ACTUALIZADO: Función para crear movimiento con contenedor seleccionado
 export const createMovement = (
   formData: MovementFormData,
   selectedProduct: { id: string; name: string; code?: string; container?: string },
@@ -27,26 +28,29 @@ export const createMovement = (
 ): Movement => {
   const newStock = calculateNewStock(formData.type, previousStock, formData.quantity);
   
+  // Usar el contenedor seleccionado por el usuario o el del producto por defecto
+  const finalContainer = formData.selectedContainer || formData.container || selectedProduct.container || '';
+  
   return {
     id: Date.now().toString(),
     productId: formData.productId,
     productName: selectedProduct.name,
     productCode: selectedProduct.code,
-    container: selectedProduct.container || '', // ⭐ NUEVO: Contenedor del producto
+    container: finalContainer, // ⭐ ACTUALIZADO: Usar contenedor seleccionado
     type: formData.type,
     quantity: formData.quantity,
-    packagedUnits: formData.packagedUnits || 0, // ⭐ NUEVO: Unidades empaquetadas
+    packagedUnits: formData.packagedUnits || 0,
     previousStock,
     newStock,
     unitPrice: formData.unitPrice,
     totalValue: formData.unitPrice ? formData.quantity * formData.unitPrice : undefined,
     reason: formData.reason,
-    observations: formData.observations, // ⭐ NUEVO: Observaciones
+    observations: formData.observations,
     documentNumber: formData.documentNumber,
     createdBy: 'admin', // En tu app real, obtener del contexto de usuario
     createdAt: new Date(),
     expiryDate: formData.expiryDate,
-    state: formData.state || 'completed', // ⭐ NUEVO: Estado por defecto
+    state: formData.state || 'completed',
   };
 };
 
@@ -120,7 +124,7 @@ export const getLastMovementForProduct = (movements: Movement[], productId: stri
     .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())[0];
 };
 
-// ⭐ NUEVA: Función para obtener el stock actual de un producto basado en sus movimientos
+// Función para obtener el stock actual de un producto basado en sus movimientos
 export const getCurrentStock = (movements: Movement[], productId: string): number => {
   const productMovements = movements
     .filter(m => m.productId === productId)
@@ -133,7 +137,7 @@ export const getCurrentStock = (movements: Movement[], productId: string): numbe
   return lastMovement.newStock;
 };
 
-// ⭐ NUEVA: Función para obtener las unidades empaquetadas actuales de un producto
+// Función para obtener las unidades empaquetadas actuales de un producto
 export const getCurrentPackagedUnits = (movements: Movement[], productId: string): number => {
   const productMovements = movements
     .filter(m => m.productId === productId)
@@ -152,7 +156,7 @@ export const getCurrentPackagedUnits = (movements: Movement[], productId: string
   }, 0);
 };
 
-// ⭐ NUEVA: Función para validar si hay suficiente stock para una salida
+// Función para validar si hay suficiente stock para una salida
 export const validateStockForExit = (
   movements: Movement[], 
   productId: string, 
@@ -169,4 +173,44 @@ export const validateStockForExit = (
   }
   
   return { isValid: true, currentStock };
+};
+
+// ⭐ NUEVA: Función para obtener todos los contenedores únicos de los movimientos
+export const getUniqueContainers = (movements: Movement[]): string[] => {
+  const containers = movements.map(m => m.container).filter(Boolean);
+  return [...new Set(containers)].sort();
+};
+
+// ⭐ NUEVA: Función para obtener movimientos de un producto en un contenedor específico
+export const getMovementsByProductAndContainer = (
+  movements: Movement[], 
+  productId: string, 
+  container: string
+): Movement[] => {
+  return movements
+    .filter(m => m.productId === productId && m.container === container)
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+};
+
+// Agregar esta función al archivo existente movement.utils.ts
+export const getReasonLabel = (reason: string) => {
+  const reasonLabels: Record<string, string> = {
+    compra: 'Compra',
+    reposicion: 'Reposición',
+    'ajuste-positivo': 'Ajuste Positivo',
+    devolucion: 'Devolución',
+    'transferencia-entrada': 'Transferencia Entrada',
+    donacion: 'Donación',
+    'produccion-interna': 'Producción Interna',
+    venta: 'Venta',
+    perdida: 'Pérdida',
+    roto: 'Roto',
+    vencido: 'Vencido',
+    'ajuste-negativo': 'Ajuste Negativo',
+    'transferencia-salida': 'Transferencia Salida',
+    'consumo-interno': 'Consumo Interno',
+    merma: 'Merma',
+    degustacion: 'Degustación',
+  };
+  return reasonLabels[reason] || reason;
 };

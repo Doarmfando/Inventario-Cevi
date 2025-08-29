@@ -1,8 +1,8 @@
 // src/features/containers/index.ts
 
 // Componentes
-export { default as ContainersView } from './components/ContainersView';
-export { default as ContainerProductsView } from './components/ContainerProductsView';
+export { default as ContainersView } from './components/views/ContainersView';
+export { default as ContainerProductsView } from './components/views/ContainerProductsView';
 export { default as ContainerCard } from './components/ContainerCard.tsx';
 export { default as ContainerForm } from './components/ContainerForm.tsx';
 

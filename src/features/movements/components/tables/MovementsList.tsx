@@ -2,8 +2,8 @@
 
 import React from 'react';
 import { Eye, ArrowUp, ArrowDown, RotateCcw, Edit, Trash2 } from 'lucide-react';
-import type { Movement } from '../types/movement.types';
-import { formatMovementData, movementReasonOptions } from '../data/mockData';
+import type { Movement } from '../../types/movement.types';
+import { formatMovementData, movementReasonOptions } from '../../data/mockData';
 
 interface MovementsListProps {
   movements: Movement[];

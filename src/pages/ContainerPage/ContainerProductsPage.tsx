@@ -1,7 +1,7 @@
 // src/pages/ContainerProductsPage.tsx
 
 import React from "react";
-import ContainerProductsView from "../../features/containers/components/ContainerProductsView";
+import ContainerProductsView from "../../features/containers/components/views/ContainerProductsView";
 
 const ContainerProductsPage: React.FC = () => {
   return <ContainerProductsView />;

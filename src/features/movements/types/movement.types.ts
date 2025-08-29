@@ -1,4 +1,4 @@
-// src/features/movements/types/movement.types.ts - ACTUALIZADO SEGÚN REQUERIMIENTOS
+// src/features/movements/types/movement.types.ts - ACTUALIZADO
 
 export type MovementType = 'entrada' | 'salida' | 'ajuste';
 export type MovementState = 'pending' | 'completed' | 'cancelled' | 'all';
@@ -28,7 +28,6 @@ export type ExitReason =
 // UNIÓN DE TODOS LOS MOTIVOS
 export type MovementReason = EntryReason | ExitReason;
 
-// ⭐ NUEVO: Interface para el producto
 export interface Product {
   id: string;
   name: string;
@@ -38,8 +37,8 @@ export interface Product {
   maxStock: number;
   price: number;
   category: string;
-  container?: string; // Contenedor del producto
-  packagedUnits?: number; // Unidades empaquetadas
+  container?: string;
+  packagedUnits?: number;
   description?: string;
   barcode?: string;
   supplier?: string;
@@ -54,72 +53,72 @@ export interface Movement {
   productId: string;
   productName: string;
   productCode?: string;
-  container: string; // ⭐ NUEVO: Contenedor del producto
+  container: string;
   type: MovementType;
   quantity: number;
-  packagedUnits: number; // ⭐ NUEVO: Cantidad de empaquetados afectados
+  packagedUnits: number;
   previousStock: number;
   newStock: number;
-  unitPrice?: number; // Precio unitario del movimiento (puede diferir del inventario)
+  unitPrice?: number;
   totalValue?: number;
-  reason: MovementReason; // ⭐ ACTUALIZADO: Motivo seleccionable
-  observations?: string; // ⭐ NUEVO: Campo de observaciones
+  reason: MovementReason;
+  observations?: string;
   documentNumber?: string;
   createdBy: string;
   createdAt: Date;
   updatedAt?: Date;
-  expiryDate?: string; // ⭐ NUEVO: Fecha de vencimiento
-  state?: MovementState; // ⭐ NUEVO: Estado del movimiento
+  expiryDate?: string;
+  state?: MovementState;
 }
 
+// ⭐ ACTUALIZADO: MovementFormData con selectedContainer
 export interface MovementFormData {
   productId: string;
   type: MovementType;
   quantity: number;
-  packagedUnits: number; // ⭐ NUEVO: Empaquetados a afectar
-  reason: MovementReason; // ⭐ ACTUALIZADO: Motivo seleccionable
-  observations?: string; // ⭐ NUEVO: Observaciones
+  packagedUnits: number;
+  reason: MovementReason;
+  observations?: string;
   documentNumber?: string;
   unitPrice?: number;
-  expiryDate?: string; // ⭐ NUEVO: Fecha de vencimiento
-  state?: MovementState; // ⭐ NUEVO: Estado del movimiento
+  selectedContainer?: string; // ⭐ NUEVO: Contenedor seleccionado por el usuario
+  container?: string; // Para mantener compatibilidad
+  expiryDate?: string;
+  state?: MovementState;
 }
 
 export interface MovementFilters {
   type?: MovementType | 'all';
   productId?: string;
-  container?: string; // ⭐ NUEVO: Filtro por contenedor
-  reason?: MovementReason | 'all'; // ⭐ ACTUALIZADO: Filtro por motivo
+  container?: string;
+  reason?: MovementReason | 'all';
   dateFrom?: string;
   dateTo?: string;
   createdBy?: string;
-  searchTerm?: string; // ⭐ NUEVO: Búsqueda general
-  state?: MovementState; // ⭐ NUEVO: Filtro por estado
-  expiryFrom?: string; // ⭐ NUEVO: Filtro por fecha de vencimiento desde
-  expiryTo?: string; // ⭐ NUEVO: Filtro por fecha de vencimiento hasta
+  searchTerm?: string;
+  state?: MovementState;
+  expiryFrom?: string;
+  expiryTo?: string;
 }
 
 export interface KardexEntry extends Movement {
   runningBalance: number;
-  runningPackagedBalance: number; // ⭐ NUEVO: Balance acumulado de empaquetados
+  runningPackagedBalance: number;
 }
 
-// ⭐ NUEVO: Interface para mostrar datos calculados en la tabla
 export interface MovementWithCalculatedData extends Movement {
-  formattedDate: string; // Fecha formateada para mostrar
-  movementTypeLabel: string; // "Entrada" | "Salida" | "Ajuste"
-  reasonLabel: string; // Etiqueta del motivo en español
-  packagedText: string; // Texto formateado: "3 emp."
-  stockChange: string; // Cambio de stock: "+5" | "-3"
+  formattedDate: string;
+  movementTypeLabel: string;
+  reasonLabel: string;
+  packagedText: string;
+  stockChange: string;
 }
 
-// ⭐ NUEVO: Opciones para selects del formulario
 export interface MovementReasonOptions {
   entrada: Array<{ value: EntryReason; label: string }>;
   salida: Array<{ value: ExitReason; label: string }>;
 }
 
-// ⭐ NUEVO: Configuración de columnas para la tabla
 export interface MovementTableColumn {
   key: keyof MovementWithCalculatedData | 'actions';
   label: string;

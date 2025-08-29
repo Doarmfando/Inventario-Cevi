@@ -1,4 +1,4 @@
-// src/features/containers/components/ContainerProductsView.tsx
+// src/features/containers/components/views/ContainerProductsView.tsx
 
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -7,20 +7,16 @@ import {
   Plus, 
   Package, 
   Search, 
-  Filter,
-  Edit,
-  Trash2,
-  Calendar,
-  CheckCircle,
-  Clock,
-  XCircle,
-  Snowflake
+  Filter
 } from 'lucide-react';
-import type { ContainerProduct, Container, ProductFormData } from '../types/container.types';
-import type { InventoryProduct } from '../data/mockProductData';
-import { mockContainers, getContainerProducts, calculateProductState } from '../data/mockContainerData';
-import { mockInventoryProducts } from '../data/mockProductData';
-import ProductForm from './ProductForm';
+import type { ContainerProduct, Container, ProductFormData } from '../../types/container.types';
+import type { InventoryProduct } from '../../data/mockProductData';
+import { mockContainers, getContainerProducts } from '../../data/mockContainerData';
+import { mockInventoryProducts } from '../../data/mockProductData';
+import ProductForm from '../forms/ProductForm';
+import ProductsTable from '../tables/ProductsTable';
+import SummaryStats from '../ui/SummaryStats';
+import StatusBadge from '../shared/StatusBadge';
 
 const ContainerProductsView: React.FC = () => {
   const { containerId } = useParams<{ containerId: string }>();
@@ -110,7 +106,8 @@ const ContainerProductsView: React.FC = () => {
     // Determinar estado basado en fecha de vencimiento si no se especifica
     let finalState = formData.state;
     if (formData.expiryDate && inventoryProduct.isPerishable) {
-      finalState = calculateProductState(new Date(formData.expiryDate));
+      // Aquí podrías llamar a una función calculateProductState si existe
+      // finalState = calculateProductState(new Date(formData.expiryDate));
     }
 
     // Crear los registros de productos empaquetados
@@ -157,45 +154,6 @@ const ContainerProductsView: React.FC = () => {
       console.log('Producto eliminado:', productId);
       // TODO: Hacer llamada al backend para eliminar
     }
-  };
-
-  const getStateIcon = (state: string) => {
-    switch (state) {
-      case 'fresco':
-        return <CheckCircle className="w-4 h-4 text-green-500" />;
-      case 'congelado':
-        return <Snowflake className="w-4 h-4 text-blue-500" />;
-      case 'por-vencer':
-        return <Clock className="w-4 h-4 text-orange-500" />;
-      case 'vencido':
-        return <XCircle className="w-4 h-4 text-red-500" />;
-      default:
-        return <Package className="w-4 h-4 text-gray-500" />;
-    }
-  };
-
-  const getStateBadge = (state: string) => {
-    const badges = {
-      fresco: 'bg-green-100 text-green-800',
-      congelado: 'bg-blue-100 text-blue-800',
-      'por-vencer': 'bg-orange-100 text-orange-800',
-      vencido: 'bg-red-100 text-red-800',
-    };
-    return badges[state as keyof typeof badges] || 'bg-gray-100 text-gray-800';
-  };
-
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('es-PE', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    });
-  };
-
-  const calculateDaysToExpiry = (expiryDate: Date) => {
-    const now = new Date();
-    const diffTime = expiryDate.getTime() - now.getTime();
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   };
 
   if (!container) {
@@ -273,13 +231,7 @@ const ContainerProductsView: React.FC = () => {
             
             <div>
               <p className="text-sm text-gray-500">Estado</p>
-              <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                container.status === 'activo' ? 'bg-green-100 text-green-800' :
-                container.status === 'mantenimiento' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
-              }`}>
-                {container.status.charAt(0).toUpperCase() + container.status.slice(1)}
-              </span>
+              <StatusBadge status={container.status} />
             </div>
           </div>
         </div>
@@ -318,130 +270,14 @@ const ContainerProductsView: React.FC = () => {
         </div>
 
         {/* Products Table */}
-        <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
-          <div className="overflow-x-auto">
-            <table className="min-w-full divide-y divide-gray-200">
-              <thead className="bg-gray-50">
-                <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Producto
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Categoría
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Cantidad
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Empaquetado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Vencimiento
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Estado
-                  </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Precio
-                  </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Acciones
-                  </th>
-                </tr>
-              </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredProducts.map((product) => (
-                  <tr key={product.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center">
-                        <Package className="w-5 h-5 text-gray-400 mr-3" />
-                        <div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {product.productName}
-                          </div>
-                          <div className="text-sm text-gray-500">
-                            ID: {product.productId}
-                          </div>
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.category}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.totalQuantity} {product.unit}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div>
-                        <span className="font-medium">{product.packagedUnits}</span> empaquetados
-                      </div>
-                      <div className="text-xs text-gray-500">
-                        {product.quantityPerPackage} {product.unit} c/u
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      {product.expiryDate ? (
-                        <div>
-                          <div className="flex items-center space-x-1">
-                            <Calendar className="w-4 h-4 text-gray-400" />
-                            <span>{formatDate(product.expiryDate)}</span>
-                          </div>
-                          <div className="text-xs text-gray-500">
-                            {(() => {
-                              const days = calculateDaysToExpiry(product.expiryDate);
-                              if (days < 0) return `Vencido hace ${Math.abs(days)} días`;
-                              if (days === 0) return 'Vence hoy';
-                              return `${days} días restantes`;
-                            })()}
-                          </div>
-                        </div>
-                      ) : (
-                        <span className="text-gray-400">Sin fecha</span>
-                      )}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <div className="flex items-center space-x-2">
-                        {getStateIcon(product.state)}
-                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStateBadge(product.state)}`}>
-                          {product.state.charAt(0).toUpperCase() + product.state.slice(1).replace('-', ' ')}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div>
-                        <span className="font-medium">S/ {product.price.toFixed(2)}</span>
-                        <div className="text-xs text-gray-500">por {product.unit}</div>
-                      </div>
-                      <div className="text-xs text-green-600 font-medium">
-                        Total: S/ {(product.totalQuantity * product.price).toFixed(2)}
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex justify-end space-x-2">
-                        <button
-                          onClick={() => handleEditProduct(product.id)}
-                          className="text-blue-600 hover:text-blue-900 p-1"
-                          title="Editar producto"
-                        >
-                          <Edit className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteProduct(product.id)}
-                          className="text-red-600 hover:text-red-900 p-1"
-                          title="Eliminar producto"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-
-          {/* Empty State */}
-          {filteredProducts.length === 0 && (
+        {filteredProducts.length > 0 ? (
+          <ProductsTable
+            products={filteredProducts}
+            onEdit={handleEditProduct}
+            onDelete={handleDeleteProduct}
+          />
+        ) : (
+          <div className="bg-white rounded-lg shadow-sm border">
             <div className="text-center py-12">
               <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -473,37 +309,12 @@ const ContainerProductsView: React.FC = () => {
                 </button>
               )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
         {/* Summary Footer */}
         {filteredProducts.length > 0 && (
-          <div className="mt-6 bg-white rounded-lg shadow-sm border p-4">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{filteredProducts.length}</div>
-                <div className="text-sm text-gray-600">Productos mostrados</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">
-                  {filteredProducts.reduce((sum, p) => sum + p.packagedUnits, 0)}
-                </div>
-                <div className="text-sm text-gray-600">Total empaquetados</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">
-                  {filteredProducts.reduce((sum, p) => sum + p.totalQuantity, 0).toFixed(1)} kg
-                </div>
-                <div className="text-sm text-gray-600">Peso total</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-600">
-                  S/ {filteredProducts.reduce((sum, p) => sum + (p.totalQuantity * p.price), 0).toFixed(2)}
-                </div>
-                <div className="text-sm text-gray-600">Valor total</div>
-              </div>
-            </div>
-          </div>
+          <SummaryStats filteredProducts={filteredProducts} />
         )}
 
         {/* Product Form Modal */}

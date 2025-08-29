@@ -2,13 +2,15 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-import MovementsList from './MovementsList';
-import MovementForm from './MovementForm';
-import MovementFilters from './MovementFilters';
-import KardexModal from './KardexModal';
-import type { Movement, MovementFilters as Filters, MovementFormData, Product } from '../types/movement.types';
-import { mockMovements } from '../data/mockData';
-import { createMovement, applyMovementFilters, getLastMovementForProduct } from '../utils/movementUtils';
+// Update the import path to the correct location of MovementsList
+import MovementsList from '../tables/MovementsList';
+// Update the import path to the correct location of MovementForm
+import MovementForm from '../forms/MovementForm';
+import MovementFilters from '../tables/MovementFilters';
+import KardexModal from '../modals/KardexModal';
+import type { Movement, MovementFilters as Filters, MovementFormData, Product } from '../../types/movement.types';
+import { mockMovements } from '../../data/mockData';
+import { createMovement, applyMovementFilters, getLastMovementForProduct } from '../../utils/movementUtils';
 
 // Mock products data - puedes mover esto a mockData.ts más tarde
 const mockProducts: Product[] = [

@@ -2,8 +2,8 @@
 
 import React, { useState } from 'react';
 import { Filter, X, MapPin, Plus, Search, Clock } from 'lucide-react';
-import type { MovementFilters as Filters, MovementReason } from '../types/movement.types';
-import { availableProducts, movementReasonOptions } from '../data/mockData';
+import type { MovementFilters as Filters, MovementReason } from '../../types/movement.types';
+import { availableProducts, movementReasonOptions } from '../../data/mockData';
 
 interface MovementFiltersProps {
   onFilter: (filters: Filters) => void;
