@@ -21,15 +21,13 @@
   <div class="max-w-md mx-auto text-center p-8 fade-in">
     <div class="mb-8">
       <lottie-player
-        id="lottie-animation"
+        src="https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json"
         background="transparent"
         speed="1"
         style="width: 250px; height: 250px; margin: auto;"
         loop
         autoplay
       ></lottie-player>
-      <!-- Mensaje de debug -->
-      <p id="debug-message" class="text-xs text-gray-400 mt-2"></p>
     </div>
     <div class="mb-8">
       <p class="text-gray-600 text-lg mb-6">
@@ -53,155 +51,11 @@
     </div>
   </div>
   <script>
-    // Detectar el entorno y configurar URLs
-    function getEnvironmentConfig() {
-      const hostname = window.location.hostname;
-      const protocol = window.location.protocol;
-      const pathname = window.location.pathname;
-      
-      // Archivo local (file://)
-      if (protocol === 'file:') {
-        return {
-          environment: 'local_file',
-          homeUrl: 'https://doarmfando.github.io/Inventario-Cevi/',
-          animationPaths: [
-            './404.json',                    // Mismo directorio
-            '../404.json',                   // Directorio padre
-            '404.json',                      // Relativo simple
-            'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json', // Chef cocinando online
-            'https://assets1.lottiefiles.com/packages/lf20_mjlh3hcy.json', // Plato de comida online
-            'https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json'  // Original online
-          ]
-        };
-      }
-      
-      // GitHub Pages
-      if (hostname.includes('github.io') || hostname.includes('githubusercontent.com')) {
-        return {
-          environment: 'github_pages',
-          homeUrl: 'https://doarmfando.github.io/Inventario-Cevi/',
-          animationPaths: [
-            '/Inventario-Cevi/404.json',     // GitHub Pages con base path
-            './404.json',                    // Relativo
-            '404.json',                      // Simple
-            'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json', // Chef cocinando online
-            'https://assets1.lottiefiles.com/packages/lf20_mjlh3hcy.json', // Plato de comida online
-            'https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json'  // Original online
-          ]
-        };
-      }
-      
-      // Desarrollo local (localhost)
-      if (hostname === 'localhost' || hostname === '127.0.0.1') {
-        return {
-          environment: 'local_dev',
-          homeUrl: window.location.origin,
-          animationPaths: [
-            '/404.json',                     // Desde raíz Vite
-            './404.json',                    // Relativo
-            '404.json',                      // Simple
-            'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json', // Chef cocinando online
-            'https://assets1.lottiefiles.com/packages/lf20_mjlh3hcy.json', // Plato de comida online
-            'https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json'  // Original online
-          ]
-        };
-      }
-      
-      // Otros servidores (fallback)
-      return {
-        environment: 'other',
-        homeUrl: window.location.origin,
-        animationPaths: [
-          './404.json',
-          '404.json',
-          'https://assets2.lottiefiles.com/packages/lf20_jcikwtux.json',
-          'https://assets1.lottiefiles.com/packages/lf20_mjlh3hcy.json',
-          'https://assets2.lottiefiles.com/packages/lf20_t9gkkhz4.json'
-        ]
-      };
-    }
-    
-    const config = getEnvironmentConfig();
-    
-    // Función para cargar animación
-    function loadAnimation() {
-      const player = document.getElementById('lottie-animation');
-      const debugMessage = document.getElementById('debug-message');
-      
-      debugMessage.textContent = `🌐 Entorno: ${config.environment}`;
-      debugMessage.style.color = '#6b7280';
-      
-      let currentIndex = 0;
-      let hasLoaded = false;
-      
-      function tryNextPath() {
-        if (currentIndex >= config.animationPaths.length || hasLoaded) {
-          if (!hasLoaded) {
-            debugMessage.textContent = `❌ No se pudo cargar animación (${config.environment})`;
-            debugMessage.style.color = '#ef4444';
-          }
-          return;
-        }
-        
-        const currentPath = config.animationPaths[currentIndex];
-        const isOnline = currentPath.startsWith('http');
-        
-        debugMessage.textContent = `🔄 [${config.environment}] Cargando: ${isOnline ? 'online' : currentPath}`;
-        debugMessage.style.color = '#6b7280';
-        
-        // Timeout más largo para archivos locales
-        const timeoutDuration = isOnline ? 3000 : 1000;
-        const timeout = setTimeout(() => {
-          if (!hasLoaded) {
-            currentIndex++;
-            tryNextPath();
-          }
-        }, timeoutDuration);
-        
-        player.src = currentPath;
-        
-        const onReady = () => {
-          clearTimeout(timeout);
-          hasLoaded = true;
-          debugMessage.textContent = `✅ [${config.environment}] Cargado: ${isOnline ? 'online' : 'local'}`;
-          debugMessage.style.color = '#10b981';
-          setTimeout(() => {
-            debugMessage.style.display = 'none';
-          }, 3000);
-          player.removeEventListener('ready', onReady);
-        };
-        
-        const onError = () => {
-          clearTimeout(timeout);
-          if (!hasLoaded) {
-            debugMessage.textContent = `❌ Error: ${isOnline ? 'online' : currentPath}`;
-            debugMessage.style.color = '#ef4444';
-            currentIndex++;
-            setTimeout(() => tryNextPath(), 200);
-          }
-          player.removeEventListener('error', onError);
-        };
-        
-        player.addEventListener('ready', onReady, { once: true });
-        player.addEventListener('error', onError, { once: true });
-      }
-      
-      tryNextPath();
-    }
-    
+    const HOME_URL = 'https://doarmfando.github.io/Inventario-Cevi/';
+    const REDIRECT_DELAY = 5000;
     function redirectToHome() {
-      // En archivo local, abrir en nueva pestaña para evitar problemas
-      if (config.environment === 'local_file') {
-        window.open(config.homeUrl, '_blank');
-      } else {
-        window.location.href = config.homeUrl;
-      }
+      window.location.href = HOME_URL;
     }
-    
-    // Inicializar cuando cargue la página
-    window.addEventListener('load', loadAnimation);
-    
-    // Sistema de countdown
     let countdown = 5;
     const countdownElement = document.getElementById('countdown');
     const timer = setInterval(() => {
@@ -212,11 +66,9 @@
         redirectToHome();
       }
     }, 1000);
-    
-    // Timeout de seguridad para redirección
     setTimeout(() => {
       redirectToHome();
-    }, 5000);
+    }, REDIRECT_DELAY);
   </script>
 </body>
 </html>
