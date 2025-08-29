@@ -105,10 +105,10 @@ const MovementsList: React.FC<MovementsListProps> = ({
                 Cantidad
               </th>
               
-              {/* Empaquetado */}
+              {/* Empaquetado
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Empaquetado
-              </th>
+              </th> */}
               
               {/* Stock Anterior */}
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -190,13 +190,13 @@ const MovementsList: React.FC<MovementsListProps> = ({
                     </span>
                   </td>
                   
-                  {/* Empaquetado */}
+                  {/* Empaquetado
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span className="text-sm text-gray-900">
                       {formattedMovement.packagedText}
                     </span>
                   </td>
-                  
+                   */}
                   {/* Stock Anterior */}
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     {movement.previousStock}

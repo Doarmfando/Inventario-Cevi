@@ -2,6 +2,178 @@
 
 import type { Product } from "../../types";
 
+export interface InventoryProduct {
+  id: string;
+  name: string;
+  category: string;
+  basePrice: number;
+  unit: string;
+  description?: string;
+  minStock?: number;
+  maxStock?: number;
+  isPerishable: boolean;
+  recommendedContainerTypes: string[];
+  createdAt: Date;
+}
+
+// Productos base del inventario (catálogo completo)
+export const mockInventoryProducts: InventoryProduct[] = [
+  // PESCADOS
+  {
+    id: '1',
+    name: 'Lenguado Filetes',
+    category: 'Pescados',
+    basePrice: 28.50,
+    unit: 'kg',
+    description: 'Filetes frescos de lenguado para ceviche y jalea',
+    minStock: 5,
+    isPerishable: true,
+    recommendedContainerTypes: ['congelador', 'frigider'],
+    createdAt: new Date('2024-01-01'),
+  },
+  {
+    id: '10',
+    name: 'Corvina Entera',
+    category: 'Pescados',
+    basePrice: 22.00,
+    unit: 'kg',
+    description: 'Corvina fresca entera para diversos platos',
+    minStock: 3,
+    isPerishable: true,
+    recommendedContainerTypes: ['congelador', 'frigider'],
+    createdAt: new Date('2024-01-02'),
+  },
+
+  // MARISCOS
+  {
+    id: '2',
+    name: 'Pulpo',
+    category: 'Mariscos',
+    basePrice: 45.00,
+    unit: 'kg',
+    description: 'Pulpo fresco del norte, duración 1 mes congelado',
+    minStock: 3,
+    isPerishable: true,
+    recommendedContainerTypes: ['congelador'],
+    createdAt: new Date('2024-01-04'),
+  },
+  {
+    id: '5',
+    name: 'Langostinos',
+    category: 'Mariscos',
+    basePrice: 35.00,
+    unit: 'kg',
+    description: 'Langostinos frescos grandes para platos especiales',
+    minStock: 4,
+    isPerishable: true,
+    recommendedContainerTypes: ['congelador'],
+    createdAt: new Date('2024-01-05'),
+  },
+  {
+    id: '9',
+    name: 'Camarones',
+    category: 'Mariscos',
+    basePrice: 42.00,
+    unit: 'kg',
+    description: 'Camarones medianos frescos, refrigeración 1 semana',
+    minStock: 3,
+    isPerishable: true,
+    recommendedContainerTypes: ['congelador'],
+    createdAt: new Date('2024-01-06'),
+  },
+
+  // VERDURAS Y TUBÉRCULOS
+  {
+    id: '3',
+    name: 'Yuca',
+    category: 'Verduras',
+    basePrice: 3.50,
+    unit: 'kg',
+    description: 'Yuca fresca pelada, se compra los jueves y se divide en bolsas de 1kg',
+    minStock: 10,
+    isPerishable: true,
+    recommendedContainerTypes: ['frigider'],
+    createdAt: new Date('2024-01-20'),
+  },
+  {
+    id: '11',
+    name: 'Camotes',
+    category: 'Verduras',
+    basePrice: 2.80,
+    unit: 'kg',
+    description: 'Camotes frescos naranjas',
+    minStock: 8,
+    isPerishable: true,
+    recommendedContainerTypes: ['frigider'],
+    createdAt: new Date('2024-01-22'),
+  },
+
+  // CONDIMENTOS
+  {
+    id: '4',
+    name: 'Rocoto',
+    category: 'Condimentos',
+    basePrice: 8.00,
+    unit: 'kg',
+    description: 'Rocoto rojo fresco para rocoto relleno',
+    minStock: 2,
+    isPerishable: true,
+    recommendedContainerTypes: ['frigider'],
+    createdAt: new Date('2024-01-25'),
+  },
+  {
+    id: '7',
+    name: 'Limones',
+    category: 'Condimentos',
+    basePrice: 2.80,
+    unit: 'kg',
+    description: 'Limones frescos para ceviche y causa',
+    minStock: 15,
+    isPerishable: true,
+    recommendedContainerTypes: ['frigider'],
+    createdAt: new Date('2024-01-18'),
+  },
+  {
+    id: '22',
+    name: 'Ají Amarillo',
+    category: 'Condimentos',
+    basePrice: 6.50,
+    unit: 'kg',
+    description: 'Ají amarillo fresco para causa y aderezos',
+    minStock: 5,
+    isPerishable: true,
+    recommendedContainerTypes: ['frigider'],
+    createdAt: new Date('2024-01-19'),
+  },
+
+  // INSUMOS SECOS
+  {
+    id: '6',
+    name: 'Aceite Vegetal',
+    category: 'Insumos',
+    basePrice: 4.20,
+    unit: 'litro',
+    description: 'Aceite vegetal para cocina - uso extremo controlado',
+    minStock: 8,
+    isPerishable: false,
+    recommendedContainerTypes: ['almacen-seco'],
+    createdAt: new Date('2024-02-03'),
+  },
+  {
+    id: '8',
+    name: 'Cancha Serrana',
+    category: 'Verduras',
+    basePrice: 4.50,
+    unit: 'kg',
+    description: 'Cancha serrana - mezcla de diente de burro, cacho y blanca',
+    minStock: 8,
+    isPerishable: false,
+    recommendedContainerTypes: ['almacen-seco'],
+    createdAt: new Date('2024-02-04'),
+  },
+];
+
+// Productos activos en el inventario (con stock y estado actual)
 export const mockProducts: Product[] = [
   {
     id: 1,
@@ -201,8 +373,30 @@ export const mockProducts: Product[] = [
     state: 'congelado',
     lastUpdated: '2025-08-19'
   },
-  {
+    {
     id: 10,
+    name: 'Coca-Cola',
+    container: 'Refri 1 - Bebidas',
+    category: 'Mariscos',
+    unit: 'kg',
+    quantity: 20, // Stock Total: 20kg
+    price: 42.00, // PRECIO ESTIMADO
+    realPrice: 45.50, // PRECIO REAL
+    minStock: 3,
+    supplier: 'Coca-Cola S.A.',
+    expiryDate: '2025-09-15',
+    estimatedDaysToExpiry: 27,
+    // Empaquetado gastronómico
+    packagedUnits: 6, // 6 empaquetados
+    weightPerPackage: 2, // 2kg cada empaquetado = 12kg empaquetados
+    packagedExpiryDays: 27, // Congelado, no por vencer
+    nearExpiryPackages: 0,
+    entryDate: '2025-08-18',
+    state: 'fresco',
+    lastUpdated: '2025-08-19'
+  },
+  {
+    id: 11,
     name: 'Ají Amarillo',
     container: 'Frigider 1 - Causa',
     category: 'Condimentos',
@@ -224,6 +418,7 @@ export const mockProducts: Product[] = [
     lastUpdated: '2025-08-19'
   }
 ];
+
 
 // Función para calcular empaquetados por vencer según reglas gastronómicas
 export const calculateNearExpiryPackages = (
@@ -267,4 +462,54 @@ export const formatPackagedText = (units: number, weightPerPackage: number): str
   if (units === 0) return "0 emp.";
   const totalWeight = units * weightPerPackage;
   return `${units} emp. (${totalWeight}kg)`;
+};
+
+// Función para obtener productos recomendados según el tipo de contenedor
+export const getRecommendedProducts = (containerType: string): InventoryProduct[] => {
+  return mockInventoryProducts.filter(product => 
+    product.recommendedContainerTypes.includes(containerType)
+  );
+};
+
+// Función para buscar productos por categoría
+export const getProductsByCategory = (category: string): InventoryProduct[] => {
+  return mockInventoryProducts.filter(product => 
+    product.category.toLowerCase().includes(category.toLowerCase())
+  );
+};
+
+// Función para buscar productos por nombre
+export const searchProducts = (searchTerm: string): InventoryProduct[] => {
+  const term = searchTerm.toLowerCase();
+  return mockInventoryProducts.filter(product => 
+    product.name.toLowerCase().includes(term) ||
+    product.category.toLowerCase().includes(term)
+  );
+};
+
+// Función para obtener todas las categorías
+export const getCategories = (): string[] => {
+  const categories = mockInventoryProducts.map(product => product.category);
+  return [...new Set(categories)].sort();
+};
+
+// Función para obtener productos por contenedor específico
+export const getProductsByContainer = (containerName: string): InventoryProduct[] => {
+  const containerMapping: { [key: string]: string[] } = {
+    'Frigider 2 - Pescado': ['Pescados'],
+    'Congelador 2': ['Mariscos'],
+    'Frigider 3 - Yuca': ['Verduras'],
+    'Frigider 4 - Mariscos': ['Condimentos'],
+    'Congelador 1': ['Mariscos'],
+    'Almacén Seco': ['Insumos', 'Verduras'],
+    'Frigider 1 - Causa': ['Condimentos'],
+    'Congelador 3': ['Mariscos']
+  };
+
+  const categories = containerMapping[containerName] || [];
+  return mockInventoryProducts.filter(product => 
+    categories.some(category => 
+      product.category.toLowerCase().includes(category.toLowerCase())
+    )
+  );
 };
