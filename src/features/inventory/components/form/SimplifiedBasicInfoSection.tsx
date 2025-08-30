@@ -1,4 +1,4 @@
-// form/SimplifiedBasicInfoSection.tsx - CON CONTENEDORES RECOMENDADOS
+// form/SimplifiedBasicInfoSection.tsx - ACTUALIZADO CON 6 CONTENEDORES
 import React from "react";
 import { Package, DollarSign, Scale, AlertTriangle, MapPin, CheckSquare } from "lucide-react";
 import FormField from "./FormField";
@@ -34,17 +34,16 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
     'kg', 'bolsa', 'litro', 'unidad', 'cubeta', 'atado', 'caja'
   ];
 
-  const containers: Container[] = [
-    'Frigider 1 - Causa',
-    'Frigider 2 - Pescado',
-    'Frigider 3 - Yuca',
-    'Frigider 4 - Mariscos',
-    'Congelador 1',
-    'Congelador 2',
-    'Congelador 3',
-    'Congelador 4',
+  // CONTENEDORES ACTUALIZADOS - 6 CONTENEDORES SEGÚN IMAGEN 2
+  const containers = [
+    'Congelador 1 - Pescado',
+    'Congelador 2 - Mariscos',
+    'Congelador 3 - Causas',
+    'Congelador 4 - Verduras',
+    'Refrigerador 5 - Gaseosas',
+    'Refrigerador 6 - Cervezas',
     'Almacén Seco'
-  ];
+  ] as const;
 
   // Contenedores recomendados por categoría
   const recommendedContainers = CONTAINER_RECOMMENDATIONS[form.category] || [];

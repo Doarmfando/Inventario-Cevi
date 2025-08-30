@@ -1,4 +1,4 @@
-// types/index.ts - ACTUALIZADO CON CONTENEDORES RECOMENDADOS
+// types/index.ts - ACTUALIZADO CON 6 CONTENEDORES SEGÚN IMAGEN 2
 
 export interface Product {
   id: number;
@@ -79,26 +79,24 @@ export type ProductUnit =
   | 'atado' 
   | 'caja';
 
-// Contenedores según la imagen y tus comentarios
+// CONTENEDORES ACTUALIZADOS - 6 CONTENEDORES SEGÚN IMAGEN 2
 export type Container = 
-  | 'Frigider 1 - Causa'
-  | 'Frigider 2 - Pescado' 
-  | 'Frigider 3 - Yuca'
-  | 'Frigider 4 - Mariscos'
-  | 'Congelador 1'
-  | 'Congelador 2' 
-  | 'Congelador 3'
-  | 'Congelador 4'
+  | 'Congelador 1 - Pescado'
+  | 'Congelador 2 - Mariscos' 
+  | 'Congelador 3 - Causas'
+  | 'Congelador 4 - Verduras'
+  | 'Refrigerador 5 - Gaseosas'
+  | 'Refrigerador 6 - Cervezas'
   | 'Almacén Seco';
 
-// NUEVO: Recomendaciones de contenedores por categoría
+// NUEVO: Recomendaciones de contenedores por categoría - ACTUALIZADO
 export const CONTAINER_RECOMMENDATIONS: Record<ProductCategory, Container[]> = {
-  'Pescados': ['Frigider 2 - Pescado', 'Congelador 1', 'Congelador 2'],
-  'Mariscos': ['Frigider 4 - Mariscos', 'Congelador 3', 'Congelador 4'],
-  'Verduras': ['Frigider 1 - Causa', 'Frigider 3 - Yuca'],
-  'Condimentos': ['Almacén Seco', 'Frigider 1 - Causa'],
-  'Insumos': ['Almacén Seco', 'Congelador 1'],
-  'Suministros': ['Almacén Seco']
+  'Pescados': ['Congelador 1 - Pescado'],
+  'Mariscos': ['Congelador 2 - Mariscos'],
+  'Verduras': ['Congelador 4 - Verduras', 'Congelador 3 - Causas'],
+  'Condimentos': ['Congelador 3 - Causas', 'Almacén Seco'],
+  'Insumos': ['Almacén Seco'],
+  'Suministros': ['Refrigerador 5 - Gaseosas', 'Refrigerador 6 - Cervezas', 'Almacén Seco']
 };
 
 // Filtros para la tabla
