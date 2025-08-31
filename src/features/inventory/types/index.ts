@@ -15,7 +15,7 @@ export type ProductCategory =
   | 'Bebidas'
   | 'Bebidas Alcohólicas'
   | 'Aceites'
-  | 'Granos'; // ✅ Agregado Granos
+  | 'Granos';
 
 export type ProductUnit = 
   | 'kg' 
@@ -24,7 +24,7 @@ export type ProductUnit =
   | 'botellas'
   | 'rollos'
   | 'paquetes'
-  | 'atados'; // ✅ Agregado atados
+  | 'atados';
 
 export type Container = 
   | 'Congelador 1 - Pescado'
@@ -64,6 +64,25 @@ export interface Product {
   lastUpdated: string;
 }
 
+// ✅ NUEVA INTERFACE PARA FORMULARIO CON CATEGORÍA OPCIONAL
+export interface NewProductForm {
+  name: string;
+  container: string; // Puede estar vacío inicialmente
+  category: ProductCategory | ""; // ✅ PERMITE VACÍO INICIAL
+  unit: ProductUnit;
+  quantity: number;
+  price: number;
+  realPrice?: number;
+  minStock: number;
+  supplier: string;
+  estimatedDaysToExpiry: number;
+  packagedUnits?: number;
+  weightPerPackage?: number;
+  packagedExpiryDays?: number;
+  state: 'fresco' | 'congelado';
+  recommendedContainers?: Container[];
+}
+
 export interface NewProduct {
   name: string;
   container: Container;
@@ -79,7 +98,7 @@ export interface NewProduct {
   weightPerPackage?: number;
   packagedExpiryDays?: number;
   state: 'fresco' | 'congelado';
-  recommendedContainers?: Container[]; // ✅ Para el formulario simplificado
+  recommendedContainers?: Container[];
 }
 
 export interface ProductWithCalculatedData extends Product {
@@ -156,7 +175,7 @@ export const CONTAINER_RECOMMENDATIONS: Record<ProductCategory, Container[]> = {
   'Bebidas': ['Refrigerador 5 - Gaseosas'],
   'Bebidas Alcohólicas': ['Refrigerador 6 - Cervezas', 'Almacén Seco'], 
   'Aceites': ['Almacén Seco'],
-  'Granos': ['Almacén Seco'] // ✅ Agregado para que funcione la comparación
+  'Granos': ['Almacén Seco']
 };
 
 // ===============================

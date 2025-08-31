@@ -10,12 +10,13 @@ interface Props {
 }
 
 const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
+  // ✅ CORREGIDO - INICIALIZACIÓN COMPLETAMENTE VACÍA
   const [form, setForm] = useState({
     name: "",
-    category: "Pescados" as ProductCategory,
-    container: "Congelador 1 - Pescado" as Container, // ✅ inicializar con un valor válido
+    category: "" as ProductCategory | "", // ✅ VACÍO INICIAL
+    container: "", // ✅ VACÍO INICIAL - no preseleccionado
     recommendedContainers: [] as Container[],
-    unit: "kg" as ProductUnit, // ✅ usar ProductUnit
+    unit: "kg" as ProductUnit, // Solo este puede tener valor por defecto
     minStock: 0,
     price: 0,
   });
@@ -42,6 +43,7 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
     const newErrors: Record<string, string> = {};
 
     if (!form.name.trim()) newErrors.name = "El nombre es requerido";
+    if (!form.category) newErrors.category = "Debes seleccionar una categoría"; // ✅ VALIDACIÓN CATEGORÍA
     if (!form.container.trim()) newErrors.container = "El contenedor es requerido";
     if (form.price <= 0) newErrors.price = "El precio debe ser mayor a 0";
     if (form.minStock < 0) newErrors.minStock = "El stock mínimo no puede ser negativo";
@@ -56,6 +58,8 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
     if (validateForm()) {
       const productData: NewProduct = {
         ...form,
+        category: form.category as ProductCategory, // ✅ CAST SEGURO DESPUÉS DE VALIDACIÓN
+        container: form.container as Container, // ✅ CAST SEGURO DESPUÉS DE VALIDACIÓN
         quantity: 0,
         supplier: "",
         estimatedDaysToExpiry: 0,

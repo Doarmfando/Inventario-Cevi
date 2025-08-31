@@ -1,6 +1,6 @@
-// table/ProductTableRow.tsx - OPTIMIZADA PARA PANTALLA COMPLETA
+// table/ProductTableRow.tsx - OPTIMIZADA PARA PANTALLA COMPLETA (SIN ICONOS DE AVISO)
 import React from "react";
-import { Eye, Edit3, Trash2, AlertTriangle, Clock } from "lucide-react";
+import { Eye, Edit3, Trash2 } from "lucide-react";
 import type { ProductWithCalculatedData, StockStatus } from "../../types";
 
 interface ProductTableRowProps {
@@ -25,18 +25,6 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
       case 'Stock OK': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
-  };
-
-  // Función para obtener icono de urgencia
-  const getUrgencyIcon = () => {
-    const isLowStock = ['Sin Stock', 'Stock Bajo'].includes(product.stockStatus);
-    const isExpiring = product.estimatedDaysToExpiry <= 3 || product.state === 'por-vencer';
-    const isExpired = product.estimatedDaysToExpiry <= 0 || product.state === 'vencido';
-
-    if (isExpired) return <AlertTriangle className="w-3 h-3 text-red-500" />;
-    if (isExpiring || isLowStock) return <AlertTriangle className="w-3 h-3 text-yellow-500" />;
-    if (product.estimatedDaysToExpiry <= 7) return <Clock className="w-3 h-3 text-blue-500" />;
-    return null;
   };
 
   // Función para obtener clase de la fila según urgencia
@@ -85,10 +73,6 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
               <div className="text-sm font-medium text-gray-900 truncate">
                 {product.name}
               </div>
-              {getUrgencyIcon()}
-            </div>
-            <div className="text-xs text-gray-500 truncate mt-0.5">
-              {product.supplier}
             </div>
             <div className="text-xs text-gray-400 mt-0.5">
               Mín: {product.minStock} {product.unit}
@@ -141,9 +125,6 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
             maximumFractionDigits: 0 
           })}
         </div>
-        <div className="text-xs text-gray-500">
-          {product.quantity} × S/ {product.price.toFixed(2)}
-        </div>
       </td>
 
       {/* 7. Empaquetados - 12% */}
@@ -151,15 +132,6 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         <div className="text-sm font-medium text-gray-900">
           {product.empaquetados || "0 emp."}
         </div>
-        <div className="text-xs text-gray-500">
-          {product.packagedUnits > 0 ? `${product.packagedWeight}kg` : "Sin emp."}
-        </div>
-        {/* Mostrar los que vencen en la misma celda */}
-        {product.nearExpiryPackages > 0 && (
-          <div className="text-xs text-orange-600 font-medium mt-0.5">
-            {product.porVencer || "0 vencen"}
-          </div>
-        )}
       </td>
       
       {/* 8. Acciones - 10% */}

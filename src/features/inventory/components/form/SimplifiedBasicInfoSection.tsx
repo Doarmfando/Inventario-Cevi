@@ -1,4 +1,4 @@
-// form/SimplifiedBasicInfoSection.tsx - CORREGIDO CON ESTRUCTURA CORRECTA
+// form/SimplifiedBasicInfoSection.tsx - CORREGIDO SIN SELECCIÓN INICIAL
 import React from "react";
 import { Package, DollarSign, Scale, AlertTriangle, MapPin, CheckSquare } from "lucide-react";
 import FormField from "./FormField";
@@ -8,7 +8,7 @@ import { CONTAINER_RECOMMENDATIONS } from "../../types";
 interface SimplifiedBasicInfoSectionProps {
   form: {
     name: string;
-    category: ProductCategory;
+    category: ProductCategory | ""; // ✅ PERMITE VACÍO INICIAL
     container: string;
     recommendedContainers: Container[];
     unit: ProductUnit;
@@ -63,9 +63,29 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
     'Almacén Seco'
   ] as const;
 
-  // Contenedores recomendados por categoría
-  const recommendedContainers = CONTAINER_RECOMMENDATIONS[form.category] || [];
-  const currentRecommended = form.recommendedContainers || recommendedContainers;
+  // ✅ SOLO MUESTRA RECOMENDACIONES SI HAY CATEGORÍA SELECCIONADA
+  const recommendedContainers = form.category ? (CONTAINER_RECOMMENDATIONS[form.category] || []) : [];
+  const currentRecommended = form.recommendedContainers || [];
+
+  // NUEVA FUNCIÓN: Manejo del cambio de categoría con reset de ubicación
+  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    // Primero actualiza la categoría
+    onChange("category")(e);
+    
+    // Luego resetea la ubicación principal para forzar nueva selección
+    const syntheticEvent = {
+      ...e,
+      target: {
+        ...e.target,
+        value: ''
+      }
+    } as React.ChangeEvent<HTMLSelectElement>;
+    
+    onChange("container")(syntheticEvent);
+    
+    // ✅ TAMBIÉN LIMPIA LOS CONTENEDORES RECOMENDADOS AL CAMBIAR CATEGORÍA
+    onRecommendedContainersChange([]);
+  };
 
   const handleContainerToggle = (container: Container) => {
     const updated = currentRecommended.includes(container)
@@ -83,8 +103,9 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
     onRecommendedContainersChange([]);
   };
 
-  // Función para mostrar recomendaciones por categoría - CORREGIDA
-  const getCategoryRecommendations = (category: ProductCategory): string => {
+  // ✅ FUNCIÓN CORREGIDA - MANEJA CATEGORÍA VACÍA
+  const getCategoryRecommendations = (category: ProductCategory | ""): string => {
+    if (!category) return "Selecciona una categoría primero";
     const recs = CONTAINER_RECOMMENDATIONS[category] || [];
     return recs.length > 0 ? recs.join(', ') : 'Almacén Seco';
   };
@@ -113,20 +134,27 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <FormField
           label="Categoría"
+          error={errors.category} // ✅ AGREGA VALIDACIÓN DE ERROR
           required
         >
           <select
             value={form.category}
-            onChange={onChange("category")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            onChange={handleCategoryChange}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+              errors.category ? 'border-red-300' : 'border-gray-300'
+            }`}
           >
+            <option value="">Seleccionar categoría</option> {/* ✅ OPCIÓN VACÍA */}
             {categories.map(category => (
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
-          <p className="text-xs text-blue-600 mt-1">
-            Sugerido: {getCategoryRecommendations(form.category)}
-          </p>
+          {/* ✅ SOLO MUESTRA SUGERENCIA SI HAY CATEGORÍA */}
+          {form.category && (
+            <p className="text-xs text-blue-600 mt-1">
+              Sugerido: {getCategoryRecommendations(form.category)}
+            </p>
+          )}
         </FormField>
 
         <FormField
@@ -141,8 +169,11 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
               errors.container ? 'border-red-300' : 'border-gray-300'
             }`}
+            disabled={!form.category} // ✅ DESHABILITADO SI NO HAY CATEGORÍA
           >
-            <option value="">Seleccionar ubicación principal</option>
+            <option value="">
+              {form.category ? "Seleccionar ubicación principal" : "Selecciona categoría primero"}
+            </option>
             {containers.map(container => (
               <option key={container} value={container}>{container}</option>
             ))}
@@ -213,105 +244,108 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
         </FormField>
       </div>
 
-      {/* Sección: Contenedores Recomendados - COMPACTA */}
-      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-sm font-medium text-gray-900 flex items-center">
-            <Package className="w-4 h-4 mr-2 text-purple-600" />
-            Contenedores para Distribución
-            <span className="text-xs font-normal text-gray-500 ml-2">(Opcional)</span>
-          </h3>
-          <div className="space-x-2">
-            <button
-              type="button"
-              onClick={selectAllRecommended}
-              className="text-xs text-purple-600 hover:text-purple-700 underline"
-            >
-              Sugeridos
-            </button>
-            <button
-              type="button"
-              onClick={clearAll}
-              className="text-xs text-gray-500 hover:text-gray-600 underline"
-            >
-              Limpiar
-            </button>
-          </div>
-        </div>
-
-        <p className="text-xs text-purple-700 mb-3">
-          Basado en "{form.category}", sugerimos: {getCategoryRecommendations(form.category)}.
-        </p>
-
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-          {containers.map(container => {
-            const isSelected = currentRecommended.includes(container);
-            const isRecommended = recommendedContainers.includes(container);
-            const isPrimary = form.container === container;
-            
-            return (
-              <div
-                key={container}
-                className={`relative flex items-center p-2 rounded border cursor-pointer transition-colors text-xs ${
-                  isPrimary 
-                    ? 'bg-green-100 border-green-300 cursor-not-allowed'
-                    : isSelected
-                      ? 'bg-purple-100 border-purple-300'
-                      : isRecommended
-                        ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
-                        : 'bg-white border-gray-200 hover:bg-gray-50'
-                }`}
-                onClick={() => !isPrimary && handleContainerToggle(container)}
+      {/* ✅ SECCIÓN DE CONTENEDORES SOLO SE MUESTRA SI HAY CATEGORÍA */}
+      {form.category && (
+        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+          <div className="flex items-center justify-between mb-3">
+            <h3 className="text-sm font-medium text-gray-900 flex items-center">
+              <Package className="w-4 h-4 mr-2 text-purple-600" />
+              Contenedores para Distribución
+              <span className="text-xs font-normal text-gray-500 ml-2">(Opcional)</span>
+            </h3>
+            <div className="space-x-2">
+              <button
+                type="button"
+                onClick={selectAllRecommended}
+                className="text-xs text-purple-600 hover:text-purple-700 underline"
+                disabled={recommendedContainers.length === 0}
               >
-                <CheckSquare 
-                  className={`w-3 h-3 mr-2 ${
-                    isPrimary
-                      ? 'text-green-600'
-                      : isSelected 
-                        ? 'text-purple-600' 
-                        : 'text-gray-400'
-                  }`}
-                  fill={isSelected || isPrimary ? "currentColor" : "none"}
-                />
-                <span className={`flex-1 ${
-                  isPrimary 
-                    ? 'text-green-800 font-medium'
-                    : isSelected 
-                      ? 'text-purple-800' 
-                      : 'text-gray-700'
-                }`}>
-                  {container}
-                </span>
-                
-                {isPrimary && (
-                  <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">P</span>
-                )}
-              </div>
-            );
-          })}
-        </div>
+                Sugeridos
+              </button>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="text-xs text-gray-500 hover:text-gray-600 underline"
+              >
+                Limpiar
+              </button>
+            </div>
+          </div>
 
-        {/* Ayuda contextual por categorías - CORREGIDA SIN CATEGORÍAS INEXISTENTES */}
-        <div className="mt-3 pt-3 border-t border-purple-200">
-          <div className="text-xs text-purple-600">
-            <strong>Ayuda por categoría:</strong>
-            <div className="mt-1 space-y-1">
-              {form.category === 'Pescados' && <p>• Pescados van principalmente al Congelador 1</p>}
-              {form.category === 'Mariscos' && <p>• Mariscos van principalmente al Congelador 2</p>}
-              {form.category === 'Causa' && <p>• La Causa preparada va específicamente al Congelador 3</p>}
-              {form.category === 'Bebidas' && <p>• Gaseosas van al Refrigerador 5</p>}
-              {form.category === 'Bebidas Alcohólicas' && <p>• Cervezas van al Refrigerador 6, vinos al Almacén Seco</p>}
-              {form.category === 'Tubérculos' && <p>• Papas para causa → Congelador 3, otros tubérculos → Congelador 4</p>}
-              {form.category === 'Cítricos' && <p>• Limones para causa van al Congelador 3</p>}
-              {form.category === 'Condimentos' && <p>• Frescos → Congelador 3 o 4, secos → Almacén Seco</p>}
-              {form.category === 'Verduras' && <p>• Verduras frescas van al Congelador 4</p>}
-              {(form.category === 'Aceites' || form.category === 'Granos') && 
-                <p>• Productos no perecederos van al Almacén Seco</p>
-              }
+          <p className="text-xs text-purple-700 mb-3">
+            Basado en "{form.category}", sugerimos: {getCategoryRecommendations(form.category)}.
+          </p>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+            {containers.map(container => {
+              const isSelected = currentRecommended.includes(container);
+              const isRecommended = recommendedContainers.includes(container);
+              const isPrimary = form.container === container;
+              
+              return (
+                <div
+                  key={container}
+                  className={`relative flex items-center p-2 rounded border cursor-pointer transition-colors text-xs ${
+                    isPrimary 
+                      ? 'bg-green-100 border-green-300 cursor-not-allowed'
+                      : isSelected
+                        ? 'bg-purple-100 border-purple-300'
+                        : isRecommended
+                          ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                          : 'bg-white border-gray-200 hover:bg-gray-50'
+                  }`}
+                  onClick={() => !isPrimary && handleContainerToggle(container)}
+                >
+                  <CheckSquare 
+                    className={`w-3 h-3 mr-2 ${
+                      isPrimary
+                        ? 'text-green-600'
+                        : isSelected 
+                          ? 'text-purple-600' 
+                          : 'text-gray-400'
+                    }`}
+                    fill={isSelected || isPrimary ? "currentColor" : "none"}
+                  />
+                  <span className={`flex-1 ${
+                    isPrimary 
+                      ? 'text-green-800 font-medium'
+                      : isSelected 
+                        ? 'text-purple-800' 
+                        : 'text-gray-700'
+                  }`}>
+                    {container}
+                  </span>
+                  
+                  {isPrimary && (
+                    <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">P</span>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Ayuda contextual por categorías */}
+          <div className="mt-3 pt-3 border-t border-purple-200">
+            <div className="text-xs text-purple-600">
+              <strong>Ayuda por categoría:</strong>
+              <div className="mt-1 space-y-1">
+                {form.category === 'Pescados' && <p>• Pescados van principalmente al Congelador 1</p>}
+                {form.category === 'Mariscos' && <p>• Mariscos van principalmente al Congelador 2</p>}
+                {form.category === 'Causa' && <p>• La Causa preparada va específicamente al Congelador 3</p>}
+                {form.category === 'Bebidas' && <p>• Gaseosas van al Refrigerador 5</p>}
+                {form.category === 'Bebidas Alcohólicas' && <p>• Cervezas van al Refrigerador 6, vinos al Almacén Seco</p>}
+                {form.category === 'Tubérculos' && <p>• Papas para causa → Congelador 3, otros tubérculos → Congelador 4</p>}
+                {form.category === 'Cítricos' && <p>• Limones para causa van al Congelador 3</p>}
+                {form.category === 'Condimentos' && <p>• Frescos → Congelador 3 o 4, secos → Almacén Seco</p>}
+                {form.category === 'Verduras' && <p>• Verduras frescas van al Congelador 4</p>}
+                {(form.category === 'Aceites' || form.category === 'Granos') && 
+                  <p>• Productos no perecederos van al Almacén Seco</p>
+                }
+              </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };
