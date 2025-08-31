@@ -1,6 +1,6 @@
 import React from "react";
-import { Search, Filter, Clock, Plus, Package } from "lucide-react";
-
+import { Search, Filter, Plus, Package } from "lucide-react";
+//  Clock,
 interface TableFiltersProps {
   searchTerm: string;
   setSearchTerm: (value: string) => void;
@@ -20,15 +20,15 @@ const TableFilters: React.FC<TableFiltersProps> = ({
   setSearchTerm,
   selectedCategory,
   setSelectedCategory,
-  selectedState,
-  setSelectedState,
+  // selectedState,
+  // setSelectedState,
   selectedContainer,
   setSelectedContainer,
   categories,
   containers,
   onAddProduct
 }) => {
-  const states = ['fresco', 'congelado', 'por-vencer', 'vencido'];
+  // const states = ['fresco', 'congelado', 'por-vencer', 'vencido'];
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -78,7 +78,7 @@ const TableFilters: React.FC<TableFiltersProps> = ({
             </div>
 
             {/* State Filter */}
-            <div className="relative min-w-[120px]">
+            {/* <div className="relative min-w-[120px]">
               <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
                 value={selectedState}
@@ -92,7 +92,7 @@ const TableFilters: React.FC<TableFiltersProps> = ({
                   </option>
                 ))}
               </select>
-            </div>
+            </div> */}
           </div>
         </div>
         
