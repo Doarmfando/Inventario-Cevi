@@ -9,7 +9,7 @@ interface FormActionsProps {
 
 const FormActions: React.FC<FormActionsProps> = ({ 
   onCancel, 
-  submitText = "Agregar Producto",
+  submitText = "Crear Producto",
   cancelText = "Cancelar"
 }) => {
   return (

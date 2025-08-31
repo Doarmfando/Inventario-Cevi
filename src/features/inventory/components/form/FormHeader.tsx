@@ -9,7 +9,7 @@ interface FormHeaderProps {
 
 const FormHeader: React.FC<FormHeaderProps> = ({ 
   onClose, 
-  title = "Agregar Producto",
+  title = "Crear Producto",
   subtitle = "Complete la información del nuevo producto"
 }) => {
   return (
