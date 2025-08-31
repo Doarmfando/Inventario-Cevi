@@ -1,4 +1,4 @@
-// src/features/containers/components/ProductForm.tsx
+// src/features/containers/components/forms/ProductForm.tsx
 
 import React, { useState, useEffect } from 'react';
 import { 
@@ -12,14 +12,14 @@ import {
   Scale,
   Tag,
   AlertCircle,
-  CheckCircle
+  CheckCircle,
+  
 } from 'lucide-react';
 import type { ProductFormData, Container } from '../../types/container.types';
 import type { InventoryProduct } from '../../data/mockProductData';
 import { 
   getRecommendedProducts, 
   searchProducts, 
-  getCategories 
 } from '../../data/mockProductData';
 
 interface ProductFormProps {
@@ -29,14 +29,68 @@ interface ProductFormProps {
   onCreateNewProduct?: (productData: Partial<InventoryProduct>) => void;
 }
 
+// Tipos para el formulario de nuevo producto - usando las mismas categorías de inventario
+type ProductCategory = 
+  | 'Pescados'
+  | 'Mariscos' 
+  | 'Causa'
+  | 'Tubérculos'
+  | 'Cítricos'
+  | 'Condimentos'
+  | 'Verduras'
+  | 'Bebidas'
+  | 'Bebidas Alcohólicas'
+  | 'Aceites'
+  | 'Granos'
+  | 'Harinas'
+  | 'Suministros'
+  | 'Limpieza';
+
+type ProductUnit = 
+  | 'kg' 
+  | 'porciones'
+  | 'litros'
+  | 'unidades'
+  | 'botellas'
+  | 'rollos'
+  | 'paquetes';
+
 interface NewProductData {
   name: string;
-  category: string;
+  category: ProductCategory;
   basePrice: number;
-  unit: string;
+  unit: ProductUnit;
   description: string;
   isPerishable: boolean;
 }
+
+// Componente FormField reutilizable
+interface FormFieldProps {
+  label: string;
+  error?: string;
+  required?: boolean;
+  icon?: typeof Package;
+  children: React.ReactNode;
+}
+
+const FormField: React.FC<FormFieldProps> = ({ 
+  label, 
+  error, 
+  required = false, 
+  icon: Icon,
+  children 
+}) => {
+  return (
+    <div>
+      <label className="block text-sm font-medium text-gray-700 mb-2">
+        {Icon && <Icon className="w-4 h-4 inline mr-1" />}
+        {label} {required && "*"}
+      </label>
+      {children}
+      {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
+    </div>
+  );
+};
 
 const ProductForm: React.FC<ProductFormProps> = ({
   container,
@@ -48,7 +102,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateProduct, setShowCreateProduct] = useState(false);
   const [filteredProducts, setFilteredProducts] = useState<InventoryProduct[]>([]);
-  const [categories] = useState<string[]>(getCategories());
   
   const [formData, setFormData] = useState<ProductFormData>({
     productId: '',
@@ -62,7 +115,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   const [newProductData, setNewProductData] = useState<NewProductData>({
     name: '',
-    category: '',
+    category: 'Pescados',
     basePrice: 0,
     unit: 'kg',
     description: '',
@@ -71,6 +124,34 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState<'select' | 'configure'>('select');
+
+  // Categorías y unidades como en el inventario
+  const categories: ProductCategory[] = [
+    'Pescados',
+    'Mariscos',
+    'Causa',
+    'Tubérculos',
+    'Cítricos',
+    'Condimentos',
+    'Verduras',
+    'Bebidas',
+    'Bebidas Alcohólicas',
+    'Aceites',
+    'Granos'
+    // 'Harinas',
+    // 'Suministros',
+    // 'Limpieza'
+  ];
+
+  const units: ProductUnit[] = [
+    'kg',
+    'porciones',
+    'litros',
+    'unidades',
+    'botellas',
+    'rollos',
+    'paquetes'
+  ];
 
   // Inicializar productos filtrados
   useEffect(() => {
@@ -106,34 +187,35 @@ const ProductForm: React.FC<ProductFormProps> = ({
     return 'fresco';
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    
-    if (showCreateProduct) {
-      const processedValue = ['basePrice'].includes(name) && value !== '' 
-        ? parseFloat(value) 
-        : name === 'isPerishable' ? value === 'true' : value;
+  const handleInputChange = (field: keyof NewProductData | keyof ProductFormData) => 
+    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+      const { value } = e.target;
       
-      setNewProductData(prev => ({
-        ...prev,
-        [name]: processedValue
-      }));
-    } else {
-      const processedValue = ['totalQuantity', 'packagedUnits', 'price'].includes(name) && value !== '' 
-        ? parseFloat(value) 
-        : value;
-      
-      setFormData(prev => ({
-        ...prev,
-        [name]: processedValue
-      }));
-    }
+      if (showCreateProduct) {
+        const processedValue = field === 'basePrice' && value !== '' 
+          ? parseFloat(value) 
+          : field === 'isPerishable' ? value === 'true' : value;
+        
+        setNewProductData(prev => ({
+          ...prev,
+          [field]: processedValue
+        }));
+      } else {
+        const processedValue = ['totalQuantity', 'packagedUnits', 'price'].includes(field as string) && value !== '' 
+          ? parseFloat(value) 
+          : value;
+        
+        setFormData(prev => ({
+          ...prev,
+          [field]: processedValue
+        }));
+      }
 
-    // Clear error when user starts typing
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
-  };
+      // Clear error when user starts typing
+      if (errors[field as string]) {
+        setErrors(prev => ({ ...prev, [field as string]: '' }));
+      }
+    };
 
   const calculateQuantityPerPackage = () => {
     if (formData.packagedUnits > 0 && formData.totalQuantity > 0) {
@@ -176,7 +258,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
       newErrors.name = 'El nombre es requerido';
     }
 
-    if (!newProductData.category.trim()) {
+    if (!newProductData.category) {
       newErrors.category = 'La categoría es requerida';
     }
 
@@ -202,7 +284,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
         // Reset form
         setNewProductData({
           name: '',
-          category: '',
+          category: 'Pescados',
           basePrice: 0,
           unit: 'kg',
           description: '',
@@ -225,6 +307,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
         productId: '',
         price: 0,
       }));
+    } else if (showCreateProduct) {
+      setShowCreateProduct(false);
     }
   };
 
@@ -239,11 +323,11 @@ const ProductForm: React.FC<ProductFormProps> = ({
             </div>
             <div>
               <h3 className="text-lg font-semibold text-gray-900">
-                {showCreateProduct ? 'Crear Nuevo Producto' : 'Agregar Producto al Contenedor'}
+                {showCreateProduct ? 'Registrar Producto' : 'Agregar Producto al Contenedor'}
               </h3>
               <p className="text-sm text-gray-500">
                 {showCreateProduct 
-                  ? 'Crea un nuevo producto para el inventario'
+                  ? 'Información básica del producto - Stock se llenará con movimientos'
                   : `${container.name} - ${step === 'select' ? 'Selecciona el producto' : 'Configura las cantidades'}`
                 }
               </p>
@@ -260,133 +344,121 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* Form Content */}
         <div className="mt-6">
           {showCreateProduct ? (
-            /* Create New Product Form */
+            /* Create New Product Form - Estilo SimplifiedBasicInfo */
             <form onSubmit={handleSubmit} className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nombre del Producto *
-                  </label>
-                  <input
-                    type="text"
-                    name="name"
-                    value={newProductData.name}
-                    onChange={handleInputChange}
-                    placeholder="Ej: Salmón Fresco"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.name ? 'border-red-500' : 'border-gray-300'
-                    }`}
-                  />
-                  {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
-                </div>
+              {/* Nombre del producto */}
+              <FormField
+                label="Nombre del Producto"
+                error={errors.name}
+                required
+              >
+                <input
+                  type="text"
+                  value={newProductData.name}
+                  onChange={handleInputChange("name")}
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                    errors.name ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="Ej: Lenguado filetes, Inca Kola, Aceite vegetal..."
+                  autoFocus
+                />
+              </FormField>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Categoría *
-                  </label>
+              {/* Categoría y Unidad en una fila */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <FormField
+                  label="Categoría"
+                  required
+                >
                   <select
-                    name="category"
                     value={newProductData.category}
-                    onChange={handleInputChange}
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                      errors.category ? 'border-red-500' : 'border-gray-300'
-                    }`}
+                    onChange={handleInputChange("category")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
-                    <option value="">Seleccionar categoría</option>
                     {categories.map(category => (
                       <option key={category} value={category}>{category}</option>
                     ))}
-                    <option value="nueva">Nueva categoría (escribir abajo)</option>
                   </select>
-                  {newProductData.category === 'nueva' && (
-                    <input
-                      type="text"
-                      name="category"
-                      value=""
-                      onChange={handleInputChange}
-                      placeholder="Escribir nueva categoría"
-                      className="w-full mt-2 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                    />
-                  )}
-                  {errors.category && <p className="mt-1 text-sm text-red-600">{errors.category}</p>}
-                </div>
+                </FormField>
 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Precio Unitario
-                  </label>
-                  <div className="relative">
-                    <DollarSign className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                    <input
-                      type="number"
-                      name="basePrice"
-                      value={newProductData.basePrice || ''}
-                      onChange={handleInputChange}
-                      placeholder="0.00"
-                      step="0.01"
-                      min="0"
-                      className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                        errors.basePrice ? 'border-red-500' : 'border-gray-300'
-                      }`}
-                    />
-                  </div>
-                  {errors.basePrice && <p className="mt-1 text-sm text-red-600">{errors.basePrice}</p>}
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Unidad de Medida
-                  </label>
+                <FormField
+                  label="Unidad de Medida"
+                  required
+                  icon={Scale}
+                >
                   <select
-                    name="unit"
                     value={newProductData.unit}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    onChange={handleInputChange("unit")}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                   >
-                    <option value="kg">Kilogramos (kg)</option>
-                    <option value="litros">Litros</option>
-                    <option value="unidades">Unidades</option>
-                    <option value="cajas">Cajas</option>
+                    {units.map(unit => (
+                      <option key={unit} value={unit}>{unit}</option>
+                    ))}
                   </select>
-                </div>
-{/* 
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    ¿Es Perecedero?
-                  </label>
-                  <select
-                    name="isPerishable"
-                    value={newProductData.isPerishable.toString()}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                  >
-                    <option value="true">Sí, es perecedero</option>
-                    <option value="false">No, no es perecedero</option>
-                  </select>
-                </div> */}
+                </FormField>
+              </div>
 
-                <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Descripción
-                  </label>
-                  <textarea
-                    name="description"
-                    value={newProductData.description}
-                    onChange={handleInputChange}
-                    rows={3}
-                    placeholder="Descripción del producto..."
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              {/* Precio Estimado */}
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <FormField
+                  label="Precio Unitario Estimado (S/)"
+                  error={errors.basePrice}
+                  required
+                  icon={DollarSign}
+                >
+                  <input
+                    type="number"
+                    value={newProductData.basePrice || ''}
+                    onChange={handleInputChange("basePrice")}
+                    min="0"
+                    step="0.01"
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                      errors.basePrice ? 'border-red-300' : 'border-gray-300'
+                    }`}
+                    placeholder="0.00"
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Este precio se usará para estimaciones. El precio real se actualizará con las compras.
+                  </p>
+                </FormField>
+              </div>
+
+              {/* Descripción */}
+              <FormField
+                label="Descripción"
+              >
+                <textarea
+                  value={newProductData.description}
+                  onChange={handleInputChange("description")}
+                  rows={3}
+                  placeholder="Descripción del producto..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                />
+              </FormField>
+
+              {/* Proceso simplificado - Info */}
+              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                <div className="flex items-start">
+                  <Package className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
+                  <div>
+                    <h4 className="text-sm font-medium text-blue-900 mb-2">Proceso simplificado:</h4>
+                    <ul className="text-xs text-blue-800 space-y-1">
+                      <li>• El <strong>stock</strong> iniciará en 0 y se llenará con movimientos/entradas</li>
+                      <li>• Los <strong>empaquetados</strong> se agregarán desde otras vistas</li>
+                      <li>• El <strong>precio real</strong> se actualizará con las compras</li>
+                      <li>• Los datos de <strong>vencimiento</strong> se calcularán automáticamente</li>
+                    </ul>
+                  </div>
                 </div>
               </div>
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                 <button
                   type="button"
-                  onClick={() => setShowCreateProduct(false)}
+                  onClick={handleBack}
                   className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                 >
-                  Cancelar
+                  ← Volver
                 </button>
                 <button
                   type="submit"
@@ -440,11 +512,6 @@ const ProductForm: React.FC<ProductFormProps> = ({
                             <p className="text-sm font-medium text-green-600 mt-1">
                               S/ {product.basePrice.toFixed(2)} / {product.unit}
                             </p>
-                            {product.isPerishable && (
-                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-800 mt-2">
-                                Perecedero
-                              </span>
-                            )}
                           </div>
                           <Package className="w-5 h-5 text-gray-400" />
                         </div>
@@ -490,17 +557,17 @@ const ProductForm: React.FC<ProductFormProps> = ({
 
                   {/* Configuration Form */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Scale className="w-4 h-4 inline mr-1" />
-                        Cantidad Total *
-                      </label>
+                    <FormField
+                      label="Cantidad Total"
+                      error={errors.totalQuantity}
+                      required
+                      icon={Scale}
+                    >
                       <div className="relative">
                         <input
                           type="number"
-                          name="totalQuantity"
                           value={formData.totalQuantity || ''}
-                          onChange={handleInputChange}
+                          onChange={handleInputChange("totalQuantity")}
                           placeholder="0"
                           step="0.01"
                           min="0"
@@ -512,27 +579,24 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           {selectedProduct.unit}
                         </span>
                       </div>
-                      {errors.totalQuantity && <p className="mt-1 text-sm text-red-600">{errors.totalQuantity}</p>}
-                    </div>
+                    </FormField>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Hash className="w-4 h-4 inline mr-1" />
-                        Número de Empaquetados *
-                      </label>
+                    <FormField
+                      label="Número de Empaquetados"
+                      error={errors.packagedUnits}
+                      required
+                      icon={Hash}
+                    >
                       <input
                         type="number"
-                        name="packagedUnits"
                         value={formData.packagedUnits || ''}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange("packagedUnits")}
                         placeholder="1"
                         min="1"
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
                           errors.packagedUnits ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
-                      {errors.packagedUnits && <p className="mt-1 text-sm text-red-600">{errors.packagedUnits}</p>}
-                      
                       {/* Auto-calculated quantity per package */}
                       {formData.totalQuantity > 0 && formData.packagedUnits > 0 && (
                         <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
@@ -542,18 +606,18 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           </span>
                         </div>
                       )}
-                    </div>
+                    </FormField>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <DollarSign className="w-4 h-4 inline mr-1" />
-                        Precio por {selectedProduct.unit} *
-                      </label>
+                    <FormField
+                      label={`Precio por ${selectedProduct.unit}`}
+                      error={errors.price}
+                      required
+                      icon={DollarSign}
+                    >
                       <input
                         type="number"
-                        name="price"
                         value={formData.price || ''}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange("price")}
                         placeholder="0.00"
                         step="0.01"
                         min="0"
@@ -561,64 +625,61 @@ const ProductForm: React.FC<ProductFormProps> = ({
                           errors.price ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
-                      {errors.price && <p className="mt-1 text-sm text-red-600">{errors.price}</p>}
-                      
                       {/* Total value calculation */}
                       {formData.totalQuantity > 0 && formData.price > 0 && (
                         <p className="mt-1 text-sm text-gray-600">
                           Valor total: <strong>S/ {(formData.totalQuantity * formData.price).toFixed(2)}</strong>
                         </p>
                       )}
-                    </div>
+                    </FormField>
 
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        <Tag className="w-4 h-4 inline mr-1" />
-                        Estado Inicial
-                      </label>
+                    <FormField
+                      label="Estado Inicial"
+                      icon={Tag}
+                    >
                       <select
-                        name="state"
                         value={formData.state}
-                        onChange={handleInputChange}
+                        onChange={handleInputChange("state")}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
                         <option value="fresco">Fresco</option>
                         <option value="congelado">Congelado</option>
                         <option value="por-vencer">Por vencer</option>
                       </select>
-                    </div>
+                    </FormField>
 
                     {selectedProduct.isPerishable && (
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
-                          <Calendar className="w-4 h-4 inline mr-1" />
-                          Fecha de Vencimiento *
-                        </label>
-                        <input
-                          type="date"
-                          name="expiryDate"
-                          value={formData.expiryDate}
-                          onChange={handleInputChange}
-                          min={new Date().toISOString().split('T')[0]}
-                          className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                            errors.expiryDate ? 'border-red-500' : 'border-gray-300'
-                          }`}
-                        />
-                        {errors.expiryDate && <p className="mt-1 text-sm text-red-600">{errors.expiryDate}</p>}
-                        
-                        <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                          <div className="flex items-start">
-                            <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
-                            <div className="text-sm text-amber-800">
-                              <p className="font-medium mb-1">Estados automáticos por vencimiento:</p>
-                              <ul className="text-xs space-y-0.5">
-                                <li>• <strong>Fresco:</strong> 15+ días para vencer</li>
-                                <li>• <strong>Por vencer:</strong> 10-15 días para vencer</li>
-                                <li>• <strong>Vencido:</strong> fecha pasada</li>
-                              </ul>
+                        <FormField
+                          label="Fecha de Vencimiento"
+                          error={errors.expiryDate}
+                          required
+                          icon={Calendar}
+                        >
+                          <input
+                            type="date"
+                            value={formData.expiryDate}
+                            onChange={handleInputChange("expiryDate")}
+                            min={new Date().toISOString().split('T')[0]}
+                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                              errors.expiryDate ? 'border-red-500' : 'border-gray-300'
+                            }`}
+                          />
+                          
+                          <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
+                            <div className="flex items-start">
+                              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
+                              <div className="text-sm text-amber-800">
+                                <p className="font-medium mb-1">Estados automáticos por vencimiento:</p>
+                                <ul className="text-xs space-y-0.5">
+                                  <li>• <strong>Fresco:</strong> 15+ días para vencer</li>
+                                  <li>• <strong>Por vencer:</strong> 10-15 días para vencer</li>
+                                  <li>• <strong>Vencido:</strong> fecha pasada</li>
+                                </ul>
+                              </div>
                             </div>
                           </div>
-                        </div>
+                        </FormField>
                       </div>
                     )}
                   </div>

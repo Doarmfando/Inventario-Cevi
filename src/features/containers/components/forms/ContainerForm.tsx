@@ -1,7 +1,7 @@
 // src/features/containers/components/ContainerForm.tsx
 
 import React, { useState } from 'react';
-import { X, Container, MapPin, Thermometer, Package } from 'lucide-react';
+import { X, Container, Thermometer, Package } from 'lucide-react';
 import type { ContainerFormData } from '../../types/container.types';
 
 interface ContainerFormProps {
@@ -20,7 +20,6 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
   const [formData, setFormData] = useState<ContainerFormData>({
     name: initialData.name || '',
     type: initialData.type || 'almacen-seco',
-    location: initialData.location || '',
     capacity: initialData.capacity || undefined,
     temperature: initialData.temperature || undefined,
     humidity: initialData.humidity || undefined,
@@ -181,24 +180,6 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
               {errors.type && (
                 <p className="mt-1 text-sm text-red-600">{errors.type}</p>
               )}
-            </div>
-
-            {/* Location */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Ubicación
-              </label>
-              <div className="relative">
-                <MapPin className="w-4 h-4 absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="Ej: Almacén Principal - Piso 1"
-                  className="w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                />
-              </div>
             </div>
           </div>
 
