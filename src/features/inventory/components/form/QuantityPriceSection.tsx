@@ -1,4 +1,4 @@
-// form/QuantityPriceSection.tsx - ACTUALIZADO CON STOCK Y EMPAQUETADO
+// form/QuantityPriceSection.tsx - ACTUALIZADO CON UNIDADES CORRECTAS
 import React from "react";
 import { Scale, DollarSign, Package2, BarChart3 } from "lucide-react";
 import FormField from "./FormField";
@@ -16,7 +16,7 @@ const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({
   onChange 
 }) => {
   const units: ProductUnit[] = [
-    'kg', 'bolsa', 'litro', 'unidad', 'cubeta', 'atado', 'caja'
+    'kg', 'litros', 'unidades', 'botellas', 'rollos', 'paquetes', 'atados'
   ];
 
   return (

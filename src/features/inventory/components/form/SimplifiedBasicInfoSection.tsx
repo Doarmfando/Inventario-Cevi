@@ -26,11 +26,11 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
   onChange,
   onRecommendedContainersChange
 }) => {
-  // CATEGORÍAS CORREGIDAS - BASADAS EN mockData.ts Y types/index.ts
+  // CATEGORÍAS CORREGIDAS - SOLO LAS PERMITIDAS
   const categories: ProductCategory[] = [
     'Pescados',
     'Mariscos',
-    'Causa', // AGREGADA - Solo para la comida Causa
+    'Causa',
     'Tubérculos',
     'Cítricos',
     'Condimentos',
@@ -39,36 +39,24 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
     'Bebidas Alcohólicas',
     'Aceites',
     'Granos'
-    // 'Harinas',
-    // 'Lácteos', // COMENTADO - No usado en mockData
-    // 'Proteínas', // COMENTADO - No usado en mockData  
-    // 'Pastas', // COMENTADO - No usado en mockData
-    // 'Suministros',
-    // 'Limpieza'
   ];
 
-  // UNIDADES CORREGIDAS - BASADAS EN mockData.ts
+  // UNIDADES CORREGIDAS - SOLO LAS 7 PERMITIDAS
   const units: ProductUnit[] = [
     'kg',
-    'porciones', // AGREGADA - Para la categoria Causa
     'litros',
     'unidades',
     'botellas',
     'rollos',
     'paquetes',
-    // 'bolsa', // COMENTADO - No usado en mockData
-    // 'litro', // COMENTADO - Se usa 'litros'
-    // 'unidad', // COMENTADO - Se usa 'unidades'
-    // 'cubeta', // COMENTADO - No usado en mockData
-    // 'atado', // COMENTADO - No usado en mockData
-    // 'caja' // COMENTADO - No usado en mockData
+    'atados'
   ];
 
   // CONTENEDORES CORREGIDOS - 7 CONTENEDORES SEGÚN mockData.ts
   const containers = [
     'Congelador 1 - Pescado',
     'Congelador 2 - Mariscos',
-    'Congelador 3 - Causa', // CORREGIDO - Era "Causas" ahora "Causa"
+    'Congelador 3 - Causa',
     'Congelador 4 - Verduras',
     'Refrigerador 5 - Gaseosas',
     'Refrigerador 6 - Cervezas',
@@ -303,7 +291,7 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
           })}
         </div>
 
-        {/* Ayuda contextual por categorías - CORREGIDA */}
+        {/* Ayuda contextual por categorías - CORREGIDA SIN CATEGORÍAS INEXISTENTES */}
         <div className="mt-3 pt-3 border-t border-purple-200">
           <div className="text-xs text-purple-600">
             <strong>Ayuda por categoría:</strong>
@@ -317,7 +305,7 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
               {form.category === 'Cítricos' && <p>• Limones para causa van al Congelador 3</p>}
               {form.category === 'Condimentos' && <p>• Frescos → Congelador 3 o 4, secos → Almacén Seco</p>}
               {form.category === 'Verduras' && <p>• Verduras frescas van al Congelador 4</p>}
-              {(form.category === 'Aceites' || form.category === 'Granos' || form.category === 'Harinas' || form.category === 'Suministros' || form.category === 'Limpieza') && 
+              {(form.category === 'Aceites' || form.category === 'Granos') && 
                 <p>• Productos no perecederos van al Almacén Seco</p>
               }
             </div>

@@ -424,7 +424,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
               </div>
 
               {/* Descripción */}
-              <FormField
+              {/* <FormField
                 label="Descripción"
               >
                 <textarea
@@ -434,7 +434,7 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   placeholder="Descripción del producto..."
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
                 />
-              </FormField>
+              </FormField> */}
 
               {/* Proceso simplificado - Info */}
               <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">

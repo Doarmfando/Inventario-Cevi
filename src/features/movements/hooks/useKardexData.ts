@@ -3,6 +3,7 @@
 import { useMemo } from 'react';
 import type { KardexEntry } from '../types/movement.types';
 import type { Product, KardexStats } from '../types/kardex.types';
+import type { Container } from '../../inventory/types';
 
 export const useKardexData = (productId: string) => {
   // Mock data - En tu app real, esto vendría de tu API basado en productId
@@ -14,12 +15,15 @@ export const useKardexData = (productId: string) => {
     unitPrice: 28.50,
   };
 
+  // Usar un container válido del tipo Container
+  const mockContainer: Container = 'Congelador 1 - Pescado';
+
   const kardexEntries: KardexEntry[] = [
     {
       id: '1',
       productId: productId,
       productName: product.name,
-      container: 'Congelador-001',
+      container: mockContainer,
       type: 'entrada',
       quantity: 20,
       packagedUnits: 4,
@@ -39,7 +43,7 @@ export const useKardexData = (productId: string) => {
       id: '2',
       productId: productId,
       productName: product.name,
-      container: 'Congelador-001',
+      container: mockContainer,
       type: 'salida',
       quantity: 5,
       packagedUnits: 1,
@@ -59,7 +63,7 @@ export const useKardexData = (productId: string) => {
       id: '3',
       productId: productId,
       productName: product.name,
-      container: 'Congelador-001',
+      container: mockContainer,
       type: 'ajuste',
       quantity: 2,
       packagedUnits: 0,
@@ -76,7 +80,7 @@ export const useKardexData = (productId: string) => {
       id: '4',
       productId: productId,
       productName: product.name,
-      container: 'Congelador-001',
+      container: mockContainer,
       type: 'salida',
       quantity: 2,
       packagedUnits: 0,

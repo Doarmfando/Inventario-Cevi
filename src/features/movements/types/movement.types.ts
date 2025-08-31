@@ -1,4 +1,6 @@
-// src/features/movements/types/movement.types.ts - ACTUALIZADO
+// src/features/movements/types/movement.types.ts - TIPOS UNIFICADOS
+
+import type { Container, ProductCategory, ProductUnit } from '../../inventory/types';
 
 export type MovementType = 'entrada' | 'salida' | 'ajuste';
 export type MovementState = 'pending' | 'completed' | 'cancelled' | 'all';
@@ -28,24 +30,18 @@ export type ExitReason =
 // UNIÓN DE TODOS LOS MOTIVOS
 export type MovementReason = EntryReason | ExitReason;
 
-export interface Product {
+// ✅ NUEVO: Tipo para productos disponibles en movimientos (basado en Product del inventario)
+export interface AvailableProduct {
   id: string;
   name: string;
-  sku: string;
+  container: Container;
+  category: ProductCategory;
+  unit: ProductUnit;
   currentStock: number;
-  minStock: number;
-  maxStock: number;
-  price: number;
-  category: string;
-  container?: string;
-  packagedUnits?: number;
+  currentPackaged: number;
+  estimatedPrice: number;
+  minStock?: number;
   description?: string;
-  barcode?: string;
-  supplier?: string;
-  location?: string;
-  status?: 'active' | 'inactive' | 'discontinued';
-  createdAt?: Date;
-  updatedAt?: Date;
 }
 
 export interface Movement {
@@ -53,7 +49,7 @@ export interface Movement {
   productId: string;
   productName: string;
   productCode?: string;
-  container: string;
+  container: Container;
   type: MovementType;
   quantity: number;
   packagedUnits: number;
@@ -81,8 +77,8 @@ export interface MovementFormData {
   observations?: string;
   documentNumber?: string;
   unitPrice?: number;
-  selectedContainer?: string; // ⭐ NUEVO: Contenedor seleccionado por el usuario
-  container?: string; // Para mantener compatibilidad
+  selectedContainer?: Container;
+  container?: Container;
   expiryDate?: string;
   state?: MovementState;
 }
@@ -90,7 +86,7 @@ export interface MovementFormData {
 export interface MovementFilters {
   type?: MovementType | 'all';
   productId?: string;
-  container?: string;
+  container?: Container;
   reason?: MovementReason | 'all';
   dateFrom?: string;
   dateTo?: string;

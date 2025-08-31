@@ -2,40 +2,13 @@
 
 import React, { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
-// Update the import path to the correct location of MovementsList
 import MovementsList from '../tables/MovementsList';
-// Update the import path to the correct location of MovementForm
 import MovementForm from '../forms/MovementForm';
 import MovementFilters from '../tables/MovementFilters';
 import KardexModal from '../modals/KardexModal';
-import type { Movement, MovementFilters as Filters, MovementFormData, Product } from '../../types/movement.types';
-import { mockMovements } from '../../data/mockData';
+import type { Movement, MovementFilters as Filters, MovementFormData } from '../../types/movement.types';
+import { mockMovements, availableProducts } from '../../data/mockData';
 import { createMovement, applyMovementFilters, getLastMovementForProduct } from '../../utils/movementUtils';
-
-// Mock products data - puedes mover esto a mockData.ts más tarde
-const mockProducts: Product[] = [
-  {
-    id: '1',
-    name: 'Producto Ejemplo 1',
-    sku: 'SKU001',
-    currentStock: 100,
-    minStock: 10,
-    maxStock: 500,
-    price: 25.99,
-    category: 'Categoría A'
-  },
-  {
-    id: '2',
-    name: 'Producto Ejemplo 2',
-    sku: 'SKU002',
-    currentStock: 50,
-    minStock: 5,
-    maxStock: 200,
-    price: 15.50,
-    category: 'Categoría B'
-  }
-  // Agrega más productos según necesites
-];
 
 const MovementView: React.FC = () => {
   const [movements, setMovements] = useState<Movement[]>([]);
@@ -56,7 +29,7 @@ const MovementView: React.FC = () => {
 
   // Función para agregar nuevo movimiento
   const handleAddMovement = (formData: MovementFormData) => {
-    const selectedProduct = mockProducts.find((p: Product) => p.id === formData.productId);
+    const selectedProduct = availableProducts.find((p) => p.id === formData.productId);
     
     if (!selectedProduct) {
       console.error('Producto no encontrado');
@@ -99,23 +72,15 @@ const MovementView: React.FC = () => {
     setSelectedProductId('');
   };
 
+  // Calcular estadísticas solo para entradas y salidas
+  const entradas = movements.filter(m => m.type === 'entrada');
+  const salidas = movements.filter(m => m.type === 'salida');
+
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Plus className="w-6 h-6 text-blue-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Total Movimientos</p>
-                <p className="text-2xl font-semibold text-gray-900">{movements.length}</p>
-              </div>
-            </div>
-          </div>
-          
+        {/* Stats Cards - Solo Entradas y Salidas */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
           <div className="bg-white p-6 rounded-lg shadow-sm border">
             <div className="flex items-center">
               <div className="p-2 bg-green-100 rounded-lg">
@@ -123,9 +88,7 @@ const MovementView: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Entradas</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {movements.filter(m => m.type === 'entrada').length}
-                </p>
+                <p className="text-2xl font-semibold text-gray-900">{entradas.length}</p>
               </div>
             </div>
           </div>
@@ -137,23 +100,7 @@ const MovementView: React.FC = () => {
               </div>
               <div className="ml-4">
                 <p className="text-sm font-medium text-gray-600">Salidas</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {movements.filter(m => m.type === 'salida').length}
-                </p>
-              </div>
-            </div>
-          </div>
-          
-          <div className="bg-white p-6 rounded-lg shadow-sm border">
-            <div className="flex items-center">
-              <div className="p-2 bg-yellow-100 rounded-lg">
-                <Plus className="w-6 h-6 text-yellow-600" />
-              </div>
-              <div className="ml-4">
-                <p className="text-sm font-medium text-gray-600">Ajustes</p>
-                <p className="text-2xl font-semibold text-gray-900">
-                  {movements.filter(m => m.type === 'ajuste').length}
-                </p>
+                <p className="text-2xl font-semibold text-gray-900">{salidas.length}</p>
               </div>
             </div>
           </div>

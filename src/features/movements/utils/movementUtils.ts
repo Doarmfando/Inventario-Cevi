@@ -1,6 +1,7 @@
-// src/features/movements/utils/movementUtils.ts - ACTUALIZADO
+// src/features/movements/utils/movementUtils.ts - CORREGIDO
 
 import type { Movement, MovementFormData, MovementFilters as Filters } from '../types/movement.types';
+import type { Container } from '../../inventory/types';
 
 export const calculateNewStock = (
   type: Movement['type'], 
@@ -20,23 +21,23 @@ export const calculateNewStock = (
   }
 };
 
-// ⭐ ACTUALIZADO: Función para crear movimiento con contenedor seleccionado
+// ⭐ CORREGIDO: Función para crear movimiento con contenedor seleccionado
 export const createMovement = (
   formData: MovementFormData,
-  selectedProduct: { id: string; name: string; code?: string; container?: string },
+  selectedProduct: { id: string; name: string; code?: string; container?: Container },
   previousStock: number
 ): Movement => {
   const newStock = calculateNewStock(formData.type, previousStock, formData.quantity);
   
-  // Usar el contenedor seleccionado por el usuario o el del producto por defecto
-  const finalContainer = formData.selectedContainer || formData.container || selectedProduct.container || '';
+  // ✅ CORREGIDO: Usar el contenedor seleccionado por el usuario o el del producto por defecto
+  const finalContainer: Container = formData.selectedContainer || formData.container || selectedProduct.container || 'Almacén Seco';
   
   return {
     id: Date.now().toString(),
     productId: formData.productId,
     productName: selectedProduct.name,
     productCode: selectedProduct.code,
-    container: finalContainer, // ⭐ ACTUALIZADO: Usar contenedor seleccionado
+    container: finalContainer, // ✅ CORREGIDO: Ahora es tipo Container
     type: formData.type,
     quantity: formData.quantity,
     packagedUnits: formData.packagedUnits || 0,
@@ -176,7 +177,7 @@ export const validateStockForExit = (
 };
 
 // ⭐ NUEVA: Función para obtener todos los contenedores únicos de los movimientos
-export const getUniqueContainers = (movements: Movement[]): string[] => {
+export const getUniqueContainers = (movements: Movement[]): Container[] => {
   const containers = movements.map(m => m.container).filter(Boolean);
   return [...new Set(containers)].sort();
 };
@@ -185,7 +186,7 @@ export const getUniqueContainers = (movements: Movement[]): string[] => {
 export const getMovementsByProductAndContainer = (
   movements: Movement[], 
   productId: string, 
-  container: string
+  container: Container
 ): Movement[] => {
   return movements
     .filter(m => m.productId === productId && m.container === container)

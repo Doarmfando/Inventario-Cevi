@@ -1,7 +1,7 @@
-// hooks/useInventory.ts - LIMPIO Y CORREGIDO PARA SISTEMA DE EMPAQUETADO GASTRONÓMICO + PRECIO REAL
+// hooks/useInventory.ts - CORREGIDO PARA RESOLVER ERRORES DE TYPESCRIPT
 
 import { useState } from "react";
-import type { Product, NewProduct, ProductWithCalculatedData, StockStatus } from "../types";
+import type { Product, NewProduct, ProductWithCalculatedData, StockStatus } from "../types"; // ✅ RUTA CORREGIDA
 import { mockProducts, calculateNearExpiryPackages, formatPackagedText } from "../components/data/mockData";
 
 export const useInventory = () => {
@@ -67,7 +67,8 @@ export const useInventory = () => {
       ),
       entryDate: new Date().toISOString().split('T')[0],
       state: calculateProductState(productData.estimatedDaysToExpiry, productData.state),
-      lastUpdated: new Date().toISOString().split('T')[0]
+      lastUpdated: new Date().toISOString().split('T')[0],
+      expiryDate: new Date(Date.now() + productData.estimatedDaysToExpiry * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
     };
     
     setProducts(prev => [...prev, newProduct]);

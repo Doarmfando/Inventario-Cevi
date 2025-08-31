@@ -2,23 +2,12 @@
 
 import React, { useEffect, useRef } from 'react';
 import { Package, MapPin, Scale } from 'lucide-react';
-import type { MovementFormData } from '../../types/movement.types';
-
-interface Product {
-  id: string;
-  name: string;
-  container: string;
-  category: string;
-  currentStock: number;
-  currentPackaged: number;
-  unit: string;
-  estimatedPrice: number;
-}
-
+import type { MovementFormData, AvailableProduct } from '../../types/movement.types';
+import type { Container } from '../../../inventory/types';
 import { movementTypes, getReasonsByType } from '../../constants/formConstants';
 
 // Contenedores disponibles según el sistema de inventario
-const availableContainers = [
+const availableContainers: Container[] = [
   'Congelador 1 - Pescado',
   'Congelador 2 - Mariscos',
   'Congelador 3 - Causa',
@@ -29,7 +18,7 @@ const availableContainers = [
 ];
 
 // Recomendaciones de contenedores por categoría
-const CONTAINER_RECOMMENDATIONS: Record<string, string[]> = {
+const CONTAINER_RECOMMENDATIONS: Record<string, Container[]> = {
   'Pescados': ['Congelador 1 - Pescado'],
   'Mariscos': ['Congelador 2 - Mariscos'],
   'Causa': ['Congelador 3 - Causa'],
@@ -47,7 +36,7 @@ const CONTAINER_RECOMMENDATIONS: Record<string, string[]> = {
 };
 
 // Función para obtener el contenedor por defecto según el producto seleccionado
-const getDefaultContainer = (product: Product): string => {
+const getDefaultContainer = (product: AvailableProduct): Container => {
   // Primero intentar usar el contenedor actual del producto
   if (product.container) {
     return product.container;
@@ -63,15 +52,16 @@ const getDefaultContainer = (product: Product): string => {
 };
 
 // Función para obtener contenedores recomendados para una categoría
-const getRecommendedContainers = (category: string): string[] => {
+const getRecommendedContainers = (category: string): Container[] => {
   return CONTAINER_RECOMMENDATIONS[category] || availableContainers;
 };
 
 interface MovementFormFieldsProps {
   formData: MovementFormData;
   errors: Record<string, string>;
-  selectedProduct: Product | undefined;
-  availableProducts: Product[];
+  selectedProduct: AvailableProduct | undefined;
+  availableProducts: AvailableProduct[];
+  availableContainers: Container[];
   onInputChange: (field: keyof MovementFormData, value: any) => void;
 }
 
@@ -80,6 +70,7 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
   errors,
   selectedProduct,
   availableProducts,
+  availableContainers,
   onInputChange
 }) => {
   const reasonOptions = getReasonsByType(formData.type);

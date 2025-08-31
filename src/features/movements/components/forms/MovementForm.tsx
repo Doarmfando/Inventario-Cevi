@@ -1,10 +1,11 @@
-// src/features/movements/components/MovementForm.tsx - REFACTORIZADO
+// src/features/movements/components/forms/MovementForm.tsx
 
 import React from 'react';
 import { X, Package } from 'lucide-react';
-import type { MovementFormData } from '../../types/movement.types';
+import type { MovementFormData, AvailableProduct } from '../../types/movement.types';
+import type { Container } from '../../../inventory/types';
 import { availableProducts } from '../../data/mockData';
-import MovementFormFields from './MovementFormFields.tsx';
+import MovementFormFields from './MovementFormFields';
 import MovementFormPreview from './MovementFormPreview';
 import useMovementForm from '../../hooks/useMovementForm';
 
@@ -13,23 +14,21 @@ interface MovementFormProps {
   onClose: () => void;
 }
 
-// Lista de contenedores disponibles
-const availableContainers = [
-  'Refrigerador Principal',
-  'Congelador A',
-  'Congelador B', 
-  'Almacén Seco',
-  'Área de Preparación',
-  'Vitrina de Postres',
-  'Cámara Fría',
-  'Despensa General'
+// Lista de contenedores disponibles - ACTUALIZADA SEGÚN TU SISTEMA
+const availableContainers: Container[] = [
+  'Congelador 1 - Pescado',
+  'Congelador 2 - Mariscos',
+  'Congelador 3 - Causa',
+  'Congelador 4 - Verduras',
+  'Refrigerador 5 - Gaseosas',
+  'Refrigerador 6 - Cervezas',
+  'Almacén Seco'
 ];
 
 const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
   const {
     formData,
     errors,
-    selectedProduct,
     newStockInfo,
     handleInputChange,
     handleSubmit
@@ -37,6 +36,10 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
     availableProducts, 
     onSubmit 
   });
+
+  // 🔹 Forzar que el selectedProduct sea un AvailableProduct (usando el mockData)
+  const matchedProduct: AvailableProduct | undefined =
+    availableProducts.find(p => p.id === formData.productId);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -66,7 +69,7 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
           <MovementFormFields
             formData={formData}
             errors={errors}
-            selectedProduct={selectedProduct}
+            selectedProduct={matchedProduct}  // ✅ ahora sí es AvailableProduct | undefined
             availableProducts={availableProducts}
             availableContainers={availableContainers}
             onInputChange={handleInputChange}
@@ -75,7 +78,7 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
           {/* Preview y Alertas */}
           <MovementFormPreview
             formData={formData}
-            selectedProduct={selectedProduct}
+            selectedProduct={matchedProduct}  // ✅ igual aquí
             newStockInfo={newStockInfo}
           />
 

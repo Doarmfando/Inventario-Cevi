@@ -1,28 +1,18 @@
-// src/features/movements/hooks/useMovementForm.ts
+// src/features/movements/hooks/useMovementForm.ts - CORREGIDO
 
 import { useState, useEffect } from 'react';
-import type { MovementFormData } from '../types/movement.types';
-
-interface Product {
-  id: string;
-  name: string;
-  container: string;
-  currentStock: number;
-  currentPackaged: number;
-  unit: string;
-  estimatedPrice: number;
-}
+import type { MovementFormData, AvailableProduct } from '../types/movement.types';
 import { getReasonsByType } from '../constants/formConstants';
 
 interface UseMovementFormProps {
-  availableProducts: Product[];
+  availableProducts: AvailableProduct[];
   onSubmit: (data: MovementFormData) => void;
 }
 
 interface UseMovementFormReturn {
   formData: MovementFormData;
   errors: Record<string, string>;
-  selectedProduct: Product | undefined;
+  selectedProduct: AvailableProduct | undefined;
   newStockInfo: { stock: number; packaged: number } | null;
   isValid: boolean;
   handleInputChange: (field: keyof MovementFormData, value: any) => void;
@@ -43,7 +33,7 @@ const useMovementForm = ({
     observations: '',
     documentNumber: '',
     unitPrice: undefined,
-    selectedContainer: '',
+    selectedContainer: undefined,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -67,7 +57,7 @@ const useMovementForm = ({
       setFormData(prev => ({
         ...prev,
         unitPrice: prev.unitPrice === undefined ? selectedProduct.estimatedPrice : prev.unitPrice,
-        selectedContainer: prev.selectedContainer === '' ? selectedProduct.container : prev.selectedContainer
+        selectedContainer: prev.selectedContainer === undefined ? selectedProduct.container : prev.selectedContainer
       }));
     }
   }, [selectedProduct]);

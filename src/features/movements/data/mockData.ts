@@ -1,120 +1,144 @@
 // src/features/movements/data/mockData.ts - RELACIONADO CON INVENTARIO EXISTENTE
 
-import type { Movement, MovementReasonOptions } from '../types/movement.types';
+import type { Movement, MovementReasonOptions, AvailableProduct } from '../types/movement.types';
 
-// PRODUCTOS DISPONIBLES (coinciden con los del inventario) - ESTRUCTURA ACTUALIZADA
-export const availableProducts = [
+// PRODUCTOS DISPONIBLES (coinciden con los del inventario) - USANDO TIPOS UNIFICADOS
+export const availableProducts: AvailableProduct[] = [
   { 
     id: '1', 
     name: 'Lenguado Filetes', 
     container: 'Congelador 1 - Pescado',
+    category: 'Pescados',
+    unit: 'kg',
     currentStock: 8,
     currentPackaged: 3,
-    unit: 'kg',
-    estimatedPrice: 28.50
+    estimatedPrice: 28.50,
+    minStock: 5
   },
   { 
     id: '2', 
     name: 'Pulpo', 
     container: 'Congelador 2 - Mariscos',
+    category: 'Mariscos',
+    unit: 'kg',
     currentStock: 12,
     currentPackaged: 2,
-    unit: 'kg',
-    estimatedPrice: 45.00
+    estimatedPrice: 45.00,
+    minStock: 3
   },
   { 
     id: '3', 
     name: 'Yuca', 
     container: 'Congelador 4 - Verduras',
+    category: 'Tubérculos',
+    unit: 'kg',
     currentStock: 15,
     currentPackaged: 5,
-    unit: 'kg',
-    estimatedPrice: 3.50
+    estimatedPrice: 3.50,
+    minStock: 10
   },
   { 
     id: '4', 
     name: 'Rocoto', 
     container: 'Congelador 4 - Verduras',
+    category: 'Condimentos',
+    unit: 'kg',
     currentStock: 0,
     currentPackaged: 0,
-    unit: 'kg',
-    estimatedPrice: 8.00
+    estimatedPrice: 8.00,
+    minStock: 2
   },
   { 
     id: '5', 
     name: 'Langostinos', 
     container: 'Congelador 2 - Mariscos',
+    category: 'Mariscos',
+    unit: 'kg',
     currentStock: 6,
     currentPackaged: 2,
-    unit: 'kg',
-    estimatedPrice: 35.00
+    estimatedPrice: 35.00,
+    minStock: 4
   },
   { 
     id: '6', 
     name: 'Aceite Vegetal', 
     container: 'Almacén Seco',
+    category: 'Aceites',
+    unit: 'litros',
     currentStock: 20,
     currentPackaged: 4,
-    unit: 'litro',
-    estimatedPrice: 4.20
+    estimatedPrice: 4.20,
+    minStock: 8
   },
   { 
     id: '7', 
     name: 'Limones', 
-    container: 'Congelador 3 - Causas',
+    container: 'Congelador 4 - Verduras',
+    category: 'Cítricos',
+    unit: 'kg',
     currentStock: 8,
     currentPackaged: 4,
-    unit: 'kg',
-    estimatedPrice: 2.80
+    estimatedPrice: 2.80,
+    minStock: 15
   },
   {
     id: '8',
     name: 'Inca Kola',
     container: 'Refrigerador 5 - Gaseosas',
+    category: 'Bebidas',
+    unit: 'unidades',
     currentStock: 48,
     currentPackaged: 2,
-    unit: 'unidades',
-    estimatedPrice: 2.50
+    estimatedPrice: 2.50,
+    minStock: 24
   },
   {
     id: '9',
     name: 'Cerveza Pilsen',
     container: 'Refrigerador 6 - Cervezas',
+    category: 'Bebidas Alcohólicas',
+    unit: 'unidades',
     currentStock: 36,
     currentPackaged: 3,
-    unit: 'unidades',
-    estimatedPrice: 3.80
+    estimatedPrice: 3.80,
+    minStock: 24
   },
   {
     id: '10',
     name: 'Camarones',
     container: 'Congelador 2 - Mariscos',
+    category: 'Mariscos',
+    unit: 'kg',
     currentStock: 10,
     currentPackaged: 2,
-    unit: 'kg',
-    estimatedPrice: 42.00
+    estimatedPrice: 42.00,
+    minStock: 3
   },
   {
     id: '11',
     name: 'Tomates',
     container: 'Congelador 4 - Verduras',
+    category: 'Verduras',
+    unit: 'kg',
     currentStock: 5,
     currentPackaged: 2,
-    unit: 'kg',
-    estimatedPrice: 3.20
+    estimatedPrice: 3.20,
+    minStock: 5
   },
   {
     id: '12',
     name: 'Papas Amarillas',
-    container: 'Congelador 3 - Causas',
+    container: 'Congelador 4 - Verduras',
+    category: 'Tubérculos',
+    unit: 'kg',
     currentStock: 12,
     currentPackaged: 3,
-    unit: 'kg',
-    estimatedPrice: 1.50
+    estimatedPrice: 1.50,
+    minStock: 10
   }
 ];
 
-// MOVIMIENTOS REALES DEL SISTEMA - ACTUALIZADOS CON NUEVA ESTRUCTURA
+// MOVIMIENTOS REALES DEL SISTEMA - ACTUALIZADOS CON TIPOS UNIFICADOS
 export const mockMovements: Movement[] = [
   {
     id: '1',
@@ -263,7 +287,7 @@ export const mockMovements: Movement[] = [
     id: '9',
     productId: '7',
     productName: 'Limones',
-    container: 'Congelador 3 - Causas',
+    container: 'Congelador 4 - Verduras',
     type: 'entrada',
     quantity: 10,
     packagedUnits: 4,
@@ -272,7 +296,7 @@ export const mockMovements: Movement[] = [
     unitPrice: 2.50,
     totalValue: 25.00,
     reason: 'compra',
-    observations: 'Limones frescos para ceviche y causa - Congelador de causas',
+    observations: 'Limones frescos para ceviche y causa - Congelador de verduras',
     documentNumber: 'FAC-005-2024',
     createdBy: 'admin',
     createdAt: new Date('2025-08-15T06:30:00'),
@@ -281,7 +305,7 @@ export const mockMovements: Movement[] = [
     id: '10',
     productId: '7',
     productName: 'Limones',
-    container: 'Congelador 3 - Causas',
+    container: 'Congelador 4 - Verduras',
     type: 'salida',
     quantity: 2,
     packagedUnits: 1,

@@ -1,8 +1,9 @@
-// src/features/movements/components/MovementFilters.tsx - Estilo TableFilters
+// src/features/movements/components/MovementFilters.tsx - CORREGIDO
 
 import React, { useState } from 'react';
 import { Filter, X, MapPin, Plus, Search, Clock } from 'lucide-react';
 import type { MovementFilters as Filters, MovementReason } from '../../types/movement.types';
+import type { Container } from '../../../inventory/types';
 import { availableProducts, movementReasonOptions } from '../../data/mockData';
 
 interface MovementFiltersProps {
@@ -14,7 +15,7 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
   const [filters, setFilters] = useState<Filters>({
     type: 'all',
     productId: '',
-    container: '',
+    container: undefined, // ✅ Usar undefined en lugar de cadena vacía
     reason: 'all',
     dateFrom: '',
     dateTo: '',
@@ -54,7 +55,14 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
   };
 
   const handleFilterChange = (key: keyof Filters, value: string) => {
-    const newFilters = { ...filters, [key]: value };
+    let processedValue: any = value;
+    
+    // ✅ Manejar el tipo Container correctamente
+    if (key === 'container') {
+      processedValue = value === '' ? undefined : value as Container;
+    }
+    
+    const newFilters = { ...filters, [key]: processedValue };
     setFilters(newFilters);
     onFilter(newFilters);
   };
@@ -63,7 +71,7 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
     const clearedFilters: Filters = {
       type: 'all',
       productId: '',
-      container: '',
+      container: undefined, // ✅ Usar undefined
       reason: 'all',
       dateFrom: '',
       dateTo: '',
@@ -76,7 +84,7 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
   const hasActiveFilters = () => {
     return filters.type !== 'all' || 
            filters.productId !== '' || 
-           filters.container !== '' ||
+           filters.container !== undefined || // ✅ Comparar con undefined
            filters.reason !== 'all' ||
            filters.searchTerm !== '';
   };

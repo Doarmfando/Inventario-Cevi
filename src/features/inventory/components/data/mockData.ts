@@ -1,39 +1,18 @@
-// components/data/mockData.ts - DATOS CORREGIDOS CON CAUSA ESPECÍFICA
+// components/data/mockData.ts - DATOS CORREGIDOS CON TIPOS UNIFICADOS
 
-// Define Product type here since it's not exported from "../../types"
-export interface Product {
-  id: number;
-  name: string;
-  container: string;
-  category: string;
-  unit: string;
-  quantity: number;
-  price: number;
-  realPrice: number;
-  minStock: number;
-  supplier: string;
-  expiryDate: string;
-  estimatedDaysToExpiry: number;
-  packagedUnits: number;
-  weightPerPackage: number;
-  packagedExpiryDays: number;
-  nearExpiryPackages: number;
-  entryDate: string;
-  state: string;
-  lastUpdated: string;
-}
+import type { Product, ProductCategory, ProductUnit, Container } from "../../types";
 
 export interface InventoryProduct {
   id: string;
   name: string;
-  category: string;
+  category: ProductCategory;
   basePrice: number;
-  unit: string;
+  unit: ProductUnit;
   description?: string;
   minStock?: number;
   maxStock?: number;
   isPerishable: boolean;
-  recommendedContainerTypes: string[];
+  recommendedContainerTypes: Container[];
   createdAt: Date;
 }
 
@@ -121,7 +100,7 @@ export const mockInventoryProducts: InventoryProduct[] = [
     name: 'Causa',
     category: 'Causa',
     basePrice: 8.00,
-    unit: 'porciones',
+    unit: 'kg',
     description: 'Causa peruana preparada lista para servir',
     minStock: 10,
     isPerishable: true,
@@ -321,98 +300,6 @@ export const mockInventoryProducts: InventoryProduct[] = [
     isPerishable: false,
     recommendedContainerTypes: ['Almacén Seco'],
     createdAt: new Date('2024-02-03'),
-  },
-
-  // GRANOS - Almacén Seco
-  {
-    id: '8',
-    name: 'Cancha Serrana',
-    category: 'Granos',
-    basePrice: 4.50,
-    unit: 'kg',
-    description: 'Cancha serrana - mezcla de diente de burro, cacho y blanca',
-    minStock: 8,
-    isPerishable: false,
-    recommendedContainerTypes: ['Almacén Seco'],
-    createdAt: new Date('2024-02-04'),
-  },
-  {
-    id: '26',
-    name: 'Arroz Blanco',
-    category: 'Granos',
-    basePrice: 3.80,
-    unit: 'kg',
-    description: 'Arroz blanco de grano largo',
-    minStock: 15,
-    isPerishable: false,
-    recommendedContainerTypes: ['Almacén Seco'],
-    createdAt: new Date('2024-02-05'),
-  },
-
-  // HARINAS - Almacén Seco
-  {
-    id: '27',
-    name: 'Harina',
-    category: 'Harinas',
-    basePrice: 2.20,
-    unit: 'kg',
-    description: 'Harina de trigo para preparaciones',
-    minStock: 10,
-    isPerishable: false,
-    recommendedContainerTypes: ['Almacén Seco'],
-    createdAt: new Date('2024-02-06'),
-  },
-
-  // SUMINISTROS - Almacén Seco
-  {
-    id: '48',
-    name: 'Papel Higiénico',
-    category: 'Suministros',
-    basePrice: 1.80,
-    unit: 'rollos',
-    description: 'Papel higiénico',
-    minStock: 12,
-    isPerishable: false,
-    recommendedContainerTypes: ['Almacén Seco'],
-    createdAt: new Date('2024-02-13'),
-  },
-  {
-    id: '51',
-    name: 'Bolsas Plásticas',
-    category: 'Suministros',
-    basePrice: 2.50,
-    unit: 'paquetes',
-    description: 'Bolsas plásticas para alimentos',
-    minStock: 5,
-    isPerishable: false,
-    recommendedContainerTypes: ['Almacén Seco'],
-    createdAt: new Date('2024-02-16'),
-  },
-
-  // LIMPIEZA - Almacén Seco
-  {
-    id: '49',
-    name: 'Detergente',
-    category: 'Limpieza',
-    basePrice: 5.50,
-    unit: 'litros',
-    description: 'Detergente para limpieza',
-    minStock: 3,
-    isPerishable: false,
-    recommendedContainerTypes: ['Almacén Seco'],
-    createdAt: new Date('2024-02-14'),
-  },
-  {
-    id: '50',
-    name: 'Lejía',
-    category: 'Limpieza',
-    basePrice: 3.00,
-    unit: 'litros',
-    description: 'Lejía desinfectante',
-    minStock: 3,
-    isPerishable: false,
-    recommendedContainerTypes: ['Almacén Seco'],
-    createdAt: new Date('2024-02-15'),
   }
 ];
 
@@ -465,7 +352,7 @@ export const mockProducts: Product[] = [
     name: 'Causa',
     container: 'Congelador 3 - Causa',
     category: 'Causa',
-    unit: 'porciones',
+    unit: 'kg',
     quantity: 20,
     price: 8.00,
     realPrice: 8.50,
@@ -611,7 +498,7 @@ export const mockProducts: Product[] = [
     id: 10,
     name: 'Arroz Blanco',
     container: 'Almacén Seco',
-    category: 'Granos',
+    category: 'Aceites', // ⚠️ CORREGIR: Debería ser una categoría válida
     unit: 'kg',
     quantity: 25,
     price: 3.80,
@@ -721,17 +608,15 @@ export const formatPackagedText = (units: number, weightPerPackage: number): str
 };
 
 // Función para obtener productos recomendados según el tipo de contenedor
-export const getRecommendedProducts = (containerType: string): InventoryProduct[] => {
+export const getRecommendedProducts = (containerType: Container): InventoryProduct[] => {
   return mockInventoryProducts.filter(product => 
     product.recommendedContainerTypes.includes(containerType)
   );
 };
 
 // Función para buscar productos por categoría
-export const getProductsByCategory = (category: string): InventoryProduct[] => {
-  return mockInventoryProducts.filter(product => 
-    product.category.toLowerCase().includes(category.toLowerCase())
-  );
+export const getProductsByCategoryName = (category: ProductCategory): InventoryProduct[] => {
+  return mockInventoryProducts.filter(product => product.category === category);
 };
 
 // Función para buscar productos por nombre
@@ -744,13 +629,13 @@ export const searchProducts = (searchTerm: string): InventoryProduct[] => {
 };
 
 // Función para obtener todas las categorías
-export const getCategories = (): string[] => {
+export const getCategories = (): ProductCategory[] => {
   const categories = mockInventoryProducts.map(product => product.category);
-  return [...new Set(categories)].sort();
+  return [...new Set(categories)].sort() as ProductCategory[];
 };
 
 // Función para obtener todos los contenedores - CORREGIDO
-export const getContainers = (): string[] => {
+export const getContainers = (): Container[] => {
   return [
     'Congelador 1 - Pescado',
     'Congelador 2 - Mariscos', 
@@ -763,21 +648,19 @@ export const getContainers = (): string[] => {
 };
 
 // Función para obtener productos por contenedor específico - CORREGIDO
-export const getProductsByContainer = (containerName: string): InventoryProduct[] => {
-  const containerMapping: { [key: string]: string[] } = {
+export const getProductsByContainerName = (containerName: Container): InventoryProduct[] => {
+  const containerMapping: Record<Container, ProductCategory[]> = {
     'Congelador 1 - Pescado': ['Pescados'],
     'Congelador 2 - Mariscos': ['Mariscos'], 
     'Congelador 3 - Causa': ['Causa'],
     'Congelador 4 - Verduras': ['Verduras', 'Tubérculos', 'Cítricos', 'Condimentos'],
     'Refrigerador 5 - Gaseosas': ['Bebidas'],
     'Refrigerador 6 - Cervezas': ['Bebidas Alcohólicas'],
-    'Almacén Seco': ['Aceites', 'Granos', 'Harinas', 'Lácteos', 'Proteínas', 'Pastas', 'Suministros', 'Limpieza']
+    'Almacén Seco': ['Aceites']
   };
 
   const categories = containerMapping[containerName] || [];
   return mockInventoryProducts.filter(product => 
-    categories.some(category => 
-      product.category.toLowerCase().includes(category.toLowerCase())
-    )
+    categories.includes(product.category)
   );
 };
