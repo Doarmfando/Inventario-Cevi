@@ -8,10 +8,10 @@ interface TableFiltersProps {
   setSelectedCategory: (value: string) => void;
   selectedState: string;
   setSelectedState: (value: string) => void;
-  selectedContainer: string; // NUEVA PROP
-  setSelectedContainer: (value: string) => void; // NUEVA PROP
+  selectedContainer: string;
+  setSelectedContainer: (value: string) => void;
   categories: string[];
-  containers: string[]; // NUEVA PROP
+  containers: string[];
   onAddProduct?: () => void;
 }
 
@@ -62,8 +62,8 @@ const TableFilters: React.FC<TableFiltersProps> = ({
               </select>
             </div>
 
-            {/* Container Filter - NUEVO */}
-            <div className="relative min-w-[160px]">
+            {/* Container Filter */}
+            <div className="relative min-w-[180px]">
               <Package className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
                 value={selectedContainer}

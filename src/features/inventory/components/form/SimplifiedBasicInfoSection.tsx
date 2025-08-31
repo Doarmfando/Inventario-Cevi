@@ -1,4 +1,4 @@
-// form/SimplifiedBasicInfoSection.tsx - ACTUALIZADO CON 6 CONTENEDORES
+// form/SimplifiedBasicInfoSection.tsx - CORREGIDO CON ESTRUCTURA CORRECTA
 import React from "react";
 import { Package, DollarSign, Scale, AlertTriangle, MapPin, CheckSquare } from "lucide-react";
 import FormField from "./FormField";
@@ -26,19 +26,49 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
   onChange,
   onRecommendedContainersChange
 }) => {
+  // CATEGORÍAS CORREGIDAS - BASADAS EN mockData.ts Y types/index.ts
   const categories: ProductCategory[] = [
-    'Pescados', 'Mariscos', 'Verduras', 'Condimentos', 'Insumos', 'Suministros'
+    'Pescados',
+    'Mariscos',
+    'Causa', // AGREGADA - Solo para la comida Causa
+    'Tubérculos',
+    'Cítricos',
+    'Condimentos',
+    'Verduras',
+    'Bebidas',
+    'Bebidas Alcohólicas',
+    'Aceites',
+    'Granos'
+    // 'Harinas',
+    // 'Lácteos', // COMENTADO - No usado en mockData
+    // 'Proteínas', // COMENTADO - No usado en mockData  
+    // 'Pastas', // COMENTADO - No usado en mockData
+    // 'Suministros',
+    // 'Limpieza'
   ];
 
+  // UNIDADES CORREGIDAS - BASADAS EN mockData.ts
   const units: ProductUnit[] = [
-    'kg', 'bolsa', 'litro', 'unidad', 'cubeta', 'atado', 'caja'
+    'kg',
+    'porciones', // AGREGADA - Para la categoria Causa
+    'litros',
+    'unidades',
+    'botellas',
+    'rollos',
+    'paquetes',
+    // 'bolsa', // COMENTADO - No usado en mockData
+    // 'litro', // COMENTADO - Se usa 'litros'
+    // 'unidad', // COMENTADO - Se usa 'unidades'
+    // 'cubeta', // COMENTADO - No usado en mockData
+    // 'atado', // COMENTADO - No usado en mockData
+    // 'caja' // COMENTADO - No usado en mockData
   ];
 
-  // CONTENEDORES ACTUALIZADOS - 6 CONTENEDORES SEGÚN IMAGEN 2
+  // CONTENEDORES CORREGIDOS - 7 CONTENEDORES SEGÚN mockData.ts
   const containers = [
     'Congelador 1 - Pescado',
     'Congelador 2 - Mariscos',
-    'Congelador 3 - Causas',
+    'Congelador 3 - Causa', // CORREGIDO - Era "Causas" ahora "Causa"
     'Congelador 4 - Verduras',
     'Refrigerador 5 - Gaseosas',
     'Refrigerador 6 - Cervezas',
@@ -65,6 +95,12 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
     onRecommendedContainersChange([]);
   };
 
+  // Función para mostrar recomendaciones por categoría - CORREGIDA
+  const getCategoryRecommendations = (category: ProductCategory): string => {
+    const recs = CONTAINER_RECOMMENDATIONS[category] || [];
+    return recs.length > 0 ? recs.join(', ') : 'Almacén Seco';
+  };
+
   return (
     <div className="space-y-6">
       {/* Nombre del producto */}
@@ -80,7 +116,7 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
             errors.name ? 'border-red-300' : 'border-gray-300'
           }`}
-          placeholder="Ej: Lenguado filetes"
+          placeholder="Ej: Lenguado filetes, Inca Kola, Aceite vegetal..."
           autoFocus
         />
       </FormField>
@@ -100,6 +136,9 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
               <option key={category} value={category}>{category}</option>
             ))}
           </select>
+          <p className="text-xs text-blue-600 mt-1">
+            Sugerido: {getCategoryRecommendations(form.category)}
+          </p>
         </FormField>
 
         <FormField
@@ -213,7 +252,7 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
         </div>
 
         <p className="text-xs text-purple-700 mb-3">
-          Basado en "{form.category}", sugerimos: {recommendedContainers.join(', ')}.
+          Basado en "{form.category}", sugerimos: {getCategoryRecommendations(form.category)}.
         </p>
 
         <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -262,6 +301,27 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
               </div>
             );
           })}
+        </div>
+
+        {/* Ayuda contextual por categorías - CORREGIDA */}
+        <div className="mt-3 pt-3 border-t border-purple-200">
+          <div className="text-xs text-purple-600">
+            <strong>Ayuda por categoría:</strong>
+            <div className="mt-1 space-y-1">
+              {form.category === 'Pescados' && <p>• Pescados van principalmente al Congelador 1</p>}
+              {form.category === 'Mariscos' && <p>• Mariscos van principalmente al Congelador 2</p>}
+              {form.category === 'Causa' && <p>• La Causa preparada va específicamente al Congelador 3</p>}
+              {form.category === 'Bebidas' && <p>• Gaseosas van al Refrigerador 5</p>}
+              {form.category === 'Bebidas Alcohólicas' && <p>• Cervezas van al Refrigerador 6, vinos al Almacén Seco</p>}
+              {form.category === 'Tubérculos' && <p>• Papas para causa → Congelador 3, otros tubérculos → Congelador 4</p>}
+              {form.category === 'Cítricos' && <p>• Limones para causa van al Congelador 3</p>}
+              {form.category === 'Condimentos' && <p>• Frescos → Congelador 3 o 4, secos → Almacén Seco</p>}
+              {form.category === 'Verduras' && <p>• Verduras frescas van al Congelador 4</p>}
+              {(form.category === 'Aceites' || form.category === 'Granos' || form.category === 'Harinas' || form.category === 'Suministros' || form.category === 'Limpieza') && 
+                <p>• Productos no perecederos van al Almacén Seco</p>
+              }
+            </div>
+          </div>
         </div>
       </div>
     </div>
