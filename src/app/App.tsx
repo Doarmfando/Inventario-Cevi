@@ -12,6 +12,9 @@ import ContainerProductsPage from "../pages/ContainerPage/ContainerProductsPage"
 import Sidebar from "../components/Sidebar/Sidebar";
 import Header from "../components/Header";
 
+// Prueba temporal de Supabase
+import { TestConnection } from "../TestConnection";
+
 const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, logout } = useAuth();
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
@@ -30,10 +33,11 @@ const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         onToggle={() => setSidebarOpen((s) => !s)}
       />
 
-      {/* contenido principal */}
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
           <Header user={user} onToggleSidebar={() => setSidebarOpen((s) => !s)} />
+          {/* PRUEBA TEMPORAL - QUITAR DESPUÉS */}
+          <TestConnection />
           {children}
         </main>
       </div>
@@ -76,7 +80,6 @@ const App: React.FC = () => {
             }
           />
 
-          {/* 🆕 RUTAS DE CONTENEDORES */}
           <Route
             path="/containers"
             element={
