@@ -3,7 +3,7 @@ import React from "react";
 import { X } from "lucide-react";
 import logo2 from "../../../assets/logo2.png";
 
-interface SidebarHeaderProps {
+interface SidebarHeaderProps {  // ← Cambiar nombre del interface
   onClose: () => void;
 }
 

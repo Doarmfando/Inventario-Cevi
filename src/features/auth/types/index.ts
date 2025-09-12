@@ -1,25 +1,26 @@
+// src/features/auth/types/index.ts
+export interface User {
+  id: string;
+  nombre_usuario: string;
+  nombre: string;
+  email: string;
+  rol: {
+    id: string;
+    nombre: 'administrador' | 'usuario';
+    descripcion: string;
+  };
+}
+
 export interface Credentials {
-  username: string;
+  username: string;  // Esto puede ser username o email
   password: string;
 }
 
-export interface InputWithIconProps {
-  icon: React.ReactNode;
-  type?: string;
-  placeholder?: string;
-  label?: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  name: string;
-}
-
-export interface PasswordInputProps {
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  placeholder?: string;
-}
-
-export interface RememberMeProps {
-  checked: boolean;
-  onChange: (checked: boolean) => void;
+// CORREGIDO: Cambiar primer parámetro de email a usernameOrEmail
+export interface AuthContextProps {
+  user: User | null;
+  loading: boolean;
+  login: (usernameOrEmail: string, password: string) => Promise<boolean>; // Cambiado
+  logout: () => Promise<void>;
+  isAdmin: boolean;
 }

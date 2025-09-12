@@ -1,9 +1,17 @@
-// src/components/Sidebar/components/NavItem.tsx
+// ==============================================
+// ARCHIVO: src/components/Sidebar/components/NavItem.tsx
+// Componente NavItem corregido
+// ==============================================
+
 import React from "react";
 import { NavLink } from "react-router-dom";
-import type { NavItem as NavItemType } from "../types/sidebar.types";
+import type { LucideIcon } from "lucide-react";
 
-interface NavItemProps extends NavItemType {
+interface NavItemProps {
+  to: string;
+  icon: LucideIcon;
+  label: string;
+  badge?: number;
   onClose: () => void;
 }
 

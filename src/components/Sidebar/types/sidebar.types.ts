@@ -1,8 +1,14 @@
-// src/components/Sidebar/types/sidebar.types.ts
-import type { ContainerSummary } from "../../../features/containers/types/container.types";
+
+// ==============================================
+// ARCHIVO: src/components/Sidebar/types/sidebar.types.ts
+// Tipos corregidos para el sidebar
+// ==============================================
+
+import type { LucideIcon } from "lucide-react";
+import type { User } from "../../../features/auth/types";
 
 export interface SidebarProps {
-  user: string;
+  user: User;
   onLogout: () => void;
   open?: boolean;
   onClose?: () => void;
@@ -11,18 +17,7 @@ export interface SidebarProps {
 
 export interface NavItem {
   to: string;
-  icon: React.ComponentType<{ className?: string }>;
+  icon: LucideIcon;
   label: string;
   badge?: number;
-}
-
-export interface ContainersByType {
-  [key: string]: ContainerSummary[];
-}
-
-export interface ContainerItemProps {
-  container: ContainerSummary;
-  onClose: () => void;
-  getContainerIcon: (type: string) => React.ReactNode;
-  getStatusColor: (status: string) => string;
 }

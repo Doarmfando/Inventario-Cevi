@@ -1,11 +1,7 @@
-// ==============================================
-// ARCHIVO: src/components/Header.tsx
-// Header corregido para usar objeto User
-// ==============================================
-
+// src/components/Header/index.tsx (crear carpeta y archivo)
 import React from "react";
 import { Menu, Bell, Search } from "lucide-react";
-import type { User } from "../features/auth/types";
+import type { User } from "../../features/auth/types";
 
 interface HeaderProps {
   user: User;

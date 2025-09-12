@@ -1,6 +1,7 @@
+// src/app/App.tsx
 import React from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./providers/AuthProvider";
+import { AuthProvider } from "../features/auth/providers/AuthProvider";
 import { useAuth } from "../features/auth/hooks/useAuth";
 import LoginPage from "../pages/LoginPage";
 import DashboardPage from "../pages/DashboardPage";
@@ -9,15 +10,25 @@ import MovementPage from "../pages/MovementPage";
 import ReportsPage from "../pages/ReportsPage";
 import ContainersPage from "../pages/ContainerPage/ContainersPage";
 import ContainerProductsPage from "../pages/ContainerPage/ContainerProductsPage";
+import { AdminPage } from "../pages/AdminPage"; // ← NUEVO
 import Sidebar from "../components/Sidebar/Sidebar";
-import Header from "../components/Header";
-
-// Prueba temporal de Supabase
-import { TestConnection } from "../TestConnection";
+import Header from "../components/Header/index";
 
 const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const { user, logout } = useAuth();
+  const { user, logout, loading } = useAuth(); // ← Agregado loading
   const [sidebarOpen, setSidebarOpen] = React.useState(false);
+
+  // Mostrar loading mientras verifica auth
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen bg-gray-100">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!user) {
     return <Navigate to="/login" replace />;
@@ -36,8 +47,6 @@ const PrivateLayout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       <div className="flex-1 flex flex-col overflow-hidden">
         <main className="flex-1 overflow-y-auto">
           <Header user={user} onToggleSidebar={() => setSidebarOpen((s) => !s)} />
-          {/* PRUEBA TEMPORAL - QUITAR DESPUÉS */}
-          <TestConnection />
           {children}
         </main>
       </div>
@@ -94,6 +103,16 @@ const App: React.FC = () => {
             element={
               <PrivateLayout>
                 <ContainerProductsPage />
+              </PrivateLayout>
+            }
+          />
+
+          {/* ← NUEVA RUTA DE ADMINISTRACIÓN */}
+          <Route
+            path="/admin"
+            element={
+              <PrivateLayout>
+                <AdminPage />
               </PrivateLayout>
             }
           />

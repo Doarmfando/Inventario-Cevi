@@ -1,14 +1,20 @@
+// ==============================================
+// ARCHIVO: src/components/Sidebar/Sidebar.tsx
+// Sidebar corregido SIN mocks de contenedores
+// ==============================================
 // src/components/Sidebar/Sidebar.tsx
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
+import { Container } from "lucide-react"; // ← Quitar Plus import
+import { NavLink } from "react-router-dom";
 import SidebarHeader from "./components/SidebarHeader";
 import NavItem from "./components/NavItem";
-import ContainersSection from "./components/ContainersSection";
 import UserProfile from "./components/UserProfile";
-import { MAIN_NAV_ITEMS } from "./constants/sidebarConstants";
-import { getContainersSummary } from "../../features/containers/data/mockContainerData";
-import type { ContainerSummary } from "../../features/containers/types/container.types";
+import { MAIN_NAV_ITEMS, ADMIN_NAV_ITEMS } from "./constants/sidebarConstants";
 import type { SidebarProps } from "./types/sidebar.types";
+import { useAuth } from "../../features/auth/hooks/useAuth";
 import "./styles/sidebarStyles.css";
+
+// ... resto del código igual
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   user, 
@@ -18,30 +24,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const isControlled = typeof open === "boolean";
   const [localOpen, setLocalOpen] = useState<boolean>(false);
-  const [containersExpanded, setContainersExpanded] = useState<boolean>(false);
-  const [containers, setContainers] = useState<ContainerSummary[]>([]);
+  const { isAdmin } = useAuth();
   
   const visible = isControlled ? !!open : localOpen;
-
-  // Cargar contenedores
-  useEffect(() => {
-    const containerData = getContainersSummary();
-    setContainers(containerData);
-  }, []);
-
-  // Función para recargar contenedores
-  const reloadContainers = () => {
-    const containerData = getContainersSummary();
-    setContainers(containerData);
-  };
-
-  // Exponer la función globalmente
-  React.useEffect(() => {
-    (window as any).reloadSidebarContainers = reloadContainers;
-    return () => {
-      delete (window as any).reloadSidebarContainers;
-    };
-  }, []);
 
   const close = () => {
     if (onClose) onClose();
@@ -72,15 +57,41 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
             ))}
 
-            {/* Sección de contenedores */}
+            {/* Sección de contenedores simplificada */}
             <div className="pt-2">
-              <ContainersSection
-                containers={containers}
-                containersExpanded={containersExpanded}
-                setContainersExpanded={setContainersExpanded}
-                onClose={close}
-              />
+              <NavLink
+                to="/containers"
+                className={({ isActive }) =>
+                  `flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-all duration-200 group ${
+                    isActive 
+                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
+                      : "text-gray-300 hover:bg-slate-800 hover:text-white"
+                  }`
+                }
+                onClick={close}
+              >
+                <Container className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
+                <span className="font-medium">Contenedores</span>
+              </NavLink>
             </div>
+
+            {/* Sección de administración - Solo para admins */}
+            {isAdmin && (
+              <div className="pt-4 border-t border-slate-700 mt-4">
+                <h3 className="px-3 text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">
+                  Administración
+                </h3>
+                {ADMIN_NAV_ITEMS.map((item) => (
+                  <NavItem
+                    key={item.to}
+                    to={item.to}
+                    icon={item.icon}
+                    label={item.label}
+                    onClose={close}
+                  />
+                ))}
+              </div>
+            )}
           </nav>
         </div>
 

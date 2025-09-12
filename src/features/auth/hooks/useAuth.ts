@@ -1,5 +1,5 @@
 // src/features/auth/hooks/useAuth.ts
-import { useAuthContext } from "../../../app/providers/AuthProvider";
+import { useAuthContext } from "../providers/useAuthContext";
 
 export const useAuth = () => {
   const context = useAuthContext();

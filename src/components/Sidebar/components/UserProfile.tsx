@@ -1,9 +1,14 @@
-// src/components/Sidebar/components/UserProfile.tsx
+// ==============================================
+// ARCHIVO: src/components/Sidebar/components/UserProfile.tsx
+// UserProfile actualizado para usar objeto User
+// ==============================================
+
 import React from "react";
 import { User, LogOut } from "lucide-react";
+import type { User as AuthUser } from "../../../features/auth/types";
 
 interface UserProfileProps {
-  user: string;
+  user: AuthUser;
   onLogout: () => void;
 }
 
@@ -20,8 +25,12 @@ const UserProfile: React.FC<UserProfileProps> = ({ user, onLogout }) => {
             <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 bg-green-400 border-2 border-slate-800 rounded-full"></div>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-white font-semibold text-sm truncate">{user}</p>
-            <p className="text-gray-400 text-xs font-medium">Administrador</p>
+            <p className="text-white font-semibold text-sm truncate">
+              {user.nombre || user.nombre_usuario}
+            </p>
+            <p className="text-gray-400 text-xs font-medium capitalize">
+              {user.rol.nombre}
+            </p>
           </div>
         </div>
       </div>
