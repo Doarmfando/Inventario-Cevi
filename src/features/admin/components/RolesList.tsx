@@ -1,9 +1,5 @@
-// ==============================================
-// ARCHIVO: src/features/admin/components/RolesList.tsx
-// Lista y gestión de roles
-// ==============================================
-
-import { useState } from 'react';
+// src/features/admin/components/RolesList.tsx
+import { useState, useCallback } from 'react';
 import { Plus, Edit, Trash2, Shield, Users } from 'lucide-react';
 import { useRoles } from '../hooks/useRoles';
 import { RoleForm } from './RoleForm';
@@ -24,53 +20,85 @@ export function RolesList() {
   const [editingRole, setEditingRole] = useState<Role | undefined>();
   const [actionLoading, setActionLoading] = useState(false);
 
-  const handleCreate = () => {
+  // Usar useCallback para evitar re-renders innecesarios
+  const handleCreate = useCallback(() => {
     setEditingRole(undefined);
     setShowForm(true);
-  };
+    setError(null); // Limpiar errores previos
+  }, [setError]);
 
-  const handleEdit = (role: Role) => {
+  const handleEdit = useCallback((role: Role) => {
     setEditingRole(role);
     setShowForm(true);
-  };
+    setError(null); // Limpiar errores previos
+  }, [setError]);
 
-  const handleDelete = async (role: Role) => {
+  const handleDelete = useCallback(async (role: Role) => {
+    // Prevenir múltiples clicks
+    if (actionLoading) {
+      console.warn('Operación en progreso, omitiendo...');
+      return;
+    }
+
     const confirmed = confirm(`¿Estás seguro de eliminar el rol "${role.nombre}"?`);
     if (!confirmed) return;
 
     setActionLoading(true);
-    const success = await deleteRole(role.id);
-    setActionLoading(false);
-    
-    if (!success) {
-      // El error ya se maneja en el hook
+    try {
+      const success = await deleteRole(role.id);
+      if (!success) {
+        console.error('No se pudo eliminar el rol');
+      }
+    } catch (error) {
+      console.error('Error eliminando rol:', error);
+    } finally {
+      setActionLoading(false);
     }
-  };
+  }, [deleteRole, actionLoading]);
 
-  const handleSave = async (data: any) => {
+  const handleSave = useCallback(async (data: any) => {
+    // Prevenir múltiples envíos
+    if (actionLoading) {
+      console.warn('Guardado en progreso, omitiendo...');
+      return false;
+    }
+
     setActionLoading(true);
-    let success = false;
-    
-    if (editingRole) {
-      success = await updateRole(editingRole.id, data);
-    } else {
-      success = await createRole(data);
+    try {
+      let success = false;
+      
+      if (editingRole) {
+        success = await updateRole(editingRole.id, data);
+      } else {
+        success = await createRole(data);
+      }
+      
+      return success;
+    } catch (error) {
+      console.error('Error guardando rol:', error);
+      return false;
+    } finally {
+      setActionLoading(false);
     }
-    
-    setActionLoading(false);
-    return success;
-  };
+  }, [editingRole, updateRole, createRole, actionLoading]);
 
-  const handleCloseForm = () => {
-    setShowForm(false);
-    setEditingRole(undefined);
-    setError(null);
-  };
+  const handleCloseForm = useCallback(() => {
+    // Solo cerrar si no hay operación en progreso
+    if (!actionLoading) {
+      setShowForm(false);
+      setEditingRole(undefined);
+      setError(null);
+    }
+  }, [actionLoading, setError]);
 
-  if (loading) {
+  // Mostrar loading inicial
+  if (loading && roles.length === 0) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-2"></div>
+          <p className="text-gray-600">Cargando roles...</p>
+        </div>
       </div>
     );
   }
@@ -85,7 +113,8 @@ export function RolesList() {
         </div>
         <button
           onClick={handleCreate}
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center"
+          disabled={actionLoading}
+          className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center disabled:opacity-50 disabled:cursor-not-allowed"
         >
           <Plus className="w-4 h-4 mr-2" />
           Nuevo Rol
@@ -94,8 +123,22 @@ export function RolesList() {
 
       {/* Error Message */}
       {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
-          {error}
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() => setError(null)}
+            className="text-red-400 hover:text-red-600 ml-2"
+          >
+            ×
+          </button>
+        </div>
+      )}
+
+      {/* Loading overlay durante operaciones */}
+      {actionLoading && (
+        <div className="bg-blue-50 border border-blue-200 text-blue-700 px-4 py-3 rounded-lg flex items-center">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+          Procesando...
         </div>
       )}
 
@@ -120,7 +163,8 @@ export function RolesList() {
               <div className="flex space-x-1">
                 <button
                   onClick={() => handleEdit(role)}
-                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors"
+                  disabled={actionLoading}
+                  className="p-1 text-gray-400 hover:text-blue-600 transition-colors disabled:opacity-50"
                   title="Editar rol"
                 >
                   <Edit className="w-4 h-4" />
@@ -154,7 +198,8 @@ export function RolesList() {
           <p className="text-gray-500 mb-4">No hay roles configurados</p>
           <button
             onClick={handleCreate}
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            disabled={actionLoading}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
           >
             Crear primer rol
           </button>

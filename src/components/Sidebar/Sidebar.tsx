@@ -2,9 +2,8 @@
 // ARCHIVO: src/components/Sidebar/Sidebar.tsx
 // Sidebar corregido SIN mocks de contenedores
 // ==============================================
-// src/components/Sidebar/Sidebar.tsx
 import React, { useState } from "react";
-import { Container } from "lucide-react"; // ← Quitar Plus import
+import { Container } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import SidebarHeader from "./components/SidebarHeader";
 import NavItem from "./components/NavItem";
@@ -13,8 +12,6 @@ import { MAIN_NAV_ITEMS, ADMIN_NAV_ITEMS } from "./constants/sidebarConstants";
 import type { SidebarProps } from "./types/sidebar.types";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import "./styles/sidebarStyles.css";
-
-// ... resto del código igual
 
 const Sidebar: React.FC<SidebarProps> = ({ 
   user, 
@@ -31,6 +28,11 @@ const Sidebar: React.FC<SidebarProps> = ({
   const close = () => {
     if (onClose) onClose();
     else setLocalOpen(false);
+  };
+
+  // Adaptar logout para que siempre sea async
+  const handleLogout = async () => {
+    await Promise.resolve(onLogout?.());
   };
 
   return (
@@ -57,7 +59,7 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
             ))}
 
-            {/* Sección de contenedores simplificada */}
+            {/* Sección de contenedores */}
             <div className="pt-2">
               <NavLink
                 to="/containers"
@@ -95,8 +97,8 @@ const Sidebar: React.FC<SidebarProps> = ({
           </nav>
         </div>
 
-        {/* User Profile - Siempre en la parte inferior */}
-        <UserProfile user={user} onLogout={onLogout} />
+        {/* User Profile */}
+        <UserProfile user={user} onLogout={handleLogout} />
       </div>
 
       {/* Overlay para móvil */}
