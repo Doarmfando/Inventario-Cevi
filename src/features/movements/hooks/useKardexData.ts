@@ -1,125 +1,91 @@
 // src/features/movements/hooks/useKardexData.ts
+// HOOK ACTUALIZADO CON DATOS REALES DE BD
 
-import { useMemo } from 'react';
-import type { KardexEntry } from '../types/movement.types';
-import type { Product, KardexStats } from '../types/kardex.types';
-import type { Container } from '../../inventory/types';
+import { useState, useEffect } from 'react';
+import { KardexService } from '../services/KardexService';
+import type { 
+  KardexProduct, 
+  KardexMovement, 
+  KardexStats, 
+  KardexDateRange 
+} from '../types/kardex.types';
 
-export const useKardexData = (productId: string) => {
-  // Mock data - En tu app real, esto vendría de tu API basado en productId
-  const product: Product = {
-    id: productId,
-    name: 'Lenguado Filetes',
-    code: 'LF001',
-    currentStock: 15,
-    unitPrice: 28.50,
+interface UseKardexDataReturn {
+  producto: KardexProduct | null;
+  movimientos: KardexMovement[];
+  stats: KardexStats;
+  loading: boolean;
+  error: string | null;
+  refrescarKardex: () => Promise<void>;
+  aplicarFiltros: (filtros: KardexDateRange) => Promise<void>;
+}
+
+export const useKardexData = (productId: string): UseKardexDataReturn => {
+  const [producto, setProducto] = useState<KardexProduct | null>(null);
+  const [movimientos, setMovimientos] = useState<KardexMovement[]>([]);
+  const [stats, setStats] = useState<KardexStats>({
+    total_entradas: 0,
+    total_salidas: 0,
+    total_ajustes: 0,
+    cantidad_entradas: 0,
+    cantidad_salidas: 0,
+    cantidad_ajustes: 0,
+    valor_total_entradas: 0,
+    valor_total_salidas: 0,
+    movimientos_periodo: 0
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [filtrosActuales, setFiltrosActuales] = useState<KardexDateRange>({});
+
+  // Cargar datos del kardex
+  const cargarKardex = async (filtros?: KardexDateRange) => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const kardexData = await KardexService.getKardexCompleto(productId, filtros);
+
+      if (!kardexData.producto) {
+        throw new Error('Producto no encontrado');
+      }
+
+      setProducto(kardexData.producto);
+      setMovimientos(kardexData.movimientos);
+      setStats(kardexData.stats);
+    } catch (err) {
+      console.error('Error cargando kardex:', err);
+      setError('Error al cargar el kardex del producto');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Usar un container válido del tipo Container
-  const mockContainer: Container = 'Congelador 1 - Pescado';
+  // Refrescar kardex con filtros actuales
+  const refrescarKardex = async () => {
+    await cargarKardex(filtrosActuales);
+  };
 
-  const kardexEntries: KardexEntry[] = [
-    {
-      id: '1',
-      productId: productId,
-      productName: product.name,
-      container: mockContainer,
-      type: 'entrada',
-      quantity: 20,
-      packagedUnits: 4,
-      previousStock: 0,
-      newStock: 20,
-      runningBalance: 20,
-      runningPackagedBalance: 4,
-      unitPrice: 28.50,
-      totalValue: 570.00,
-      reason: 'compra',
-      observations: 'Compra inicial de inventario',
-      documentNumber: 'FAC-001-001',
-      createdBy: 'admin',
-      createdAt: new Date('2024-08-01T10:00:00'),
-    },
-    {
-      id: '2',
-      productId: productId,
-      productName: product.name,
-      container: mockContainer,
-      type: 'salida',
-      quantity: 5,
-      packagedUnits: 1,
-      previousStock: 20,
-      newStock: 15,
-      runningBalance: 15,
-      runningPackagedBalance: 3,
-      unitPrice: 28.50,
-      totalValue: 142.50,
-      reason: 'venta',
-      observations: 'Venta a cliente',
-      documentNumber: 'BOL-001-001',
-      createdBy: 'admin',
-      createdAt: new Date('2024-08-02T14:30:00'),
-    },
-    {
-      id: '3',
-      productId: productId,
-      productName: product.name,
-      container: mockContainer,
-      type: 'ajuste',
-      quantity: 2,
-      packagedUnits: 0,
-      previousStock: 15,
-      newStock: 17,
-      runningBalance: 17,
-      runningPackagedBalance: 3,
-      reason: 'ajuste-positivo',
-      observations: 'Ajuste por inventario físico',
-      createdBy: 'admin',
-      createdAt: new Date('2024-08-03T09:15:00'),
-    },
-    {
-      id: '4',
-      productId: productId,
-      productName: product.name,
-      container: mockContainer,
-      type: 'salida',
-      quantity: 2,
-      packagedUnits: 0,
-      previousStock: 17,
-      newStock: 15,
-      runningBalance: 15,
-      runningPackagedBalance: 3,
-      unitPrice: 28.50,
-      totalValue: 57.00,
-      reason: 'venta',
-      observations: 'Venta mostrador',
-      createdBy: 'admin',
-      createdAt: new Date('2024-08-04T16:45:00'),
-    },
-  ];
+  // Aplicar nuevos filtros
+  const aplicarFiltros = async (filtros: KardexDateRange) => {
+    setFiltrosActuales(filtros);
+    await cargarKardex(filtros);
+  };
 
-  const stats: KardexStats = useMemo(() => {
-    const totalEntradas = kardexEntries
-      .filter(entry => entry.type === 'entrada')
-      .reduce((sum, entry) => sum + entry.quantity, 0);
-
-    const totalSalidas = kardexEntries
-      .filter(entry => entry.type === 'salida')
-      .reduce((sum, entry) => sum + entry.quantity, 0);
-
-    const totalAjustes = kardexEntries
-      .filter(entry => entry.type === 'ajuste')
-      .reduce((sum, entry) => sum + entry.quantity, 0);
-
-    return {
-      totalEntradas,
-      totalSalidas,
-      totalAjustes,
-    };
-  }, [kardexEntries]);
+  // Cargar datos iniciales
+  useEffect(() => {
+    if (productId) {
+      cargarKardex();
+    }
+  }, [productId]);
 
   return {
-    product,
-    kardexEntries,
+    producto,
+    movimientos,
     stats,
+    loading,
+    error,
+    refrescarKardex,
+    aplicarFiltros
   };
 };
