@@ -1,8 +1,20 @@
+// src/features/inventory/components/table/TableSummary.tsx
 import React from "react";
-import type { Product } from "../../types/";
+
+// Tipo compatible con el producto que retorna useInventory.getProductsWithCalculatedData()
+interface ProductForSummary {
+  id: string;
+  name: string;
+  quantity: number;
+  minStock: number;
+  stockStatus: 'Stock OK' | 'Stock Bajo' | 'Reponer' | 'Sin Stock';
+  estimatedDaysToExpiry: number;
+  // Agregamos campos calculados para vencimientos (por ahora serán 0)
+  porVencer?: string;
+}
 
 interface TableSummaryProps {
-  filteredProducts: Product[];
+  filteredProducts: ProductForSummary[];
   totalProducts: number;
 }
 
@@ -14,9 +26,27 @@ const TableSummary: React.FC<TableSummaryProps> = ({
     return null;
   }
 
-  const expiredCount = filteredProducts.filter(p => p.state === 'vencido').length;
-  const expiringCount = filteredProducts.filter(p => p.state === 'por-vencer').length;
-  const lowStockCount = filteredProducts.filter(p => p.quantity <= p.minStock).length;
+  // Calcular productos vencidos (estimatedDaysToExpiry <= 0)
+  const expiredCount = filteredProducts.filter(p => 
+    p.estimatedDaysToExpiry <= 0
+  ).length;
+
+  // Calcular productos por vencer (1-3 días)
+  const expiringCount = filteredProducts.filter(p => 
+    p.estimatedDaysToExpiry > 0 && p.estimatedDaysToExpiry <= 3
+  ).length;
+
+  // Calcular productos con stock bajo (usando tu sistema de estados)
+  const lowStockCount = filteredProducts.filter(p => 
+    p.stockStatus === 'Stock Bajo' || 
+    p.stockStatus === 'Reponer' || 
+    p.stockStatus === 'Sin Stock'
+  ).length;
+
+  // Calcular productos sin stock específicamente
+  const outOfStockCount = filteredProducts.filter(p => 
+    p.stockStatus === 'Sin Stock'
+  ).length;
 
   return (
     <div className="bg-white p-4 rounded-xl shadow-sm border border-gray-200">
@@ -26,22 +56,35 @@ const TableSummary: React.FC<TableSummaryProps> = ({
         </div>
         
         <div className="flex flex-wrap gap-4 text-xs">
+          {/* Productos vencidos */}
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-red-100 rounded-full"></div>
+            <div className="w-3 h-3 bg-red-100 rounded-full border-2 border-red-300"></div>
             <span className="text-gray-600">
               {expiredCount} Vencidos
             </span>
           </div>
+          
+          {/* Productos por vencer */}
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-yellow-100 rounded-full"></div>
+            <div className="w-3 h-3 bg-yellow-100 rounded-full border-2 border-yellow-300"></div>
             <span className="text-gray-600">
               {expiringCount} Por vencer
             </span>
           </div>
+          
+          {/* Stock bajo */}
           <div className="flex items-center space-x-2">
-            <div className="w-3 h-3 bg-orange-100 rounded-full"></div>
+            <div className="w-3 h-3 bg-orange-100 rounded-full border-2 border-orange-300"></div>
             <span className="text-gray-600">
               {lowStockCount} Stock bajo
+            </span>
+          </div>
+
+          {/* Sin stock */}
+          <div className="flex items-center space-x-2">
+            <div className="w-3 h-3 bg-red-200 rounded-full border-2 border-red-400"></div>
+            <span className="text-gray-600">
+              {outOfStockCount} Sin stock
             </span>
           </div>
         </div>

@@ -1,251 +1,288 @@
-// hooks/useInventory.ts - CORREGIDO PARA RESOLVER ERRORES DE TYPESCRIPT
-
-import { useState } from "react";
-import type { Product, NewProduct, ProductWithCalculatedData, StockStatus } from "../types"; // ✅ RUTA CORREGIDA
-import { mockProducts, calculateNearExpiryPackages, formatPackagedText } from "../components/data/mockData";
+// src/features/inventory/hooks/useInventory.ts
+import { useState, useEffect } from "react";
+import { InventoryService } from '../services/inventoryService';
+import type { 
+  ProductoInventario,
+  FormularioProducto,
+  DBCategoria,
+  DBUnidadMedida,
+  DBContenedor
+} from '../types';
 
 export const useInventory = () => {
-  const [products, setProducts] = useState<Product[]>(mockProducts);
+  // Estados principales
+  const [productos, setProductos] = useState<ProductoInventario[]>([]);
+  const [categorias, setCategorias] = useState<DBCategoria[]>([]);
+  const [unidades, setUnidades] = useState<DBUnidadMedida[]>([]);
+  const [contenedores, setContenedores] = useState<DBContenedor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Función para calcular el estado del stock
-  const getStockStatus = (quantity: number, minStock: number): StockStatus => {
-    if (quantity === 0) return 'Sin Stock';
-    if (quantity <= minStock) return 'Stock Bajo';
-    if (quantity <= minStock * 1.5) return 'Reponer Pronto';
-    return 'Stock OK';
+  // Cargar datos iniciales
+  useEffect(() => {
+    cargarDatosIniciales();
+  }, []);
+
+  const cargarDatosIniciales = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [
+        productosData,
+        categoriasData,
+        unidadesData,
+        contenedoresData
+      ] = await Promise.all([
+        InventoryService.getProductosInventario(),
+        InventoryService.getCategorias(),
+        InventoryService.getUnidadesMedida(),
+        InventoryService.getContenedores()
+      ]);
+
+      setProductos(productosData);
+      setCategorias(categoriasData);
+      setUnidades(unidadesData);
+      setContenedores(contenedoresData);
+    } catch (err) {
+      console.error('Error cargando datos:', err);
+      setError('Error al cargar los datos del inventario');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  // Función para calcular el estado del producto basado en los días estimados
-  const calculateProductState = (estimatedDays: number, currentState: string): Product['state'] => {
-    if (currentState === 'congelado') return 'congelado';
-    if (estimatedDays <= 0) return 'vencido';
-    if (estimatedDays <= 3) return 'por-vencer';
-    return 'fresco';
+  // Recargar solo productos
+  const recargarProductos = async () => {
+    try {
+      const productosData = await InventoryService.getProductosInventario();
+      setProductos(productosData);
+    } catch (err) {
+      console.error('Error recargando productos:', err);
+    }
   };
 
-  // FUNCIÓN PRINCIPAL - Productos con datos calculados para la tabla
-  const getProductsWithCalculatedData = (): ProductWithCalculatedData[] => {
-    return products.map(product => {
-      const packagedWeight = product.packagedUnits * product.weightPerPackage;
-      const availableStock = Math.max(0, product.quantity - packagedWeight);
-      
-      // Recalcular empaquetados por vencer
-      const nearExpiryPackages = calculateNearExpiryPackages(
-        product.packagedUnits,
-        product.packagedExpiryDays,
-        product.state,
-        product.category
-      );
+  // ============================================
+  // CREAR PRODUCTO
+  // ============================================
+  const addProduct = async (data: FormularioProducto): Promise<boolean> => {
+    try {
+      const productoId = await InventoryService.crearProducto(data);
+      if (productoId) {
+        await recargarProductos();
+        return true;
+      }
+      return false;
+    } catch (err) {
+      console.error('Error creando producto:', err);
+      return false;
+    }
+  };
+
+  // ============================================
+  // ACTUALIZAR PRODUCTO
+  // ============================================
+  const updateProduct = async (id: string, updates: Partial<FormularioProducto>): Promise<boolean> => {
+    try {
+      const success = await InventoryService.actualizarProducto(id, updates);
+      if (success) {
+        await recargarProductos();
+      }
+      return success;
+    } catch (err) {
+      console.error('Error actualizando producto:', err);
+      return false;
+    }
+  };
+
+  // ============================================
+  // ELIMINAR PRODUCTO
+  // ============================================
+  const deleteProduct = async (id: string): Promise<boolean> => {
+    try {
+      // Verificar si tiene stock
+      const producto = productos.find(p => p.id === id);
+      if (producto && producto.stock_actual > 0) {
+        throw new Error('No se puede eliminar un producto con stock existente');
+      }
+
+      const success = await InventoryService.eliminarProducto(id);
+      if (success) {
+        await recargarProductos();
+      }
+      return success;
+    } catch (err: any) {
+      alert(err.message || 'Error eliminando producto');
+      return false;
+    }
+  };
+
+  // ============================================
+  // FORMATEAR PRODUCTOS PARA LA TABLA (Compatibilidad)
+  // ============================================
+  const getProductsWithCalculatedData = () => {
+    return productos.map(producto => {
+      // Obtener nombre del contenedor principal
+      const contenedorNombre = producto.contenedor_fijo?.nombre || 'Sin asignar';
       
       return {
-        ...product,
-        stockStatus: getStockStatus(product.quantity, product.minStock),
-        totalValue: product.price * product.quantity, // Valor con precio estimado
-        realTotalValue: product.realPrice ? product.realPrice * product.quantity : undefined, // Valor con precio real (si existe)
-        availableStock,
-        packagedWeight,
-        empaquetados: formatPackagedText(product.packagedUnits, product.weightPerPackage),
-        porVencer: formatPackagedText(nearExpiryPackages, product.weightPerPackage),
-        nearExpiryPackages
+        // IDs y datos básicos
+        id: producto.id,
+        name: producto.nombre,
+        
+        // Contenedor principal
+        container: contenedorNombre,
+        
+        // Categoría
+        category: producto.categoria.nombre,
+        
+        // Stock y unidad
+        quantity: producto.stock_actual,
+        unit: producto.unidad_medida.abreviatura,
+        
+        // Estado del inventario
+        stockStatus: producto.estado_inventario,
+        state: producto.estado_inventario, // Para compatibilidad
+        
+        // Precios
+        price: producto.precio_estimado,
+        totalValue: producto.valor_total,
+        
+        // Stock mínimo
+        minStock: producto.stock_min,
+        
+        // Empaquetados
+        empaquetados: producto.empaquetados_detalle,
+        packagedUnits: producto.total_empaquetados,
+        
+        // Campos adicionales para compatibilidad con la tabla actual
+        supplier: '', // No se usa en tu sistema
+        estimatedDaysToExpiry: 0, // Se calcula en detalle_contenedor
+        weightPerPackage: 0, // Se define en detalle_contenedor
+        packagedExpiryDays: 0, // Se define en detalle_contenedor
+        nearExpiryPackages: 0, // Se calcula dinámicamente
+        entryDate: producto.created_at,
+        lastUpdated: producto.updated_at,
+        expiryDate: '', // Se obtiene de detalle_contenedor
+        availableStock: producto.stock_actual,
+        packagedWeight: 0,
+        porVencer: '0', // Se calculará cuando tengamos fechas de vencimiento
+        
+        // Datos originales por si los necesitas
+        _original: producto
       };
     });
   };
 
-  // CRUD Operations
-  const addProduct = (productData: NewProduct) => {
-    const newProduct: Product = {
-      id: Date.now(),
-      ...productData,
-      packagedUnits: productData.packagedUnits || 0,
-      weightPerPackage: productData.weightPerPackage || 1,
-      packagedExpiryDays: productData.packagedExpiryDays || productData.estimatedDaysToExpiry,
-      nearExpiryPackages: calculateNearExpiryPackages(
-        productData.packagedUnits || 0,
-        productData.packagedExpiryDays || productData.estimatedDaysToExpiry,
-        productData.state,
-        productData.category
-      ),
-      entryDate: new Date().toISOString().split('T')[0],
-      state: calculateProductState(productData.estimatedDaysToExpiry, productData.state),
-      lastUpdated: new Date().toISOString().split('T')[0],
-      expiryDate: new Date(Date.now() + productData.estimatedDaysToExpiry * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-    };
-    
-    setProducts(prev => [...prev, newProduct]);
-  };
-
-  const deleteProduct = (id: number) => {
-    setProducts(prev => prev.filter(p => p.id !== id));
-  };
-
-  const updateProduct = (id: number, updates: Partial<Product>) => {
-    setProducts(prev => prev.map(p => 
-      p.id === id 
-        ? { 
-            ...p, 
-            ...updates,
-            nearExpiryPackages: updates.packagedUnits !== undefined || updates.packagedExpiryDays !== undefined ? 
-              calculateNearExpiryPackages(
-                updates.packagedUnits || p.packagedUnits,
-                updates.packagedExpiryDays || p.packagedExpiryDays,
-                updates.state || p.state,
-                updates.category || p.category
-              ) : p.nearExpiryPackages,
-            state: updates.estimatedDaysToExpiry ? 
-              calculateProductState(updates.estimatedDaysToExpiry, updates.state || p.state) : p.state,
-            lastUpdated: new Date().toISOString().split('T')[0] 
-          }
-        : p
-    ));
-  };
-
-  // Actualizar estados de productos y empaquetados por vencer
-  const updateProductStates = () => {
-    setProducts(prev => prev.map(p => ({
-      ...p,
-      state: calculateProductState(p.estimatedDaysToExpiry, p.state),
-      nearExpiryPackages: calculateNearExpiryPackages(
-        p.packagedUnits,
-        p.packagedExpiryDays,
-        p.state,
-        p.category
-      )
-    })));
-  };
-
-  // ESTADÍSTICAS PARA TARJETAS SUPERIORES
+  // ============================================
+  // ESTADÍSTICAS
+  // ============================================
   const getStats = () => {
-    const productsWithData = getProductsWithCalculatedData();
-    const totalProducts = products.length;
-    const lowStockItems = productsWithData.filter(item => 
-      item.stockStatus === 'Sin Stock' || item.stockStatus === 'Stock Bajo'
+    const totalProducts = productos.length;
+    const totalValue = productos.reduce((sum, p) => sum + p.valor_total, 0);
+    
+    // Contar por estado
+    const lowStockItems = productos.filter(p => 
+      p.estado_inventario === 'Stock Bajo' || p.estado_inventario === 'Reponer'
     ).length;
-    const expiringItems = products.filter(item => item.state === 'por-vencer').length;
-    const expiredItems = products.filter(item => item.state === 'vencido').length;
     
-    // Valores calculados con precio estimado y precio real
-    const totalInventoryValue = productsWithData.reduce((sum, item) => sum + item.totalValue, 0);
-    const totalRealInventoryValue = productsWithData.reduce((sum, item) => 
-      sum + (item.realTotalValue || item.totalValue), 0
-    );
+    const outOfStock = productos.filter(p => 
+      p.estado_inventario === 'Sin Stock'
+    ).length;
     
-    // Estadísticas de empaquetado gastronómico
-    const totalPackagedUnits = products.reduce((sum, item) => sum + item.packagedUnits, 0);
-    const totalPackagedWeight = productsWithData.reduce((sum, item) => sum + item.packagedWeight, 0);
-    const totalNearExpiryPackages = productsWithData.reduce((sum, item) => sum + item.nearExpiryPackages, 0);
-    const totalNearExpiryWeight = productsWithData.reduce((sum, item) => 
-      sum + (item.nearExpiryPackages * item.weightPerPackage), 0
-    );
+    // Por ahora, estos se calcularán cuando implementemos detalle_contenedor
+    const expiringItems = 0; // Se calculará con fechas de vencimiento
+    const expiredItems = 0; // Se calculará con fechas de vencimiento
     
-    const categories = [...new Set(products.map(item => item.category))];
-    const containers = [...new Set(products.map(item => item.container))];
-
     return {
       totalProducts,
+      totalValue,
       lowStockItems,
       expiringItems,
       expiredItems,
-      totalValue: totalInventoryValue, // Valor estimado
-      totalRealValue: totalRealInventoryValue, // Valor real
-      // Estadísticas de empaquetado
-      totalPackagedUnits,
-      totalPackagedWeight,
-      totalNearExpiryPackages,
-      totalNearExpiryWeight,
-      categoriesCount: categories.length,
-      containersCount: containers.length,
-      categories,
-      containers
+      outOfStock
     };
   };
 
-  // FUNCIONES DE FILTRADO Y AGRUPACIÓN
+  // ============================================
+  // PRODUCTOS CON ALERTAS
+  // ============================================
   const getLowStockProducts = () => {
-    const productsWithData = getProductsWithCalculatedData();
-    return productsWithData.filter(item => 
-      item.stockStatus === 'Sin Stock' || item.stockStatus === 'Stock Bajo'
+    return productos.filter(p => 
+      p.estado_inventario === 'Stock Bajo' || 
+      p.estado_inventario === 'Reponer' ||
+      p.estado_inventario === 'Sin Stock'
     );
   };
 
   const getExpiringProducts = () => {
-    return products.filter(item => item.state === 'por-vencer' || item.state === 'vencido');
+    // Por implementar cuando tengamos fechas de vencimiento en detalle_contenedor
+    return [];
   };
 
-  // Productos con empaquetados por vencer (específico para negocio gastronómico)
-  const getPackagesNearExpiry = () => {
-    const productsWithData = getProductsWithCalculatedData();
-    return productsWithData.filter(item => item.nearExpiryPackages > 0);
+  // ============================================
+  // HELPERS PARA FORMULARIOS
+  // ============================================
+  
+  // Obtener contenedores disponibles para un producto
+  const getContenedoresDisponibles = () => {
+    return contenedores.map(c => ({
+      id: c.id,
+      nombre: c.nombre,
+      codigo: c.codigo,
+      tipo: c.tipo_contenedor_id
+    }));
   };
 
-  const getProductsByCategory = () => {
-    const categories = [...new Set(products.map(item => item.category))];
-    return categories.map(category => {
-      const categoryItems = products.filter(item => item.category === category);
-      const productsWithData = getProductsWithCalculatedData().filter(item => item.category === category);
-      
-      // Valores con precio estimado y precio real
-      const categoryValue = categoryItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const categoryRealValue = categoryItems.reduce((sum, item) => 
-        sum + ((item.realPrice || item.price) * item.quantity), 0
-      );
-      
-      const categoryPackagedUnits = categoryItems.reduce((sum, item) => sum + item.packagedUnits, 0);
-      const categoryPackagedWeight = productsWithData.reduce((sum, item) => sum + item.packagedWeight, 0);
-      const categoryNearExpiry = productsWithData.reduce((sum, item) => sum + item.nearExpiryPackages, 0);
-      
-      return {
-        category,
-        count: categoryItems.length,
-        value: categoryValue, // Valor estimado
-        realValue: categoryRealValue, // Valor real
-        packagedUnits: categoryPackagedUnits,
-        packagedWeight: categoryPackagedWeight,
-        nearExpiryPackages: categoryNearExpiry,
-        items: categoryItems
-      };
-    });
+  // Obtener categorías para selector
+  const getCategoriasDisponibles = () => {
+    return categorias.map(c => ({
+      id: c.id,
+      nombre: c.nombre
+    }));
   };
 
-  const getProductsByContainer = () => {
-    const containers = [...new Set(products.map(item => item.container))];
-    return containers.map(container => {
-      const containerItems = products.filter(item => item.container === container);
-      const productsWithData = getProductsWithCalculatedData().filter(item => item.container === container);
-      
-      // Valores con precio estimado y precio real
-      const containerValue = containerItems.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-      const containerRealValue = containerItems.reduce((sum, item) => 
-        sum + ((item.realPrice || item.price) * item.quantity), 0
-      );
-      
-      const containerPackagedUnits = containerItems.reduce((sum, item) => sum + item.packagedUnits, 0);
-      const containerPackagedWeight = productsWithData.reduce((sum, item) => sum + item.packagedWeight, 0);
-      const containerNearExpiry = productsWithData.reduce((sum, item) => sum + item.nearExpiryPackages, 0);
-      
-      return {
-        container,
-        count: containerItems.length,
-        value: containerValue, // Valor estimado
-        realValue: containerRealValue, // Valor real
-        packagedUnits: containerPackagedUnits,
-        packagedWeight: containerPackagedWeight,
-        nearExpiryPackages: containerNearExpiry,
-        items: containerItems
-      };
-    });
+  // Obtener unidades de medida para selector
+  const getUnidadesDisponibles = () => {
+    return unidades.map(u => ({
+      id: u.id,
+      nombre: u.nombre,
+      abreviatura: u.abreviatura
+    }));
   };
 
-  return { 
-    products: getProductsWithCalculatedData(),
-    addProduct, 
-    deleteProduct, 
+  // ============================================
+  // RETURN DEL HOOK
+  // ============================================
+  return {
+    // Datos principales
+    products: getProductsWithCalculatedData(), // Para compatibilidad con tabla actual
+    productosRaw: productos, // Datos originales si los necesitas
+    categorias,
+    unidades,
+    contenedores,
+    
+    // Estado
+    loading,
+    error,
+    
+    // CRUD
+    addProduct,
     updateProduct,
-    updateProductStates,
+    deleteProduct,
+    
+    // Recargar datos
+    refreshProducts: recargarProductos,
+    updateProductStates: recargarProductos, // Alias para compatibilidad
+    
+    // Estadísticas
     getStats,
     getLowStockProducts,
     getExpiringProducts,
-    getPackagesNearExpiry, // NUEVA: Específica para empaquetados por vencer
-    getProductsByCategory,
-    getProductsByContainer
+    
+    // Helpers para formularios
+    getContenedoresDisponibles,
+    getCategoriasDisponibles,
+    getUnidadesDisponibles
   };
 };

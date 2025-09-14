@@ -1,9 +1,8 @@
-// src/features/movements/components/MovementsList.tsx - TABLA SIMPLIFICADA
+// src/features/movements/components/tables/MovementsList.tsx - ADAPTADO A LA BD
 
 import React from 'react';
 import { Eye, ArrowUp, ArrowDown, RotateCcw, Edit, Trash2 } from 'lucide-react';
-import type { Movement } from '../../types/movement.types';
-import { formatMovementData, movementReasonOptions } from '../../data/mockData';
+import type { Movement, MovementType } from '../../types/movement.types';
 
 interface MovementsListProps {
   movements: Movement[];
@@ -19,8 +18,8 @@ const MovementsList: React.FC<MovementsListProps> = ({
   onDelete 
 }) => {
   
-  const getMovementIcon = (type: Movement['type']) => {
-    switch (type) {
+  const getMovementIcon = (tipoMovimiento?: MovementType) => {
+    switch (tipoMovimiento) {
       case 'entrada':
         return <ArrowUp className="w-4 h-4 text-green-600" />;
       case 'salida':
@@ -32,8 +31,8 @@ const MovementsList: React.FC<MovementsListProps> = ({
     }
   };
 
-  const getMovementTypeClass = (type: Movement['type']) => {
-    switch (type) {
+  const getMovementTypeClass = (tipoMovimiento?: MovementType) => {
+    switch (tipoMovimiento) {
       case 'entrada':
         return 'bg-green-100 text-green-800';
       case 'salida':
@@ -45,19 +44,49 @@ const MovementsList: React.FC<MovementsListProps> = ({
     }
   };
 
-  const getReasonLabel = (reason: string, type: 'entrada' | 'salida' | 'ajuste') => {
-    if (type === 'ajuste') return reason;
-    
-    const options = movementReasonOptions[type as 'entrada' | 'salida'];
-    const found = options?.find(option => option.value === reason);
-    return found ? found.label : reason;
+  const getMovementTypeLabel = (tipoMovimiento?: MovementType) => {
+    switch (tipoMovimiento) {
+      case 'entrada':
+        return 'Entrada';
+      case 'salida':
+        return 'Salida';
+      case 'ajuste':
+        return 'Ajuste';
+      default:
+        return 'Desconocido';
+    }
   };
 
-  const formatCurrency = (amount: number) => {
+  const formatCurrency = (amount?: number) => {
+    if (!amount) return '-';
     return new Intl.NumberFormat('es-PE', {
       style: 'currency',
       currency: 'PEN',
     }).format(amount);
+  };
+
+  const formatDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const dateOptions: Intl.DateTimeFormatOptions = {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    };
+    const timeOptions: Intl.DateTimeFormatOptions = {
+      hour: '2-digit',
+      minute: '2-digit',
+      hour12: false
+    };
+    
+    return {
+      date: date.toLocaleDateString('es-PE', dateOptions),
+      time: date.toLocaleTimeString('es-PE', timeOptions)
+    };
+  };
+
+  const formatQuantity = (cantidad: number, tipoMovimiento?: MovementType) => {
+    const sign = tipoMovimiento === 'entrada' ? '+' : tipoMovimiento === 'salida' ? '-' : '';
+    return `${sign}${cantidad}`;
   };
 
   const truncateText = (text: string, maxLength: number = 30) => {
@@ -77,7 +106,7 @@ const MovementsList: React.FC<MovementsListProps> = ({
         </div>
       </div>
     );
-  };
+  }
 
   return (
     <div className="bg-white rounded-lg shadow-sm border overflow-hidden">
@@ -95,6 +124,11 @@ const MovementsList: React.FC<MovementsListProps> = ({
                 Producto
               </th>
               
+              {/* Contenedor */}
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                Contenedor
+              </th>
+              
               {/* Tipo */}
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Tipo
@@ -104,11 +138,6 @@ const MovementsList: React.FC<MovementsListProps> = ({
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                 Cantidad
               </th>
-              
-              {/* Empaquetado
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Empaquetado
-              </th> */}
               
               {/* Stock Anterior */}
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -143,38 +172,44 @@ const MovementsList: React.FC<MovementsListProps> = ({
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {movements.map((movement) => {
-              const formattedMovement = formatMovementData(movement);
+              const formatted = formatDate(movement.fecha_movimiento);
+              const tipoMovimiento = movement.motivo?.tipo_movimiento;
               
               return (
                 <tr key={movement.id} className="hover:bg-gray-50 transition-colors">
                   {/* Fecha */}
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
                     <div className="font-medium">
-                      {formattedMovement.formattedDate.split(',')[0]}
+                      {formatted.date}
                     </div>
                     <div className="text-xs text-gray-500">
-                      {formattedMovement.formattedDate.split(',')[1]}
+                      {formatted.time}
                     </div>
                   </td>
                   
                   {/* Producto */}
-                  <td className="px-4 py-4 whitespace-nowrap">
+                  <td className="px-4 py-4">
                     <div className="text-sm font-medium text-gray-900">
-                      {movement.productName}
+                      {movement.producto_nombre || 'Sin nombre'}
                     </div>
-                    {movement.productCode && (
-                      <div className="text-xs text-gray-500">
-                        {movement.productCode}
-                      </div>
-                    )}
+                    <div className="text-xs text-gray-500">
+                      {movement.categoria_nombre || 'Sin categoría'}
+                    </div>
+                  </td>
+                  
+                  {/* Contenedor */}
+                  <td className="px-4 py-4 whitespace-nowrap">
+                    <div className="text-sm text-gray-900">
+                      {movement.contenedor_nombre || 'Sin contenedor'}
+                    </div>
                   </td>
                   
                   {/* Tipo */}
                   <td className="px-4 py-4 whitespace-nowrap">
                     <div className="flex items-center space-x-2">
-                      {getMovementIcon(movement.type)}
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMovementTypeClass(movement.type)}`}>
-                        {formattedMovement.movementTypeLabel}
+                      {getMovementIcon(tipoMovimiento)}
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getMovementTypeClass(tipoMovimiento)}`}>
+                        {getMovementTypeLabel(tipoMovimiento)}
                       </span>
                     </div>
                   </td>
@@ -182,64 +217,60 @@ const MovementsList: React.FC<MovementsListProps> = ({
                   {/* Cantidad */}
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span className={`text-sm font-medium ${
-                      movement.type === 'entrada' ? 'text-green-600' : 
-                      movement.type === 'salida' ? 'text-red-600' : 
+                      tipoMovimiento === 'entrada' ? 'text-green-600' : 
+                      tipoMovimiento === 'salida' ? 'text-red-600' : 
                       'text-yellow-600'
                     }`}>
-                      {formattedMovement.stockChange}
+                      {formatQuantity(movement.cantidad, tipoMovimiento)}
+                      <span className="text-xs text-gray-500 ml-1">
+                        {movement.unidad_medida}
+                      </span>
                     </span>
                   </td>
                   
-                  {/* Empaquetado
-                  <td className="px-4 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900">
-                      {formattedMovement.packagedText}
-                    </span>
-                  </td>
-                   */}
                   {/* Stock Anterior */}
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {movement.previousStock}
+                    {movement.stock_anterior}
                   </td>
                   
                   {/* Stock Nuevo */}
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span className={`text-sm font-medium ${
-                      movement.newStock > movement.previousStock ? 'text-green-600' : 
-                      movement.newStock < movement.previousStock ? 'text-red-600' : 
+                      movement.stock_nuevo > movement.stock_anterior ? 'text-green-600' : 
+                      movement.stock_nuevo < movement.stock_anterior ? 'text-red-600' : 
                       'text-gray-900'
                     }`}>
-                      {movement.newStock}
+                      {movement.stock_nuevo}
                     </span>
                   </td>
                   
                   {/* Valor Total */}
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span className="text-sm font-semibold text-gray-900">
-                      {movement.totalValue ? formatCurrency(movement.totalValue) : '-'}
+                      {formatCurrency(movement.valor_total)}
                     </span>
                   </td>
                   
                   {/* Motivo */}
                   <td className="px-4 py-4">
                     <div className="text-sm text-gray-900">
-                      {getReasonLabel(movement.reason, movement.type)}
+                      {movement.motivo?.nombre || 'Sin motivo'}
                     </div>
-                    {movement.documentNumber && (
+                    {movement.numero_documento && (
                       <div className="text-xs text-gray-500 mt-1">
-                        Doc: {movement.documentNumber}
+                        Doc: {movement.numero_documento}
                       </div>
                     )}
                   </td>
                   
                   {/* Observación */}
                   <td className="px-4 py-4">
-                    {movement.observations ? (
+                    {movement.observacion ? (
                       <div 
                         className="text-sm text-gray-600 max-w-xs"
-                        title={movement.observations}
+                        title={movement.observacion}
                       >
-                        {truncateText(movement.observations, 25)}
+                        {truncateText(movement.observacion, 25)}
                       </div>
                     ) : (
                       <span className="text-sm text-gray-400">-</span>
@@ -251,12 +282,12 @@ const MovementsList: React.FC<MovementsListProps> = ({
                     <div className="flex items-center space-x-2">
                       {/* Ver Kardex */}
                       <button
-                        onClick={() => onViewKardex(movement.productId)}
+                        onClick={() => onViewKardex(movement.producto_id)}
                         className="inline-flex items-center p-1.5 text-blue-600 hover:text-blue-900 hover:bg-blue-50 rounded transition-colors"
                         title="Ver Kardex"
                       >
-                          <Eye className="w-4 h-4 mr-1" />
-                          <span className="text-xs font-medium">Kardex</span>
+                        <Eye className="w-4 h-4 mr-1" />
+                        <span className="text-xs font-medium">Kardex</span>
                       </button>
                       
                       {/* Editar (opcional) */}
@@ -293,7 +324,7 @@ const MovementsList: React.FC<MovementsListProps> = ({
         </table>
       </div>
       
-      {/* Footer */}
+      {/* Footer con estadísticas */}
       <div className="bg-gray-50 px-6 py-3 border-t border-gray-200">
         <div className="flex items-center justify-between">
           <div className="text-sm text-gray-600">
@@ -303,13 +334,13 @@ const MovementsList: React.FC<MovementsListProps> = ({
           {/* Estadísticas rápidas */}
           <div className="flex items-center space-x-4 text-sm">
             <span className="text-green-600 font-medium">
-              Entradas: {movements.filter(m => m.type === 'entrada').length}
+              Entradas: {movements.filter(m => m.motivo?.tipo_movimiento === 'entrada').length}
             </span>
             <span className="text-red-600 font-medium">
-              Salidas: {movements.filter(m => m.type === 'salida').length}
+              Salidas: {movements.filter(m => m.motivo?.tipo_movimiento === 'salida').length}
             </span>
             <span className="text-yellow-600 font-medium">
-              Ajustes: {movements.filter(m => m.type === 'ajuste').length}
+              Ajustes: {movements.filter(m => m.motivo?.tipo_movimiento === 'ajuste').length}
             </span>
           </div>
         </div>

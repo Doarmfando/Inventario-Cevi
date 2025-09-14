@@ -1,24 +1,30 @@
+// src/features/inventory/components/inventory/ProductForm.tsx
 import React, { useState } from "react";
-import type { NewProduct, Container, ProductCategory, ProductUnit } from "../../types";
+import type { FormularioProducto, DBCategoria, DBUnidadMedida, DBContenedor } from "../../types";
 import FormHeader from "../form/FormHeader";
 import SimplifiedBasicInfoSection from "../form/SimplifiedBasicInfoSection";
 import FormActions from "../form/FormActions";
 
 interface Props {
-  onSubmit: (product: NewProduct) => void;
+  onSubmit: (product: FormularioProducto) => void;
   onClose: () => void;
+  // Datos de la BD que se pasan como props
+  categories: DBCategoria[];
+  units: DBUnidadMedida[];
+  containers: DBContenedor[];
 }
 
-const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
-  // ✅ CORREGIDO - INICIALIZACIÓN COMPLETAMENTE VACÍA
+const ProductForm: React.FC<Props> = ({ onSubmit, onClose, categories, units, containers }) => {
+  // Estado del formulario basado en FormularioProducto
   const [form, setForm] = useState({
-    name: "",
-    category: "" as ProductCategory | "", // ✅ VACÍO INICIAL
-    container: "", // ✅ VACÍO INICIAL - no preseleccionado
-    recommendedContainers: [] as Container[],
-    unit: "kg" as ProductUnit, // Solo este puede tener valor por defecto
-    minStock: 0,
-    price: 0,
+    nombre: "",
+    descripcion: "",
+    categoria_id: "", // UUID de la categoría
+    unidad_medida_id: "", // UUID de la unidad de medida
+    contenedor_fijo_id: "", // UUID del contenedor principal
+    contenedores_recomendados_ids: [] as string[], // Array de UUIDs
+    precio_estimado: 0,
+    stock_min: 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -26,7 +32,9 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
   const handleChange = (field: keyof typeof form) => (
     e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
   ) => {
-    const value = ["price", "minStock"].includes(field) ? Number(e.target.value) : e.target.value;
+    const value = ["precio_estimado", "stock_min"].includes(field) 
+      ? Number(e.target.value) 
+      : e.target.value;
     
     setForm(prev => ({ ...prev, [field]: value as any }));
     
@@ -35,18 +43,19 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
     }
   };
 
-  const handleRecommendedContainersChange = (containers: Container[]) => {
-    setForm(prev => ({ ...prev, recommendedContainers: containers }));
+  const handleRecommendedContainersChange = (containerIds: string[]) => {
+    setForm(prev => ({ ...prev, contenedores_recomendados_ids: containerIds }));
   };
 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!form.name.trim()) newErrors.name = "El nombre es requerido";
-    if (!form.category) newErrors.category = "Debes seleccionar una categoría"; // ✅ VALIDACIÓN CATEGORÍA
-    if (!form.container.trim()) newErrors.container = "El contenedor es requerido";
-    if (form.price <= 0) newErrors.price = "El precio debe ser mayor a 0";
-    if (form.minStock < 0) newErrors.minStock = "El stock mínimo no puede ser negativo";
+    if (!form.nombre.trim()) newErrors.nombre = "El nombre es requerido";
+    if (!form.categoria_id) newErrors.categoria_id = "Debes seleccionar una categoría";
+    if (!form.unidad_medida_id) newErrors.unidad_medida_id = "Debes seleccionar una unidad de medida";
+    if (!form.contenedor_fijo_id) newErrors.contenedor_fijo_id = "El contenedor principal es requerido";
+    if (form.precio_estimado <= 0) newErrors.precio_estimado = "El precio debe ser mayor a 0";
+    if (form.stock_min < 0) newErrors.stock_min = "El stock mínimo no puede ser negativo";
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
@@ -56,18 +65,15 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
     e.preventDefault();
     
     if (validateForm()) {
-      const productData: NewProduct = {
-        ...form,
-        category: form.category as ProductCategory, // ✅ CAST SEGURO DESPUÉS DE VALIDACIÓN
-        container: form.container as Container, // ✅ CAST SEGURO DESPUÉS DE VALIDACIÓN
-        quantity: 0,
-        supplier: "",
-        estimatedDaysToExpiry: 0,
-        packagedUnits: 0,
-        weightPerPackage: 1,
-        packagedExpiryDays: 0,
-        state: "fresco", // ✅ solo 'fresco' o 'congelado'
-        recommendedContainers: form.recommendedContainers,
+      const productData: FormularioProducto = {
+        nombre: form.nombre,
+        descripcion: form.descripcion || undefined,
+        categoria_id: form.categoria_id,
+        unidad_medida_id: form.unidad_medida_id,
+        contenedor_fijo_id: form.contenedor_fijo_id,
+        contenedores_recomendados_ids: form.contenedores_recomendados_ids,
+        precio_estimado: form.precio_estimado,
+        stock_min: form.stock_min,
       };
 
       onSubmit(productData);
@@ -89,10 +95,13 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
             form={form} 
             errors={errors} 
             onChange={handleChange}
-            onRecommendedContainersChange={handleRecommendedContainersChange} 
+            onRecommendedContainersChange={handleRecommendedContainersChange}
+            categories={categories}
+            units={units}
+            containers={containers}
           />
 
-          {form.recommendedContainers.length > 0 && (
+          {form.contenedores_recomendados_ids.length > 0 && (
             <div className="bg-purple-50 border border-purple-200 rounded-lg p-4">
               <div className="flex items-start space-x-2">
                 <div className="bg-purple-100 p-1 rounded-full mt-0.5">
@@ -102,14 +111,17 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
                 </div>
                 <div className="text-sm text-purple-800">
                   <p className="font-medium">📦 Distribución configurada:</p>
-                  <p>• <strong>Ubicación principal:</strong> {form.container}</p>
-                  <p>• <strong>Contenedores para distribución ({form.recommendedContainers.length}):</strong></p>
+                  <p>• <strong>Contenedor principal:</strong> {containers.find(c => c.id === form.contenedor_fijo_id)?.nombre}</p>
+                  <p>• <strong>Contenedores para distribución ({form.contenedores_recomendados_ids.length}):</strong></p>
                   <div className="ml-4 mt-1">
-                    {form.recommendedContainers.map((container, _index) => (
-                      <span key={container} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded mr-1 mb-1 inline-block">
-                        {container}
-                      </span>
-                    ))}
+                    {form.contenedores_recomendados_ids.map((containerId) => {
+                      const container = containers.find(c => c.id === containerId);
+                      return (
+                        <span key={containerId} className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded mr-1 mb-1 inline-block">
+                          {container?.nombre}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
@@ -126,9 +138,9 @@ const ProductForm: React.FC<Props> = ({ onSubmit, onClose }) => {
               <div className="text-sm text-blue-800">
                 <p className="font-medium">📝 Proceso simplificado:</p>
                 <p>• El <strong>stock</strong> iniciará en 0 y se llenará con movimientos/entradas</p>
-                <p>• Los <strong>empaquetados</strong> se agregarán desde otras vistas</p>
-                <p>• El <strong>precio real</strong> se actualizará con las compras</p>
-                <p>• Los datos de <strong>vencimiento</strong> se calcularán automáticamente</p>
+                <p>• Los <strong>empaquetados</strong> se agregarán desde detalle de contenedores</p>
+                <p>• El <strong>precio real</strong> se actualizará con las compras en movimientos</p>
+                <p>• Los datos de <strong>vencimiento</strong> se manejarán en detalle_contenedor</p>
                 <p>• Los <strong>contenedores recomendados</strong> facilitarán la distribución en movimientos</p>
               </div>
             </div>

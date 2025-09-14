@@ -1,10 +1,9 @@
-// src/features/movements/components/MovementFilters.tsx - CORREGIDO
+// src/features/movements/components/tables/MovementFilters.tsx - ADAPTADO A LA BD
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Filter, X, MapPin, Plus, Search, Clock } from 'lucide-react';
-import type { MovementFilters as Filters, MovementReason } from '../../types/movement.types';
-import type { Container } from '../../../inventory/types';
-import { availableProducts, movementReasonOptions } from '../../data/mockData';
+import type { MovementFilters as Filters, AvailableProduct, MotivoMovimiento } from '../../types/movement.types';
+import { MovementsService } from '../../services/movementsService';
 
 interface MovementFiltersProps {
   onFilter: (filters: Filters) => void;
@@ -13,14 +12,55 @@ interface MovementFiltersProps {
 
 const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMovement }) => {
   const [filters, setFilters] = useState<Filters>({
-    type: 'all',
-    productId: '',
-    container: undefined, // ✅ Usar undefined en lugar de cadena vacía
-    reason: 'all',
-    dateFrom: '',
-    dateTo: '',
+    tipo_movimiento: 'all',
+    producto_id: '',
+    contenedor_id: '',
+    motivo_movimiento_id: '',
+    fecha_desde: '',
+    fecha_hasta: '',
     searchTerm: '',
   });
+
+  // Estados para datos de la BD
+  const [productos, setProductos] = useState<AvailableProduct[]>([]);
+  const [motivos, setMotivos] = useState<MotivoMovimiento[]>([]);
+  const [contenedores, setContenedores] = useState<Array<{id: string; nombre: string}>>([]);
+  const [loading, setLoading] = useState(false);
+
+  // Cargar datos iniciales
+  useEffect(() => {
+    cargarDatosIniciales();
+  }, []);
+
+  const cargarDatosIniciales = async () => {
+    try {
+      setLoading(true);
+      const [productosData, motivosData] = await Promise.all([
+        MovementsService.getProductosDisponibles(),
+        MovementsService.getMotivosMovimiento()
+      ]);
+
+      setProductos(productosData);
+      setMotivos(motivosData);
+
+      // Extraer contenedores únicos de los productos
+      const contenedoresUnicos = new Map();
+      productosData.forEach(producto => {
+        if (producto.contenedor_fijo) {
+          contenedoresUnicos.set(producto.contenedor_fijo.id, producto.contenedor_fijo);
+        }
+        producto.contenedores_recomendados.forEach(cont => {
+          contenedoresUnicos.set(cont.id, cont);
+        });
+      });
+
+      setContenedores(Array.from(contenedoresUnicos.values()));
+    } catch (error) {
+      console.error('Error cargando datos para filtros:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const movementTypes = [
     { value: 'all', label: 'Todos los tipos' },
@@ -29,52 +69,23 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
     { value: 'ajuste', label: 'Ajustes' },
   ];
 
-  // Obtener contenedores únicos
-  const containers = [...new Set(availableProducts.map(p => p.container))].map(container => ({
-    value: container,
-    label: container
-  }));
-
-  // Obtener todas las opciones de motivos combinadas
-  const getAllReasons = (): Array<{ value: MovementReason | 'all'; label: string }> => {
-    const allReasons: Array<{ value: MovementReason | 'all'; label: string }> = [
-      { value: 'all', label: 'Todos los motivos' }
-    ];
-    
-    // Agregar motivos de entrada
-    movementReasonOptions.entrada.forEach(reason => {
-      allReasons.push({ value: reason.value, label: reason.label });
-    });
-    
-    // Agregar motivos de salida
-    movementReasonOptions.salida.forEach(reason => {
-      allReasons.push({ value: reason.value, label: reason.label });
-    });
-    
-    return allReasons;
-  };
-
   const handleFilterChange = (key: keyof Filters, value: string) => {
-    let processedValue: any = value;
-    
-    // ✅ Manejar el tipo Container correctamente
-    if (key === 'container') {
-      processedValue = value === '' ? undefined : value as Container;
-    }
-    
-    const newFilters = { ...filters, [key]: processedValue };
+    const newFilters = { 
+      ...filters, 
+      [key]: value === '' || value === 'all' ? undefined : value 
+    };
     setFilters(newFilters);
     onFilter(newFilters);
   };
 
   const clearFilters = () => {
     const clearedFilters: Filters = {
-      type: 'all',
-      productId: '',
-      container: undefined, // ✅ Usar undefined
-      reason: 'all',
-      dateFrom: '',
-      dateTo: '',
+      tipo_movimiento: 'all',
+      producto_id: '',
+      contenedor_id: '',
+      motivo_movimiento_id: '',
+      fecha_desde: '',
+      fecha_hasta: '',
       searchTerm: '',
     };
     setFilters(clearedFilters);
@@ -82,11 +93,21 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
   };
 
   const hasActiveFilters = () => {
-    return filters.type !== 'all' || 
-           filters.productId !== '' || 
-           filters.container !== undefined || // ✅ Comparar con undefined
-           filters.reason !== 'all' ||
-           filters.searchTerm !== '';
+    return filters.tipo_movimiento !== 'all' || 
+           filters.producto_id !== '' || 
+           filters.contenedor_id !== '' || 
+           filters.motivo_movimiento_id !== '' ||
+           filters.searchTerm !== '' ||
+           filters.fecha_desde !== '' ||
+           filters.fecha_hasta !== '';
+  };
+
+  // Filtrar motivos por tipo seleccionado
+  const getMotivosDisponibles = () => {
+    if (!filters.tipo_movimiento || filters.tipo_movimiento === 'all') {
+      return motivos;
+    }
+    return motivos.filter(m => m.tipo_movimiento === filters.tipo_movimiento);
   };
 
   return (
@@ -98,7 +119,7 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <input
               type="text"
-              placeholder="Buscar productos o proveedores..."
+              placeholder="Buscar productos..."
               value={filters.searchTerm || ''}
               onChange={(e) => handleFilterChange('searchTerm', e.target.value)}
               className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
@@ -110,8 +131,8 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
             <div className="relative min-w-[140px]">
               <Filter className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
-                value={filters.type || 'all'}
-                onChange={(e) => handleFilterChange('type', e.target.value)}
+                value={filters.tipo_movimiento || 'all'}
+                onChange={(e) => handleFilterChange('tipo_movimiento', e.target.value)}
                 className="appearance-none pl-9 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
               >
                 {movementTypes.map((type) => (
@@ -122,18 +143,36 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
               </select>
             </div>
 
+            {/* Product Filter */}
+            <div className="relative min-w-[160px]">
+              <select
+                value={filters.producto_id || ''}
+                onChange={(e) => handleFilterChange('producto_id', e.target.value)}
+                className="appearance-none pl-3 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                disabled={loading}
+              >
+                <option value="">Todos los productos</option>
+                {productos.map((producto) => (
+                  <option key={producto.id} value={producto.id}>
+                    {producto.nombre} ({producto.categoria})
+                  </option>
+                ))}
+              </select>
+            </div>
+
             {/* Container Filter */}
             <div className="relative min-w-[160px]">
               <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
-                value={filters.container || ''}
-                onChange={(e) => handleFilterChange('container', e.target.value)}
+                value={filters.contenedor_id || ''}
+                onChange={(e) => handleFilterChange('contenedor_id', e.target.value)}
                 className="appearance-none pl-9 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                disabled={loading}
               >
                 <option value="">Todos los contenedores</option>
-                {containers.map((container) => (
-                  <option key={container.value} value={container.value}>
-                    {container.label}
+                {contenedores.map((contenedor) => (
+                  <option key={contenedor.id} value={contenedor.id}>
+                    {contenedor.nombre}
                   </option>
                 ))}
               </select>
@@ -143,16 +182,36 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
             <div className="relative min-w-[140px]">
               <Clock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <select
-                value={filters.reason || 'all'}
-                onChange={(e) => handleFilterChange('reason', e.target.value)}
+                value={filters.motivo_movimiento_id || ''}
+                onChange={(e) => handleFilterChange('motivo_movimiento_id', e.target.value)}
                 className="appearance-none pl-9 pr-8 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white text-sm"
+                disabled={loading}
               >
-                {getAllReasons().map((reason) => (
-                  <option key={reason.value} value={reason.value}>
-                    {reason.label}
+                <option value="">Todos los motivos</option>
+                {getMotivosDisponibles().map((motivo) => (
+                  <option key={motivo.id} value={motivo.id}>
+                    {motivo.nombre}
                   </option>
                 ))}
               </select>
+            </div>
+
+            {/* Date Filters */}
+            <div className="flex gap-2">
+              <input
+                type="date"
+                value={filters.fecha_desde || ''}
+                onChange={(e) => handleFilterChange('fecha_desde', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder="Desde"
+              />
+              <input
+                type="date"
+                value={filters.fecha_hasta || ''}
+                onChange={(e) => handleFilterChange('fecha_hasta', e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                placeholder="Hasta"
+              />
             </div>
 
             {/* Clear Filters Button */}
@@ -177,6 +236,14 @@ const MovementFilters: React.FC<MovementFiltersProps> = ({ onFilter, onNewMoveme
           <span>Nuevo Movimiento</span>
         </button>
       </div>
+
+      {/* Loading indicator */}
+      {loading && (
+        <div className="mt-2 text-sm text-gray-500 flex items-center space-x-2">
+          <div className="animate-spin rounded-full h-3 w-3 border-b border-blue-600"></div>
+          <span>Cargando opciones...</span>
+        </div>
+      )}
     </div>
   );
 };

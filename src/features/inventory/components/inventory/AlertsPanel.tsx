@@ -1,10 +1,10 @@
 import React from "react";
 import { AlertTriangle, Clock, TrendingUp } from "lucide-react";
-import type { Product } from "../../types";
+import type { ProductoInventario } from "../../types";
 
 interface AlertsPanelProps {
-  expiringProducts: Product[];
-  lowStockProducts: Product[];
+  expiringProducts: ProductoInventario[];
+  lowStockProducts: ProductoInventario[];
 }
 
 const AlertsPanel: React.FC<AlertsPanelProps> = ({ 

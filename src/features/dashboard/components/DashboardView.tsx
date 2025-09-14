@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useInventory } from "../../inventory/hooks/useInventory";
+import { useDashboard } from "../hooks/useDashboard";
 import DashboardStatsCards from "./DashboardStatsCards";
 import LowStockAlert from "./LowStockAlert";
 import CategorySummary from "./CategorySummary";
@@ -9,13 +9,31 @@ import { BarChart3, TrendingUp, Package, AlertCircle } from "lucide-react";
 type DashboardTab = 'overview' | 'trends' | 'categories' | 'alerts';
 
 const DashboardView: React.FC = () => {
-  const { getStats, getLowStockProducts, getProductsByCategory, getExpiringProducts } = useInventory();
+  const { stats, lowStockProducts, expiringProducts, categoryStats, loading, error } = useDashboard();
   const [activeTab, setActiveTab] = useState<DashboardTab>('overview');
 
-  const stats = getStats();
-  const lowStockProducts = getLowStockProducts();
-  const expiringProducts = getExpiringProducts();
-  const categoryStats = getProductsByCategory();
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Cargando datos del dashboard...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="bg-white p-8 rounded-lg shadow-md text-center">
+          <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Error al cargar el dashboard</h2>
+          <p className="text-gray-600">{error}</p>
+        </div>
+      </div>
+    );
+  }
 
   const tabs = [
     {
@@ -56,11 +74,11 @@ const DashboardView: React.FC = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="p-6">
-            <div></div>
-
         {/* Header */}
-        
-
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Dashboard de Inventario</h1>
+          <p className="text-gray-600">Resumen general del estado de tu inventario</p>
+        </div>
 
         {/* Estadísticas principales (siempre visibles) */}
         <DashboardStatsCards stats={stats} />

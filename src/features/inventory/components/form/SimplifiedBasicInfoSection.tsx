@@ -1,113 +1,53 @@
-// form/SimplifiedBasicInfoSection.tsx - CORREGIDO SIN SELECCIÓN INICIAL
+// form/SimplifiedBasicInfoSection.tsx - CORREGIDO PARA USAR BD
 import React from "react";
 import { Package, DollarSign, Scale, AlertTriangle, MapPin, CheckSquare } from "lucide-react";
 import FormField from "./FormField";
-import type { ProductCategory, Container, ProductUnit } from "../../types";
-import { CONTAINER_RECOMMENDATIONS } from "../../types";
+import type { DBCategoria, DBUnidadMedida, DBContenedor } from "../../types";
 
 interface SimplifiedBasicInfoSectionProps {
   form: {
-    name: string;
-    category: ProductCategory | ""; // ✅ PERMITE VACÍO INICIAL
-    container: string;
-    recommendedContainers: Container[];
-    unit: ProductUnit;
-    minStock: number;
-    price: number;
+    nombre: string;
+    descripcion: string;
+    categoria_id: string;
+    unidad_medida_id: string;
+    contenedor_fijo_id: string;
+    contenedores_recomendados_ids: string[];
+    precio_estimado: number;
+    stock_min: number;
   };
   errors: Record<string, string>;
   onChange: (field: keyof SimplifiedBasicInfoSectionProps['form']) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  onRecommendedContainersChange: (containers: Container[]) => void;
+  onRecommendedContainersChange: (containerIds: string[]) => void;
+  // Datos que vienen de la BD
+  categories: DBCategoria[];
+  units: DBUnidadMedida[];
+  containers: DBContenedor[];
 }
 
 const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({ 
   form, 
   errors, 
   onChange,
-  onRecommendedContainersChange
+  onRecommendedContainersChange,
+  categories,
+  units,
+  containers
 }) => {
-  // CATEGORÍAS CORREGIDAS - SOLO LAS PERMITIDAS
-  const categories: ProductCategory[] = [
-    'Pescados',
-    'Mariscos',
-    'Causa',
-    'Tubérculos',
-    'Cítricos',
-    'Condimentos',
-    'Verduras',
-    'Bebidas',
-    'Bebidas Alcohólicas',
-    'Aceites',
-    'Granos'
-  ];
-
-  // UNIDADES CORREGIDAS - SOLO LAS 7 PERMITIDAS
-  const units: ProductUnit[] = [
-    'kg',
-    'litros',
-    'unidades',
-    'botellas',
-    'rollos',
-    'paquetes',
-    'atados'
-  ];
-
-  // CONTENEDORES CORREGIDOS - 7 CONTENEDORES SEGÚN mockData.ts
-  const containers = [
-    'Congelador 1 - Pescado',
-    'Congelador 2 - Mariscos',
-    'Congelador 3 - Causa',
-    'Congelador 4 - Verduras',
-    'Refrigerador 5 - Gaseosas',
-    'Refrigerador 6 - Cervezas',
-    'Almacén Seco'
-  ] as const;
-
-  // ✅ SOLO MUESTRA RECOMENDACIONES SI HAY CATEGORÍA SELECCIONADA
-  const recommendedContainers = form.category ? (CONTAINER_RECOMMENDATIONS[form.category] || []) : [];
-  const currentRecommended = form.recommendedContainers || [];
-
-  // NUEVA FUNCIÓN: Manejo del cambio de categoría con reset de ubicación
-  const handleCategoryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-    // Primero actualiza la categoría
-    onChange("category")(e);
-    
-    // Luego resetea la ubicación principal para forzar nueva selección
-    const syntheticEvent = {
-      ...e,
-      target: {
-        ...e.target,
-        value: ''
-      }
-    } as React.ChangeEvent<HTMLSelectElement>;
-    
-    onChange("container")(syntheticEvent);
-    
-    // ✅ TAMBIÉN LIMPIA LOS CONTENEDORES RECOMENDADOS AL CAMBIAR CATEGORÍA
-    onRecommendedContainersChange([]);
-  };
-
-  const handleContainerToggle = (container: Container) => {
-    const updated = currentRecommended.includes(container)
-      ? currentRecommended.filter(c => c !== container)
-      : [...currentRecommended, container];
+  const handleContainerToggle = (containerId: string) => {
+    const updated = form.contenedores_recomendados_ids.includes(containerId)
+      ? form.contenedores_recomendados_ids.filter(id => id !== containerId)
+      : [...form.contenedores_recomendados_ids, containerId];
     
     onRecommendedContainersChange(updated);
-  };
-
-  const selectAllRecommended = () => {
-    onRecommendedContainersChange(recommendedContainers);
   };
 
   const clearAll = () => {
     onRecommendedContainersChange([]);
   };
 
-  // ✅ FUNCIÓN CORREGIDA - MANEJA CATEGORÍA VACÍA
-  const getCategoryRecommendations = (category: ProductCategory | ""): string => {
-    if (!category) return "Selecciona una categoría primero";
-    const recs = CONTAINER_RECOMMENDATIONS[category] || [];
-    return recs.length > 0 ? recs.join(', ') : 'Almacén Seco';
+  const getSelectedUnit = () => {
+    const unit = units.find(u => u.id === form.unidad_medida_id);
+    return unit ? unit.abreviatura : 'unidad';
   };
 
   return (
@@ -115,18 +55,32 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
       {/* Nombre del producto */}
       <FormField
         label="Nombre del Producto"
-        error={errors.name}
+        error={errors.nombre}
         required
       >
         <input
           type="text"
-          value={form.name}
-          onChange={onChange("name")}
+          value={form.nombre}
+          onChange={onChange("nombre")}
           className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-            errors.name ? 'border-red-300' : 'border-gray-300'
+            errors.nombre ? 'border-red-300' : 'border-gray-300'
           }`}
           placeholder="Ej: Lenguado filetes, Inca Kola, Aceite vegetal..."
           autoFocus
+        />
+      </FormField>
+
+      {/* Descripción */}
+      <FormField
+        label="Descripción"
+        error={errors.descripcion}
+      >
+        <input
+          type="text"
+          value={form.descripcion}
+          onChange={onChange("descripcion")}
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+          placeholder="Descripción adicional del producto (opcional)"
         />
       </FormField>
 
@@ -134,64 +88,65 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <FormField
           label="Categoría"
-          error={errors.category} // ✅ AGREGA VALIDACIÓN DE ERROR
+          error={errors.categoria_id}
           required
         >
           <select
-            value={form.category}
-            onChange={handleCategoryChange}
+            value={form.categoria_id}
+            onChange={onChange("categoria_id")}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-              errors.category ? 'border-red-300' : 'border-gray-300'
+              errors.categoria_id ? 'border-red-300' : 'border-gray-300'
             }`}
           >
-            <option value="">Seleccionar categoría</option> {/* ✅ OPCIÓN VACÍA */}
+            <option value="">Seleccionar categoría</option>
             {categories.map(category => (
-              <option key={category} value={category}>{category}</option>
+              <option key={category.id} value={category.id}>
+                {category.nombre}
+              </option>
             ))}
           </select>
-          {/* ✅ SOLO MUESTRA SUGERENCIA SI HAY CATEGORÍA */}
-          {form.category && (
-            <p className="text-xs text-blue-600 mt-1">
-              Sugerido: {getCategoryRecommendations(form.category)}
-            </p>
-          )}
         </FormField>
 
         <FormField
           label="Ubicación Principal"
-          error={errors.container}
+          error={errors.contenedor_fijo_id}
           required
           icon={MapPin}
         >
           <select
-            value={form.container}
-            onChange={onChange("container")}
+            value={form.contenedor_fijo_id}
+            onChange={onChange("contenedor_fijo_id")}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-              errors.container ? 'border-red-300' : 'border-gray-300'
+              errors.contenedor_fijo_id ? 'border-red-300' : 'border-gray-300'
             }`}
-            disabled={!form.category} // ✅ DESHABILITADO SI NO HAY CATEGORÍA
           >
-            <option value="">
-              {form.category ? "Seleccionar ubicación principal" : "Selecciona categoría primero"}
-            </option>
+            <option value="">Seleccionar ubicación principal</option>
             {containers.map(container => (
-              <option key={container} value={container}>{container}</option>
+              <option key={container.id} value={container.id}>
+                {container.nombre}
+              </option>
             ))}
           </select>
         </FormField>
 
         <FormField
           label="Unidad de Medida"
+          error={errors.unidad_medida_id}
           required
           icon={Scale}
         >
           <select
-            value={form.unit}
-            onChange={onChange("unit")}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+            value={form.unidad_medida_id}
+            onChange={onChange("unidad_medida_id")}
+            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+              errors.unidad_medida_id ? 'border-red-300' : 'border-gray-300'
+            }`}
           >
+            <option value="">Seleccionar unidad</option>
             {units.map(unit => (
-              <option key={unit} value={unit}>{unit}</option>
+              <option key={unit.id} value={unit.id}>
+                {unit.nombre} ({unit.abreviatura})
+              </option>
             ))}
           </select>
         </FormField>
@@ -201,18 +156,18 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <FormField
           label="Precio Unitario Estimado (S/)"
-          error={errors.price}
+          error={errors.precio_estimado}
           required
           icon={DollarSign}
         >
           <input
             type="number"
-            value={form.price}
-            onChange={onChange("price")}
+            value={form.precio_estimado}
+            onChange={onChange("precio_estimado")}
             min="0"
             step="0.01"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-              errors.price ? 'border-red-300' : 'border-gray-300'
+              errors.precio_estimado ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="0.00"
           />
@@ -222,19 +177,19 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
         </FormField>
 
         <FormField
-          label={`Stock Mínimo (${form.unit})`}
-          error={errors.minStock}
+          label={`Stock Mínimo (${getSelectedUnit()})`}
+          error={errors.stock_min}
           required
           icon={AlertTriangle}
         >
           <input
             type="number"
-            value={form.minStock}
-            onChange={onChange("minStock")}
+            value={form.stock_min}
+            onChange={onChange("stock_min")}
             min="0"
             step="1"
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-              errors.minStock ? 'border-red-300' : 'border-gray-300'
+              errors.stock_min ? 'border-red-300' : 'border-gray-300'
             }`}
             placeholder="0"
           />
@@ -244,108 +199,72 @@ const SimplifiedBasicInfoSection: React.FC<SimplifiedBasicInfoSectionProps> = ({
         </FormField>
       </div>
 
-      {/* ✅ SECCIÓN DE CONTENEDORES SOLO SE MUESTRA SI HAY CATEGORÍA */}
-      {form.category && (
-        <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-          <div className="flex items-center justify-between mb-3">
-            <h3 className="text-sm font-medium text-gray-900 flex items-center">
-              <Package className="w-4 h-4 mr-2 text-purple-600" />
-              Contenedores para Distribución
-              <span className="text-xs font-normal text-gray-500 ml-2">(Opcional)</span>
-            </h3>
-            <div className="space-x-2">
-              <button
-                type="button"
-                onClick={selectAllRecommended}
-                className="text-xs text-purple-600 hover:text-purple-700 underline"
-                disabled={recommendedContainers.length === 0}
-              >
-                Sugeridos
-              </button>
-              <button
-                type="button"
-                onClick={clearAll}
-                className="text-xs text-gray-500 hover:text-gray-600 underline"
-              >
-                Limpiar
-              </button>
-            </div>
-          </div>
-
-          <p className="text-xs text-purple-700 mb-3">
-            Basado en "{form.category}", sugerimos: {getCategoryRecommendations(form.category)}.
-          </p>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
-            {containers.map(container => {
-              const isSelected = currentRecommended.includes(container);
-              const isRecommended = recommendedContainers.includes(container);
-              const isPrimary = form.container === container;
-              
-              return (
-                <div
-                  key={container}
-                  className={`relative flex items-center p-2 rounded border cursor-pointer transition-colors text-xs ${
-                    isPrimary 
-                      ? 'bg-green-100 border-green-300 cursor-not-allowed'
-                      : isSelected
-                        ? 'bg-purple-100 border-purple-300'
-                        : isRecommended
-                          ? 'bg-blue-50 border-blue-200 hover:bg-blue-100'
-                          : 'bg-white border-gray-200 hover:bg-gray-50'
-                  }`}
-                  onClick={() => !isPrimary && handleContainerToggle(container)}
-                >
-                  <CheckSquare 
-                    className={`w-3 h-3 mr-2 ${
-                      isPrimary
-                        ? 'text-green-600'
-                        : isSelected 
-                          ? 'text-purple-600' 
-                          : 'text-gray-400'
-                    }`}
-                    fill={isSelected || isPrimary ? "currentColor" : "none"}
-                  />
-                  <span className={`flex-1 ${
-                    isPrimary 
-                      ? 'text-green-800 font-medium'
-                      : isSelected 
-                        ? 'text-purple-800' 
-                        : 'text-gray-700'
-                  }`}>
-                    {container}
-                  </span>
-                  
-                  {isPrimary && (
-                    <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">P</span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Ayuda contextual por categorías */}
-          <div className="mt-3 pt-3 border-t border-purple-200">
-            <div className="text-xs text-purple-600">
-              <strong>Ayuda por categoría:</strong>
-              <div className="mt-1 space-y-1">
-                {form.category === 'Pescados' && <p>• Pescados van principalmente al Congelador 1</p>}
-                {form.category === 'Mariscos' && <p>• Mariscos van principalmente al Congelador 2</p>}
-                {form.category === 'Causa' && <p>• La Causa preparada va específicamente al Congelador 3</p>}
-                {form.category === 'Bebidas' && <p>• Gaseosas van al Refrigerador 5</p>}
-                {form.category === 'Bebidas Alcohólicas' && <p>• Cervezas van al Refrigerador 6, vinos al Almacén Seco</p>}
-                {form.category === 'Tubérculos' && <p>• Papas para causa → Congelador 3, otros tubérculos → Congelador 4</p>}
-                {form.category === 'Cítricos' && <p>• Limones para causa van al Congelador 3</p>}
-                {form.category === 'Condimentos' && <p>• Frescos → Congelador 3 o 4, secos → Almacén Seco</p>}
-                {form.category === 'Verduras' && <p>• Verduras frescas van al Congelador 4</p>}
-                {(form.category === 'Aceites' || form.category === 'Granos') && 
-                  <p>• Productos no perecederos van al Almacén Seco</p>
-                }
-              </div>
-            </div>
-          </div>
+      {/* Contenedores para Distribución */}
+      <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+        <div className="flex items-center justify-between mb-3">
+          <h3 className="text-sm font-medium text-gray-900 flex items-center">
+            <Package className="w-4 h-4 mr-2 text-purple-600" />
+            Contenedores para Distribución
+            <span className="text-xs font-normal text-gray-500 ml-2">(Opcional)</span>
+          </h3>
+          <button
+            type="button"
+            onClick={clearAll}
+            className="text-xs text-gray-500 hover:text-gray-600 underline"
+          >
+            Limpiar
+          </button>
         </div>
-      )}
+
+        <p className="text-xs text-purple-700 mb-3">
+          Selecciona contenedores adicionales donde este producto podría almacenarse.
+        </p>
+
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
+          {containers.map(container => {
+            const isSelected = form.contenedores_recomendados_ids.includes(container.id);
+            const isPrimary = form.contenedor_fijo_id === container.id;
+            
+            return (
+              <div
+                key={container.id}
+                className={`relative flex items-center p-2 rounded border cursor-pointer transition-colors text-xs ${
+                  isPrimary 
+                    ? 'bg-green-100 border-green-300 cursor-not-allowed'
+                    : isSelected
+                      ? 'bg-purple-100 border-purple-300'
+                      : 'bg-white border-gray-200 hover:bg-gray-50'
+                }`}
+                onClick={() => !isPrimary && handleContainerToggle(container.id)}
+              >
+                <CheckSquare 
+                  className={`w-3 h-3 mr-2 ${
+                    isPrimary
+                      ? 'text-green-600'
+                      : isSelected 
+                        ? 'text-purple-600' 
+                        : 'text-gray-400'
+                  }`}
+                  fill={isSelected || isPrimary ? "currentColor" : "none"}
+                />
+                <span className={`flex-1 ${
+                  isPrimary 
+                    ? 'text-green-800 font-medium'
+                    : isSelected 
+                      ? 'text-purple-800' 
+                      : 'text-gray-700'
+                }`}>
+                  {container.nombre}
+                </span>
+                
+                {isPrimary && (
+                  <span className="text-xs bg-green-600 text-white px-1 py-0.5 rounded">P</span>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
     </div>
   );
 };

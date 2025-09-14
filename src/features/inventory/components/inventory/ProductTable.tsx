@@ -1,16 +1,45 @@
+// src/features/inventory/components/inventory/ProductTable.tsx
 import React, { useState, useMemo } from "react";
-import type { ProductWithCalculatedData } from "../../types";
 import TableFilters from "../table/TableFilters";
 import ProductTableRow from "../table/ProductTableRow";
 import TableSummary from "../table/TableSummary";
 import EmptyState from "../table/EmptyState";
 
+// Tipo compatible con lo que retorna useInventory().products
+type ProductTableData = {
+  id: string;
+  name: string;
+  container: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  stockStatus: 'Stock OK' | 'Stock Bajo' | 'Reponer' | 'Sin Stock';
+  state: 'Stock OK' | 'Stock Bajo' | 'Reponer' | 'Sin Stock';
+  price: number;
+  totalValue: number;
+  minStock: number;
+  empaquetados: string;
+  packagedUnits: number;
+  supplier: string;
+  estimatedDaysToExpiry: number;
+  weightPerPackage: number;
+  packagedExpiryDays: number;
+  nearExpiryPackages: number;
+  entryDate: string;
+  lastUpdated: string;
+  expiryDate: string;
+  availableStock: number;
+  packagedWeight: number;
+  porVencer: string;
+  _original: any; // ProductoInventario original - ahora es obligatorio
+};
+
 interface Props {
-  products: ProductWithCalculatedData[]; // Ya vienen con datos calculados del hook
-  onDelete: (id: number) => void;
+  products: ProductTableData[]; // Ya vienen con datos calculados del hook
+  onDelete: (id: string) => void; // Cambiado a string para UUIDs
   onAddProduct?: () => void;
-  onEdit?: (product: ProductWithCalculatedData) => void;
-  onView?: (product: ProductWithCalculatedData) => void;
+  onEdit?: (product: ProductTableData) => void;
+  onView?: (product: ProductTableData) => void;
 }
 
 const ProductTable: React.FC<Props> = ({ 
@@ -41,10 +70,15 @@ const ProductTable: React.FC<Props> = ({
   const filteredProducts = useMemo(() => {
     return products.filter(item => {
       const matchesSearch = item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                           item.supplier.toLowerCase().includes(searchTerm.toLowerCase());
+                           (item.supplier?.toLowerCase().includes(searchTerm.toLowerCase()) || false);
+      
       const matchesCategory = !selectedCategory || item.category === selectedCategory;
-      const matchesState = !selectedState || item.state === selectedState;
+      
+      // Filtrar por estado usando stockStatus
+      const matchesState = !selectedState || item.stockStatus === selectedState;
+      
       const matchesContainer = !selectedContainer || item.container === selectedContainer;
+      
       return matchesSearch && matchesCategory && matchesState && matchesContainer;
     });
   }, [products, searchTerm, selectedCategory, selectedState, selectedContainer]);

@@ -1,67 +1,18 @@
-// src/features/movements/components/MovementFormFields.tsx
+// src/features/movements/components/forms/MovementFormFields.tsx
+// ACTUALIZADO CON CAMPO EMPAQUETADO
 
 import React, { useEffect, useRef } from 'react';
-import { Package, MapPin, Scale } from 'lucide-react';
-import type { MovementFormData, AvailableProduct } from '../../types/movement.types';
-import type { Container } from '../../../inventory/types';
-import { movementTypes, getReasonsByType } from '../../constants/formConstants';
-
-// Contenedores disponibles según el sistema de inventario
-const availableContainers: Container[] = [
-  'Congelador 1 - Pescado',
-  'Congelador 2 - Mariscos',
-  'Congelador 3 - Causa',
-  'Congelador 4 - Verduras',
-  'Refrigerador 5 - Gaseosas',
-  'Refrigerador 6 - Cervezas',
-  'Almacén Seco'
-];
-
-// Recomendaciones de contenedores por categoría
-const CONTAINER_RECOMMENDATIONS: Record<string, Container[]> = {
-  'Pescados': ['Congelador 1 - Pescado'],
-  'Mariscos': ['Congelador 2 - Mariscos'],
-  'Causa': ['Congelador 3 - Causa'],
-  'Tubérculos': ['Congelador 3 - Causa', 'Congelador 4 - Verduras'],
-  'Cítricos': ['Congelador 3 - Causa', 'Congelador 4 - Verduras'],
-  'Condimentos': ['Congelador 3 - Causa', 'Congelador 4 - Verduras', 'Almacén Seco'],
-  'Verduras': ['Congelador 4 - Verduras'],
-  'Bebidas': ['Refrigerador 5 - Gaseosas'],
-  'Bebidas Alcohólicas': ['Refrigerador 6 - Cervezas', 'Almacén Seco'],
-  'Aceites': ['Almacén Seco'],
-  'Granos': ['Almacén Seco'],
-  'Harinas': ['Almacén Seco'],
-  'Suministros': ['Almacén Seco'],
-  'Limpieza': ['Almacén Seco']
-};
-
-// Función para obtener el contenedor por defecto según el producto seleccionado
-const getDefaultContainer = (product: AvailableProduct): Container => {
-  // Primero intentar usar el contenedor actual del producto
-  if (product.container) {
-    return product.container;
-  }
-  
-  // Si no tiene contenedor actual, usar el primer recomendado para su categoría
-  const recommendations = CONTAINER_RECOMMENDATIONS[product.category];
-  if (recommendations && recommendations.length > 0) {
-    return recommendations[0];
-  }
-  
-  return 'Almacén Seco'; // Fallback
-};
-
-// Función para obtener contenedores recomendados para una categoría
-const getRecommendedContainers = (category: string): Container[] => {
-  return CONTAINER_RECOMMENDATIONS[category] || availableContainers;
-};
+import { Package, MapPin, Scale, Layers } from 'lucide-react';
+import type { MovementFormData, AvailableProduct, MotivoMovimiento } from '../../types/movement.types';
+import { movementTypes } from '../../constants/formConstants';
+import { MovementsService } from '../../services/movementsService';
 
 interface MovementFormFieldsProps {
   formData: MovementFormData;
   errors: Record<string, string>;
   selectedProduct: AvailableProduct | undefined;
   availableProducts: AvailableProduct[];
-  availableContainers: Container[];
+  containers: Array<{id: string; nombre: string}>;
   onInputChange: (field: keyof MovementFormData, value: any) => void;
 }
 
@@ -70,25 +21,52 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
   errors,
   selectedProduct,
   availableProducts,
-  availableContainers,
+  containers,
   onInputChange
 }) => {
-  const reasonOptions = getReasonsByType(formData.type);
   const previousProductId = useRef<string | null>(null);
-  
-  // Obtener contenedores recomendados basados en la categoría del producto seleccionado
-  const recommendedContainers = selectedProduct 
-    ? getRecommendedContainers(selectedProduct.category)
-    : availableContainers;
+  const [motivosDelTipo, setMotivosDelTipo] = React.useState<MotivoMovimiento[]>([]);
+
+  // Cargar motivos cuando cambia el tipo de movimiento
+  useEffect(() => {
+    const cargarMotivos = async () => {
+      try {
+        const motivos = await MovementsService.getMotivosMovimiento(formData.tipo_movimiento);
+        setMotivosDelTipo(motivos);
+        
+        if (motivos.length > 0 && !formData.motivo_movimiento_id) {
+          onInputChange('motivo_movimiento_id', motivos[0].id);
+        }
+      } catch (error) {
+        console.error('Error cargando motivos:', error);
+      }
+    };
+
+    cargarMotivos();
+  }, [formData.tipo_movimiento, onInputChange]);
+
+  // Obtener contenedores recomendados para el producto seleccionado
+  const contenedoresRecomendados = selectedProduct?.contenedores_recomendados || [];
+  const contenedorFijo = selectedProduct?.contenedor_fijo;
 
   // Auto-seleccionar contenedor por defecto SOLO cuando cambie de producto
   useEffect(() => {
     if (selectedProduct && selectedProduct.id !== previousProductId.current) {
-      const defaultContainer = getDefaultContainer(selectedProduct);
-      onInputChange('selectedContainer', defaultContainer);
+      let defaultContainer = '';
+      
+      if (contenedorFijo) {
+        defaultContainer = contenedorFijo.id;
+      } else if (contenedoresRecomendados.length > 0) {
+        defaultContainer = contenedoresRecomendados[0].id;
+      }
+      
+      if (defaultContainer) {
+        onInputChange('contenedor_id', defaultContainer);
+      }
+      
       previousProductId.current = selectedProduct.id;
     }
-  }, [selectedProduct, onInputChange]); // Solo cuando cambie el ID del producto
+  }, [selectedProduct, contenedorFijo, contenedoresRecomendados, onInputChange]);
 
   return (
     <div className="space-y-6">
@@ -104,9 +82,9 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
               <button
                 key={type.value}
                 type="button"
-                onClick={() => onInputChange('type', type.value)}
+                onClick={() => onInputChange('tipo_movimiento', type.value)}
                 className={`flex flex-col items-center p-4 border-2 rounded-lg transition-all ${
-                  formData.type === type.value
+                  formData.tipo_movimiento === type.value
                     ? 'border-blue-500 bg-blue-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
@@ -119,39 +97,38 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
         </div>
       </div>
 
-      {/* Motivo y Precio Unitario en la misma fila */}
+      {/* Motivo y Precio Unitario */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Motivo */}
         <div>
-          <label htmlFor="reason" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="motivo" className="block text-sm font-medium text-gray-700 mb-2">
             Motivo
           </label>
           <select
-            id="reason"
-            value={formData.reason}
-            onChange={(e) => onInputChange('reason', e.target.value)}
+            id="motivo"
+            value={formData.motivo_movimiento_id}
+            onChange={(e) => onInputChange('motivo_movimiento_id', e.target.value)}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.reason ? 'border-red-500' : 'border-gray-300'
+              errors.motivo_movimiento_id ? 'border-red-500' : 'border-gray-300'
             }`}
           >
-            {reasonOptions.map((reason) => (
-              <option key={reason.value} value={reason.value}>
-                {reason.label}
+            <option value="">Selecciona un motivo...</option>
+            {motivosDelTipo.map((motivo) => (
+              <option key={motivo.id} value={motivo.id}>
+                {motivo.nombre}
               </option>
             ))}
           </select>
-          {errors.reason && (
-            <p className="mt-1 text-sm text-red-600">{errors.reason}</p>
+          {errors.motivo_movimiento_id && (
+            <p className="mt-1 text-sm text-red-600">{errors.motivo_movimiento_id}</p>
           )}
         </div>
 
-        {/* Precio Unitario */}
         <div>
-          <label htmlFor="unitPrice" className="block text-sm font-medium text-gray-700 mb-2">
-            Precio Unitario
+          <label htmlFor="precioReal" className="block text-sm font-medium text-gray-700 mb-2">
+            Precio Real
             {selectedProduct && (
               <span className="text-xs text-gray-500 ml-1">
-                (Estimado: S/ {selectedProduct.estimatedPrice.toFixed(2)})
+                (Estimado: S/ {selectedProduct.precio_estimado.toFixed(2)})
               </span>
             )}
           </label>
@@ -161,102 +138,112 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
             </span>
             <input
               type="number"
-              id="unitPrice"
+              id="precioReal"
               min="0"
               step="0.01"
-              value={formData.unitPrice || ''}
+              value={formData.precio_real || ''}
               onChange={(e) => {
                 const value = e.target.value === '' ? undefined : parseFloat(e.target.value);
-                onInputChange('unitPrice', isNaN(value as number) ? undefined : value);
+                onInputChange('precio_real', isNaN(value as number) ? undefined : value);
               }}
               className="w-full pl-8 pr-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
               placeholder="0.00"
             />
           </div>
+          {errors.precio_real && (
+            <p className="mt-1 text-sm text-red-600">{errors.precio_real}</p>
+          )}
         </div>
       </div>
 
-      {/* Selección de Producto y Contenedor en la misma fila */}
+      {/* Producto y Contenedor */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {/* Selección de Producto */}
         <div>
-          <label htmlFor="productId" className="block text-sm font-medium text-gray-700 mb-2">
+          <label htmlFor="producto" className="block text-sm font-medium text-gray-700 mb-2">
             Selecciona el Producto
           </label>
           <select
-            id="productId"
-            value={formData.productId}
-            onChange={(e) => onInputChange('productId', e.target.value)}
+            id="producto"
+            value={formData.producto_id}
+            onChange={(e) => onInputChange('producto_id', e.target.value)}
             className={`w-full px-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.productId ? 'border-red-500' : 'border-gray-300'
+              errors.producto_id ? 'border-red-500' : 'border-gray-300'
             }`}
           >
             <option value="">Selecciona un producto...</option>
             {availableProducts.map((product) => (
               <option key={product.id} value={product.id}>
-                {product.name} - Stock: {product.currentStock} {product.unit} - Empaquetados: {product.currentPackaged}
+                {product.nombre} - Stock: {product.stock_actual} {product.unidad_medida} - Empaquetados: {product.total_empaquetados}
               </option>
             ))}
           </select>
-          {errors.productId && (
-            <p className="mt-1 text-sm text-red-600">{errors.productId}</p>
+          {errors.producto_id && (
+            <p className="mt-1 text-sm text-red-600">{errors.producto_id}</p>
           )}
         </div>
-        {/* Selección de Contenedor */}
+        
         <div>
           <label
-            htmlFor="selectedContainer"
+            htmlFor="contenedor"
             className="block text-sm font-medium text-gray-700 mb-2"
           >
             Contenedor de Destino
-            {selectedProduct?.container && (
+            {contenedorFijo && (
               <span className="text-xs text-gray-500 ml-2">
-                (Actual: {selectedProduct.container})
+                (Actual: {contenedorFijo.nombre})
               </span>
             )}
           </label>
           <div className="relative">
             <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
             <select
-              id="selectedContainer"
-              value={formData.selectedContainer}
-              onChange={(e) => onInputChange("selectedContainer", e.target.value)}
+              id="contenedor"
+              value={formData.contenedor_id}
+              onChange={(e) => onInputChange("contenedor_id", e.target.value)}
               className={`w-full pl-10 pr-3 py-3 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                errors.selectedContainer ? "border-red-500" : "border-gray-300"
+                errors.contenedor_id ? "border-red-500" : "border-gray-300"
               }`}
             >
               <option value="">Selecciona un contenedor...</option>
 
-              {/* Contenedores recomendados primero */}
-              <optgroup label="Recomendados para esta categoría">
-                {recommendedContainers.map((container) => (
-                  <option key={container} value={container}>
-                    {container}
-                    {selectedProduct?.container === container ? " (Actual)" : ""}
+              {contenedorFijo && (
+                <optgroup label="Contenedor actual">
+                  <option key={contenedorFijo.id} value={contenedorFijo.id}>
+                    {contenedorFijo.nombre} (Actual)
                   </option>
-                ))}
-              </optgroup>
+                </optgroup>
+              )}
 
-              {/* Otros contenedores */}
-              {recommendedContainers.length < availableContainers.length && (
-                <optgroup label="Otros contenedores">
-                  {availableContainers
-                    .filter(
-                      (container) => !recommendedContainers.includes(container)
+              {contenedoresRecomendados.length > 0 && (
+                <optgroup label="Recomendados para este producto">
+                  {contenedoresRecomendados
+                    .filter(cont => cont.id !== contenedorFijo?.id)
+                    .map((contenedor) => (
+                      <option key={contenedor.id} value={contenedor.id}>
+                        {contenedor.nombre}
+                      </option>
+                    ))}
+                </optgroup>
+              )}
+
+              {containers.length > 0 && (
+                <optgroup label="Todos los contenedores">
+                  {containers
+                    .filter(cont => 
+                      cont.id !== contenedorFijo?.id && 
+                      !contenedoresRecomendados.some(rec => rec.id === cont.id)
                     )
-                    .map((container) => (
-                      <option key={container} value={container}>
-                        {container}
-                        {selectedProduct?.container === container ? " (Actual)" : ""}
+                    .map((contenedor) => (
+                      <option key={contenedor.id} value={contenedor.id}>
+                        {contenedor.nombre}
                       </option>
                     ))}
                 </optgroup>
               )}
             </select>
           </div>
-
-          {errors.selectedContainer && (
-            <p className="mt-1 text-sm text-red-600">{errors.selectedContainer}</p>
+          {errors.contenedor_id && (
+            <p className="mt-1 text-sm text-red-600">{errors.contenedor_id}</p>
           )}
         </div>
       </div>
@@ -269,7 +256,7 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
               <Package className="w-4 h-4 text-gray-500" />
               <div>
                 <p className="text-xs text-gray-500">Producto</p>
-                <p className="font-medium text-gray-900">{selectedProduct.name}</p>
+                <p className="font-medium text-gray-900">{selectedProduct.nombre}</p>
               </div>
             </div>
             
@@ -277,7 +264,9 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
               <MapPin className="w-4 h-4 text-gray-500" />
               <div>
                 <p className="text-xs text-gray-500">Ubicación Actual</p>
-                <p className="font-medium text-gray-900">{selectedProduct.container}</p>
+                <p className="font-medium text-gray-900">
+                  {selectedProduct.contenedor_fijo?.nombre || 'Sin contenedor fijo'}
+                </p>
               </div>
             </div>
 
@@ -285,84 +274,87 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
               <Scale className="w-4 h-4 text-gray-500" />
               <div>
                 <p className="text-xs text-gray-500">Stock Actual</p>
-                <p className="font-medium text-gray-900">{selectedProduct.currentStock} {selectedProduct.unit}</p>
+                <p className="font-medium text-gray-900">{selectedProduct.stock_actual} {selectedProduct.unidad_medida}</p>
               </div>
             </div>
 
             <div className="flex items-center space-x-2">
-              <Package className="w-4 h-4 text-gray-500" />
+              <Layers className="w-4 h-4 text-gray-500" />
               <div>
                 <p className="text-xs text-gray-500">Empaquetados</p>
-                <p className="font-medium text-gray-900">{selectedProduct.currentPackaged}</p>
+                <p className="font-medium text-gray-900">{selectedProduct.total_empaquetados}</p>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Cantidad y Empaquetados */}
+      {/* Cantidad y Empaquetado - NUEVA SECCIÓN */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Cantidad */}
         <div>
-          <label htmlFor="quantity" className="block text-sm font-medium text-gray-700 mb-2">
-            Cantidad {selectedProduct && `(${selectedProduct.unit})`}
+          <label htmlFor="cantidad" className="block text-sm font-medium text-gray-700 mb-2">
+            Cantidad Total {selectedProduct && `(${selectedProduct.unidad_medida})`}
           </label>
           <input
             type="number"
-            id="quantity"
+            id="cantidad"
             min="0"
             step="0.1"
-            value={formData.quantity === 0 ? '' : formData.quantity}
+            value={formData.cantidad === 0 ? '' : formData.cantidad}
             onChange={(e) => {
               const value = e.target.value === '' ? 0 : parseFloat(e.target.value);
-              onInputChange('quantity', isNaN(value) ? 0 : value);
+              onInputChange('cantidad', isNaN(value) ? 0 : value);
             }}
             className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.quantity ? 'border-red-500' : 'border-gray-300'
+              errors.cantidad ? 'border-red-500' : 'border-gray-300'
             }`}
-            placeholder="Ingresa la cantidad"
+            placeholder="Ingresa la cantidad total"
           />
-          {errors.quantity && (
-            <p className="mt-1 text-sm text-red-600">{errors.quantity}</p>
+          {errors.cantidad && (
+            <p className="mt-1 text-sm text-red-600">{errors.cantidad}</p>
           )}
         </div>
 
-        {/* Empaquetados */}
+        {/* Empaquetado - NUEVO CAMPO */}
         <div>
-          <label htmlFor="packagedUnits" className="block text-sm font-medium text-gray-700 mb-2">
-            Empaquetados
+          <label htmlFor="empaquetado" className="block text-sm font-medium text-gray-700 mb-2">
+            Empaquetado / Raciones
+            <span className="text-xs text-gray-500 ml-1">(Opcional)</span>
           </label>
-          <input
-            type="number"
-            id="packagedUnits"
-            min="0"
-            step="1"
-            value={formData.packagedUnits === 0 ? '' : formData.packagedUnits}
-            onChange={(e) => {
-              const value = e.target.value === '' ? 0 : parseInt(e.target.value, 10);
-              onInputChange('packagedUnits', isNaN(value) ? 0 : value);
-            }}
-            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-              errors.packagedUnits ? 'border-red-500' : 'border-gray-300'
-            }`}
-            placeholder="Cantidad de empaquetados"
-          />
-          {errors.packagedUnits && (
-            <p className="mt-1 text-sm text-red-600">{errors.packagedUnits}</p>
+          <div className="relative">
+            <Layers className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-5 h-5" />
+            <input
+              type="text"
+              id="empaquetado"
+              value={formData.empaquetado || ''}
+              onChange={(e) => onInputChange('empaquetado', e.target.value)}
+              className={`w-full pl-10 pr-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                errors.empaquetado ? 'border-red-500' : 'border-gray-300'
+              }`}
+              placeholder="Ej: 5 bolsas x 1kg, 10 porciones, etc."
+              maxLength={100}
+            />
+          </div>
+          {errors.empaquetado && (
+            <p className="mt-1 text-sm text-red-600">{errors.empaquetado}</p>
           )}
+          <p className="mt-1 text-xs text-gray-500">
+            Describe cómo viene dividido el producto (porciones, bolsas, paquetes, etc.)
+          </p>
         </div>
       </div>
 
       {/* Número de Documento */}
       <div>
-        <label htmlFor="documentNumber" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="documento" className="block text-sm font-medium text-gray-700 mb-2">
           Número de Documento (Opcional)
         </label>
         <input
           type="text"
-          id="documentNumber"
-          value={formData.documentNumber || ''}
-          onChange={(e) => onInputChange('documentNumber', e.target.value)}
+          id="documento"
+          value={formData.numero_documento || ''}
+          onChange={(e) => onInputChange('numero_documento', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
           placeholder="Ej: FAC-001-2024, BOL-001-0156"
         />
@@ -370,14 +362,14 @@ const MovementFormFields: React.FC<MovementFormFieldsProps> = ({
 
       {/* Observaciones */}
       <div>
-        <label htmlFor="observations" className="block text-sm font-medium text-gray-700 mb-2">
+        <label htmlFor="observaciones" className="block text-sm font-medium text-gray-700 mb-2">
           Observaciones (Opcional)
         </label>
         <textarea
-          id="observations"
+          id="observaciones"
           rows={3}
-          value={formData.observations || ''}
-          onChange={(e) => onInputChange('observations', e.target.value)}
+          value={formData.observacion || ''}
+          onChange={(e) => onInputChange('observacion', e.target.value)}
           className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 resize-none"
           placeholder="Describe detalles adicionales del movimiento..."
         />

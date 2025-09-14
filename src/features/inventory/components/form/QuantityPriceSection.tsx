@@ -1,13 +1,13 @@
-// form/QuantityPriceSection.tsx - ACTUALIZADO CON UNIDADES CORRECTAS
+// form/QuantityPriceSection.tsx - CORREGIDO PARA BD
 import React from "react";
-import { Scale, DollarSign, Package2, BarChart3 } from "lucide-react";
+import { DollarSign, Package2, BarChart3 } from "lucide-react";
 import FormField from "./FormField";
-import type { NewProduct, ProductUnit } from "../../types";
+import type { FormularioProducto } from "../../types";
 
 interface QuantityPriceSectionProps {
-  form: NewProduct;
+  form: FormularioProducto;
   errors: Record<string, string>;
-  onChange: (field: keyof NewProduct) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
+  onChange: (field: keyof FormularioProducto) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
 }
 
 const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({ 
@@ -15,10 +15,6 @@ const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({
   errors, 
   onChange 
 }) => {
-  const units: ProductUnit[] = [
-    'kg', 'litros', 'unidades', 'botellas', 'rollos', 'paquetes', 'atados'
-  ];
-
   return (
     <div className="space-y-6">
       {/* Sección: Información de Stock */}
@@ -28,56 +24,41 @@ const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({
           Información de Stock
         </h3>
         
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Unidad de medida */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Precio estimado */}
           <FormField
-            label="Unidad de Medida"
+            label="Precio Unitario Estimado (S/)"
+            error={errors.precio_estimado}
             required
-            icon={Scale}
-          >
-            <select
-              value={form.unit}
-              onChange={onChange("unit")}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            >
-              {units.map(unit => (
-                <option key={unit} value={unit}>{unit}</option>
-              ))}
-            </select>
-          </FormField>
-
-          {/* Cantidad inicial */}
-          <FormField
-            label="Cantidad Inicial"
-            error={errors.quantity}
-            required
+            icon={DollarSign}
           >
             <input
               type="number"
-              value={form.quantity}
-              onChange={onChange("quantity")}
+              value={form.precio_estimado}
+              onChange={onChange("precio_estimado")}
               min="0"
-              step="0.1"
+              step="0.01"
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                errors.quantity ? 'border-red-300' : 'border-gray-300'
+                errors.precio_estimado ? 'border-red-300' : 'border-gray-300'
               }`}
-              placeholder="0"
+              placeholder="0.00"
             />
           </FormField>
 
           {/* Stock mínimo */}
           <FormField
             label="Stock Mínimo"
-            error={errors.minStock}
+            error={errors.stock_min}
+            required
           >
             <input
               type="number"
-              value={form.minStock}
-              onChange={onChange("minStock")}
+              value={form.stock_min}
+              onChange={onChange("stock_min")}
               min="0"
               step="1"
               className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                errors.minStock ? 'border-red-300' : 'border-gray-300'
+                errors.stock_min ? 'border-red-300' : 'border-gray-300'
               }`}
               placeholder="0"
             />
@@ -85,115 +66,19 @@ const QuantityPriceSection: React.FC<QuantityPriceSectionProps> = ({
         </div>
       </div>
 
-      {/* Sección: Precio */}
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-          <DollarSign className="w-5 h-5 mr-2 text-green-600" />
-          Información de Precio
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-          <FormField
-            label="Precio Unitario (S/)"
-            error={errors.price}
-            required
-            icon={DollarSign}
-          >
-            <input
-              type="number"
-              value={form.price}
-              onChange={onChange("price")}
-              min="0"
-              step="0.01"
-              className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                errors.price ? 'border-red-300' : 'border-gray-300'
-              }`}
-              placeholder="0.00"
-            />
-          </FormField>
-        </div>
-      </div>
-
-      {/* Sección: Empaquetado (Opcional) */}
-      <div>
-        <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center">
-          <Package2 className="w-5 h-5 mr-2 text-purple-600" />
-          Empaquetado Gastronómico
-          <span className="text-sm font-normal text-gray-500 ml-2">(Opcional)</span>
-        </h3>
-        
-        <div className="bg-gray-50 p-4 rounded-lg">
-          <p className="text-sm text-gray-600 mb-4">
-            Si ya tienes productos empaquetados listos para servir, completa esta sección.
-          </p>
-          
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Número de empaquetados */}
-            <FormField
-              label="# de Empaquetados"
-              error={errors.packagedUnits}
-            >
-              <input
-                type="number"
-                value={form.packagedUnits || 0}
-                onChange={onChange("packagedUnits")}
-                min="0"
-                step="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                  errors.packagedUnits ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="0"
-              />
-            </FormField>
-
-            {/* Peso por empaquetado */}
-            <FormField
-              label={`Peso por Empaquetado (${form.unit})`}
-              error={errors.weightPerPackage}
-            >
-              <input
-                type="number"
-                value={form.weightPerPackage || 1}
-                onChange={onChange("weightPerPackage")}
-                min="0.1"
-                step="0.1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                  errors.weightPerPackage ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder="1"
-              />
-            </FormField>
-
-            {/* Días de vencimiento empaquetados */}
-            <FormField
-              label="Días Vencimiento Empaquetados"
-              error={errors.packagedExpiryDays}
-            >
-              <input
-                type="number"
-                value={form.packagedExpiryDays || form.estimatedDaysToExpiry}
-                onChange={onChange("packagedExpiryDays")}
-                min="0"
-                step="1"
-                className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                  errors.packagedExpiryDays ? 'border-red-300' : 'border-gray-300'
-                }`}
-                placeholder={form.estimatedDaysToExpiry.toString()}
-              />
-            </FormField>
+      {/* Información sobre el flujo */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="flex items-start space-x-2">
+          <div className="bg-blue-100 p-1 rounded-full mt-0.5">
+            <Package2 className="w-4 h-4 text-blue-600" />
           </div>
-
-          {/* Información calculada */}
-          {form.packagedUnits && form.packagedUnits > 0 && (
-            <div className="mt-3 p-3 bg-blue-50 rounded border border-blue-200">
-              <p className="text-sm text-blue-800">
-                <strong>Total empaquetado:</strong> {((form.packagedUnits || 0) * (form.weightPerPackage || 1)).toFixed(1)} {form.unit}
-              </p>
-              <p className="text-sm text-blue-700">
-                <strong>Stock disponible:</strong> {Math.max(0, form.quantity - ((form.packagedUnits || 0) * (form.weightPerPackage || 1))).toFixed(1)} {form.unit}
-              </p>
-            </div>
-          )}
+          <div className="text-sm text-blue-800">
+            <p className="font-medium">Proceso de registro simplificado:</p>
+            <p>• El stock inicial será 0 y se llenará con movimientos de entrada</p>
+            <p>• Los empaquetados se manejan en detalle_contenedor</p>
+            <p>• El precio real se actualizará con las compras</p>
+            <p>• La información de vencimiento se registra por lote en contenedores</p>
+          </div>
         </div>
       </div>
     </div>

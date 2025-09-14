@@ -1,10 +1,8 @@
-// src/features/movements/components/forms/MovementForm.tsx
+// src/features/movements/components/forms/MovementForm.tsx - COMPLETO
 
 import React from 'react';
 import { X, Package } from 'lucide-react';
-import type { MovementFormData, AvailableProduct } from '../../types/movement.types';
-import type { Container } from '../../../inventory/types';
-import { availableProducts } from '../../data/mockData';
+import type { MovementFormData } from '../../types/movement.types';
 import MovementFormFields from './MovementFormFields';
 import MovementFormPreview from './MovementFormPreview';
 import useMovementForm from '../../hooks/useMovementForm';
@@ -14,32 +12,27 @@ interface MovementFormProps {
   onClose: () => void;
 }
 
-// Lista de contenedores disponibles - ACTUALIZADA SEGÚN TU SISTEMA
-const availableContainers: Container[] = [
-  'Congelador 1 - Pescado',
-  'Congelador 2 - Mariscos',
-  'Congelador 3 - Causa',
-  'Congelador 4 - Verduras',
-  'Refrigerador 5 - Gaseosas',
-  'Refrigerador 6 - Cervezas',
-  'Almacén Seco'
-];
-
 const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
   const {
     formData,
+    loading,
+    selectedProduct,
+    availableProducts,
+    containers,
     errors,
     newStockInfo,
+    isValid,
     handleInputChange,
-    handleSubmit
-  } = useMovementForm({ 
-    availableProducts, 
-    onSubmit 
-  });
+    handleSubmit,
+    validateForm
+  } = useMovementForm({ onSubmit });
 
-  // 🔹 Forzar que el selectedProduct sea un AvailableProduct (usando el mockData)
-  const matchedProduct: AvailableProduct | undefined =
-    availableProducts.find(p => p.id === formData.productId);
+  const handleFormSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (validateForm()) {
+      handleSubmit(e);
+    }
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
@@ -58,29 +51,42 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={loading}
           >
             <X className="w-6 h-6" />
           </button>
         </div>
 
         {/* Form */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+        <form onSubmit={handleFormSubmit} className="p-6 space-y-6">
+          {/* Loading State */}
+          {loading && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+              <div className="flex items-center space-x-3">
+                <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
+                <span className="text-blue-800 text-sm">Cargando datos...</span>
+              </div>
+            </div>
+          )}
+
           {/* Campos del formulario */}
           <MovementFormFields
             formData={formData}
             errors={errors}
-            selectedProduct={matchedProduct}  // ✅ ahora sí es AvailableProduct | undefined
+            selectedProduct={selectedProduct}
             availableProducts={availableProducts}
-            availableContainers={availableContainers}
+            containers={containers}
             onInputChange={handleInputChange}
           />
 
-          {/* Preview y Alertas */}
-          <MovementFormPreview
-            formData={formData}
-            selectedProduct={matchedProduct}  // ✅ igual aquí
-            newStockInfo={newStockInfo}
-          />
+          {/* Preview del movimiento */}
+          {selectedProduct && (
+            <MovementFormPreview
+              formData={formData}
+              selectedProduct={selectedProduct}
+              newStockInfo={newStockInfo}
+            />
+          )}
 
           {/* Actions */}
           <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
@@ -88,14 +94,27 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
               type="button"
               onClick={onClose}
               className="px-6 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+              disabled={loading}
             >
               Cancelar
             </button>
             <button
               type="submit"
-              className="px-6 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors"
+              disabled={!isValid || loading}
+              className={`px-6 py-2 text-sm font-medium text-white border border-transparent rounded-lg transition-colors ${
+                isValid && !loading
+                  ? 'bg-blue-600 hover:bg-blue-700'
+                  : 'bg-gray-400 cursor-not-allowed'
+              }`}
             >
-              Registrar Movimiento
+              {loading ? (
+                <span className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <span>Registrando...</span>
+                </span>
+              ) : (
+                'Registrar Movimiento'
+              )}
             </button>
           </div>
         </form>

@@ -1,11 +1,43 @@
-// table/ProductTableRow.tsx - OPTIMIZADA PARA PANTALLA COMPLETA (SIN ICONOS DE AVISO)
+// src/features/inventory/components/table/ProductTableRow.tsx
 import React from "react";
 import { Eye, Edit3, Trash2 } from "lucide-react";
-import type { ProductWithCalculatedData, StockStatus } from "../../types";
+import type { ProductoInventario } from "../../types";
+
+// Tipo para el producto con datos calculados (compatible con useInventory)
+type ProductWithCalculatedData = {
+  id: string;
+  name: string;
+  container: string;
+  category: string;
+  quantity: number;
+  unit: string;
+  stockStatus: ProductoInventario['estado_inventario'];
+  state: ProductoInventario['estado_inventario'];
+  price: number;
+  totalValue: number;
+  minStock: number;
+  empaquetados: string;
+  packagedUnits: number;
+  supplier: string;
+  estimatedDaysToExpiry: number;
+  weightPerPackage: number;
+  packagedExpiryDays: number;
+  nearExpiryPackages: number;
+  entryDate: string;
+  lastUpdated: string;
+  expiryDate: string;
+  availableStock: number;
+  packagedWeight: number;
+  porVencer: string;
+  _original: ProductoInventario;
+};
+
+// Tipo para el estado de stock (usando los estados de tu sistema)
+type StockStatus = ProductoInventario['estado_inventario'];
 
 interface ProductTableRowProps {
   product: ProductWithCalculatedData;
-  onDelete: (id: number) => void;
+  onDelete: (id: string) => void;
   onEdit?: (product: ProductWithCalculatedData) => void;
   onView?: (product: ProductWithCalculatedData) => void;
 }
@@ -21,7 +53,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
     switch (status) {
       case 'Sin Stock': return 'bg-red-100 text-red-800 border-red-200';
       case 'Stock Bajo': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'Reponer Pronto': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'Reponer': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
       case 'Stock OK': return 'bg-green-100 text-green-800 border-green-200';
       default: return 'bg-gray-100 text-gray-800 border-gray-200';
     }
@@ -29,9 +61,9 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
 
   // Función para obtener clase de la fila según urgencia
   const getRowClassName = () => {
-    const isExpired = product.estimatedDaysToExpiry <= 0 || product.state === 'vencido';
+    const isExpired = product.estimatedDaysToExpiry <= 0;
     const isUrgent = product.stockStatus === 'Sin Stock' || product.estimatedDaysToExpiry <= 1;
-    const isWarning = product.stockStatus === 'Stock Bajo' || product.estimatedDaysToExpiry <= 3;
+    const isWarning = product.stockStatus === 'Stock Bajo' || product.stockStatus === 'Reponer' || product.estimatedDaysToExpiry <= 3;
 
     let baseClass = "hover:bg-gray-50 transition-all duration-200";
     
@@ -60,6 +92,17 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
   const handleView = () => {
     if (onView) {
       onView(product);
+    }
+  };
+
+  // Formatear el texto del estado para mostrar
+  const getStatusDisplayText = (status: StockStatus) => {
+    switch (status) {
+      case 'Stock OK': return 'OK';
+      case 'Stock Bajo': return 'Bajo';
+      case 'Sin Stock': return 'Sin Stock';
+      case 'Reponer': return 'Reponer';
+      default: return status;
     }
   };
 
@@ -109,11 +152,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
         <span className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium border ${
           getStockStatusColor(product.stockStatus)
         }`}>
-          {product.stockStatus === 'Stock OK' ? 'OK' : 
-           product.stockStatus === 'Stock Bajo' ? 'Bajo' :
-           product.stockStatus === 'Sin Stock' ? 'Sin' :
-           product.stockStatus === 'Reponer Pronto' ? 'Reponer' :
-           product.stockStatus}
+          {getStatusDisplayText(product.stockStatus)}
         </span>
       </td>
 
@@ -130,7 +169,7 @@ const ProductTableRow: React.FC<ProductTableRowProps> = ({
       {/* 7. Empaquetados - 12% */}
       <td className="px-2 py-3">
         <div className="text-sm font-medium text-gray-900">
-          {product.empaquetados || "0 emp."}
+          {product.packagedUnits} emp
         </div>
       </td>
       
