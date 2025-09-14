@@ -1,18 +1,23 @@
-// src/features/movements/components/forms/MovementForm.tsx - COMPLETO
+// src/features/movements/components/forms/MovementForm.tsx - SIN DUPLICACIÓN
 
 import React from 'react';
 import { X, Package } from 'lucide-react';
-import type { MovementFormData } from '../../types/movement.types';
+import type { MovementWithDetails } from '../../types/movement.types';
 import MovementFormFields from './MovementFormFields';
 import MovementFormPreview from './MovementFormPreview';
 import useMovementForm from '../../hooks/useMovementForm';
 
 interface MovementFormProps {
-  onSubmit: (data: MovementFormData) => void;
+  onSuccess: () => void; // Solo para cerrar modal/limpiar UI
+  onMovementCreated?: (movement: MovementWithDetails) => void; // Opcional para agregar a lista
   onClose: () => void;
 }
 
-const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
+const MovementForm: React.FC<MovementFormProps> = ({ 
+  onSuccess, 
+  onMovementCreated, 
+  onClose 
+}) => {
   const {
     formData,
     loading,
@@ -25,7 +30,7 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
     handleInputChange,
     handleSubmit,
     validateForm
-  } = useMovementForm({ onSubmit });
+  } = useMovementForm({ onSuccess, onMovementCreated });
 
   const handleFormSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -66,6 +71,13 @@ const MovementForm: React.FC<MovementFormProps> = ({ onSubmit, onClose }) => {
                 <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-600"></div>
                 <span className="text-blue-800 text-sm">Cargando datos...</span>
               </div>
+            </div>
+          )}
+
+          {/* Error general */}
+          {errors.general && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <p className="text-red-800 text-sm">{errors.general}</p>
             </div>
           )}
 

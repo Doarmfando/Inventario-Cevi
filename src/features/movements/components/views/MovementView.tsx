@@ -1,4 +1,5 @@
 // src/features/movements/components/views/MovementView.tsx
+// ACTUALIZADO SIN DUPLICACIÓN
 
 import React, { useState, useEffect } from 'react';
 import { Plus, Minus } from 'lucide-react';
@@ -6,7 +7,11 @@ import MovementsList from '../tables/MovementsList';
 import MovementForm from '../forms/MovementForm';
 import MovementFilters from '../tables/MovementFilters';
 import KardexModal from '../modals/KardexModal';
-import type { Movement, MovementFilters as Filters, MovementFormData } from '../../types/movement.types';
+import type { 
+  Movement, 
+  MovementFilters as Filters, 
+  MovementWithDetails 
+} from '../../types/movement.types';
 import { MovementsService } from '../../services/movementsService';
 
 const MovementView: React.FC = () => {
@@ -39,27 +44,46 @@ const MovementView: React.FC = () => {
     cargarMovimientos();
   }, []);
 
-  // Función para agregar nuevo movimiento
-  const handleAddMovement = async (formData: MovementFormData) => {
-    try {
-      setLoading(true);
-      const movimientoId = await MovementsService.crearMovimiento(formData);
+  // ✅ AGREGAR NUEVO MOVIMIENTO SIN DUPLICACIÓN
+  const handleMovementCreated = (newMovement: MovementWithDetails) => {
+    // Convertir MovementWithDetails a Movement para compatibilidad
+    const movementForList: Movement = {
+      id: newMovement.id,
+      producto_id: newMovement.producto.id,
+      contenedor_id: newMovement.contenedor.id,
+      motivo_movimiento_id: newMovement.motivo.id,
+      fecha_movimiento: newMovement.fecha_movimiento,
+      cantidad: newMovement.cantidad,
+      stock_anterior: newMovement.stock_anterior,
+      stock_nuevo: newMovement.stock_nuevo,
+      precio_real: newMovement.precio_real,
+      numero_documento: newMovement.numero_documento,
+      observacion: newMovement.observacion,
+      empaquetado: newMovement.empaquetado,
+      created_by: newMovement.created_by,
       
-      if (movimientoId) {
-        console.log('Movimiento registrado exitosamente:', movimientoId);
-        setShowForm(false);
-        // Recargar movimientos para mostrar el nuevo
-        await cargarMovimientos();
-      } else {
-        console.error('Error: No se pudo crear el movimiento');
-        alert('Error al registrar el movimiento');
-      }
-    } catch (err) {
-      console.error('Error creando movimiento:', err);
-      alert('Error al registrar el movimiento');
-    } finally {
-      setLoading(false);
-    }
+      // Datos joined - SIN CONCATENAR UNIDAD EN CANTIDAD
+      producto_nombre: newMovement.producto.nombre,
+      contenedor_nombre: newMovement.contenedor.nombre,
+      categoria_nombre: newMovement.producto.categoria,
+      unidad_medida: newMovement.producto.unidad_medida, // Solo la unidad, sin concatenar
+      motivo: {
+        id: newMovement.motivo.id,
+        nombre: newMovement.motivo.nombre,
+        tipo_movimiento: newMovement.motivo.tipo_movimiento,
+        visible: true
+      },
+      valor_total: newMovement.valor_total
+    };
+
+    // Solo agregar al principio de la lista
+    setMovements(prev => [movementForList, ...prev]);
+    setFilteredMovements(prev => [movementForList, ...prev]);
+  };
+
+  // ✅ SOLO CERRAR FORMULARIO
+  const handleFormSuccess = () => {
+    setShowForm(false);
   };
 
   // Función para manejar el cambio de filtros
@@ -190,10 +214,11 @@ const MovementView: React.FC = () => {
           />
         </div>
 
-        {/* Modal del formulario */}
+        {/* ✅ MODAL DEL FORMULARIO SIN DUPLICACIÓN */}
         {showForm && (
           <MovementForm
-            onSubmit={handleAddMovement}
+            onSuccess={handleFormSuccess}
+            onMovementCreated={handleMovementCreated}
             onClose={handleCloseForm}
           />
         )}

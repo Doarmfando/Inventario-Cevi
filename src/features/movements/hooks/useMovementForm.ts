@@ -1,16 +1,18 @@
 // src/features/movements/hooks/useMovementForm.ts
-// HOOK ACTUALIZADO CON CAMPO EMPAQUETADO
+// HOOK ACTUALIZADO SIN DUPLICACIÓN
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { supabase } from '../../../lib/supabase';
 import { MovementsService } from '../services/movementsService';
 import type { 
   MovementFormData, 
+  MovementWithDetails,
   AvailableProduct
 } from '../types/movement.types';
 
 interface UseMovementFormProps {
-  onSubmit: (data: MovementFormData) => void;
+  onSuccess: () => void; // Solo para cerrar modal/limpiar UI
+  onMovementCreated?: (movement: MovementWithDetails) => void; // Opcional para agregar a lista
 }
 
 export interface UseMovementFormReturn {
@@ -27,7 +29,7 @@ export interface UseMovementFormReturn {
   validateForm: () => boolean;
 }
 
-const useMovementForm = ({ onSubmit }: UseMovementFormProps): UseMovementFormReturn => {
+const useMovementForm = ({ onSuccess, onMovementCreated }: UseMovementFormProps): UseMovementFormReturn => {
   // Estado inicial del formulario CON EMPAQUETADO
   const [formData, setFormData] = useState<MovementFormData>({
     tipo_movimiento: 'entrada',
@@ -233,7 +235,7 @@ const useMovementForm = ({ onSubmit }: UseMovementFormProps): UseMovementFormRet
     );
   }, [formData]);
 
-  // Manejar envío del formulario
+  // ✅ MANEJAR ENVÍO SIN DUPLICACIÓN
   const handleSubmit = useCallback(async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -244,39 +246,39 @@ const useMovementForm = ({ onSubmit }: UseMovementFormProps): UseMovementFormRet
     try {
       setLoading(true);
       
-      // Usar el servicio para crear el movimiento
-      const movementId = await MovementsService.crearMovimiento(formData);
+      // ✅ 1. Crear movimiento y obtener datos completos
+      const movementCreated = await MovementsService.crearMovimientoCompleto(formData);
       
-      if (movementId) {
-        // Llamar callback de éxito
-        onSubmit(formData);
-
-        // Resetear formulario
-        setFormData({
-          tipo_movimiento: 'entrada',
-          motivo_movimiento_id: '',
-          producto_id: '',
-          contenedor_id: '',
-          cantidad: 0,
-          empaquetado: '', // AGREGADO: resetear empaquetado
-          precio_real: undefined,
-          numero_documento: '',
-          observacion: ''
-        });
-        
-        // Recargar productos para actualizar stocks
-        const productos = await MovementsService.getProductosDisponibles();
-        setAvailableProducts(productos);
-      } else {
-        setErrors({ general: 'Error al registrar el movimiento' });
-      }
+      // ✅ 2. Notificar que se creó el movimiento (para agregar a lista)
+      onMovementCreated?.(movementCreated);
+      
+      // ✅ 3. Cerrar modal/limpiar UI
+      onSuccess();
+      
+      // ✅ 4. Resetear formulario
+      setFormData({
+        tipo_movimiento: 'entrada',
+        motivo_movimiento_id: '',
+        producto_id: '',
+        contenedor_id: '',
+        cantidad: 0,
+        empaquetado: '',
+        precio_real: undefined,
+        numero_documento: '',
+        observacion: ''
+      });
+      
+      // ✅ 5. Actualizar solo productos para stock (sin recargar lista completa)
+      const productos = await MovementsService.getProductosDisponibles();
+      setAvailableProducts(productos);
+      
     } catch (error) {
       console.error('Error al registrar movimiento:', error);
       setErrors({ general: 'Error al registrar el movimiento. Por favor intenta nuevamente.' });
     } finally {
       setLoading(false);
     }
-  }, [formData, validateForm, onSubmit]);
+  }, [formData, validateForm, onSuccess, onMovementCreated]);
 
   return {
     formData,

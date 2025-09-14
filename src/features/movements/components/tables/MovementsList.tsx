@@ -1,4 +1,4 @@
-// src/features/movements/components/tables/MovementsList.tsx - ADAPTADO A LA BD
+// src/features/movements/components/tables/MovementsList.tsx - SIN UNIDAD DE MEDIDA
 
 import React from 'react';
 import { Eye, ArrowUp, ArrowDown, RotateCcw, Edit, Trash2 } from 'lucide-react';
@@ -214,7 +214,7 @@ const MovementsList: React.FC<MovementsListProps> = ({
                     </div>
                   </td>
                   
-                  {/* Cantidad */}
+                  {/* ✅ Cantidad SIN UNIDAD DE MEDIDA */}
                   <td className="px-4 py-4 whitespace-nowrap">
                     <span className={`text-sm font-medium ${
                       tipoMovimiento === 'entrada' ? 'text-green-600' : 
@@ -222,9 +222,6 @@ const MovementsList: React.FC<MovementsListProps> = ({
                       'text-yellow-600'
                     }`}>
                       {formatQuantity(movement.cantidad, tipoMovimiento)}
-                      <span className="text-xs text-gray-500 ml-1">
-                        {movement.unidad_medida}
-                      </span>
                     </span>
                   </td>
                   

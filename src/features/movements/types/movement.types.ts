@@ -1,5 +1,5 @@
 // src/features/movements/types/movement.types.ts
-// TIPOS ACTUALIZADOS CON CAMPO EMPAQUETADO
+// TIPOS ACTUALIZADOS CON CAMPO EMPAQUETADO Y MovementWithDetails
 
 export type MovementType = 'entrada' | 'salida' | 'ajuste';
 
@@ -55,6 +55,44 @@ export interface Movement {
   categoria_nombre?: string;
   unidad_medida?: string;
   motivo?: MotivoMovimiento;
+  valor_total?: number;
+}
+
+// ===============================
+// NUEVO: MOVIMIENTO COMPLETO PARA EVITAR DUPLICACIÓN
+// ===============================
+
+export interface MovementWithDetails {
+  id: string;
+  tipo_movimiento: MovementType;
+  cantidad: number;
+  stock_anterior: number;
+  stock_nuevo: number;
+  precio_real?: number;
+  empaquetado?: string;
+  numero_documento?: string;
+  observacion?: string;
+  fecha_movimiento: string;
+  created_by?: string;
+  
+  // Datos completos joined
+  producto: {
+    id: string;
+    nombre: string;
+    unidad_medida: string;
+    categoria: string;
+  };
+  contenedor: {
+    id: string;
+    nombre: string;
+  };
+  motivo: {
+    id: string;
+    nombre: string;
+    tipo_movimiento: MovementType;
+  };
+  
+  // Calculados
   valor_total?: number;
 }
 

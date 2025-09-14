@@ -1,10 +1,11 @@
 // src/features/movements/services/movementsService.ts
-// SERVICIO ACTUALIZADO CON CAMPO EMPAQUETADO
+// SERVICIO ACTUALIZADO CON MÉTODO crearMovimientoCompleto
 
 import { supabase } from '../../../lib/supabase';
 import type {
   Movement,
   MovementFormData,
+  MovementWithDetails,
   MotivoMovimiento,
   AvailableProduct,
   MovementFilters,
@@ -110,6 +111,234 @@ export class MovementsService {
   }
 
   // ============================================
+  // CREAR MOVIMIENTO COMPLETO - NUEVO MÉTODO
+  // ============================================
+  static async crearMovimientoCompleto(data: MovementFormData): Promise<MovementWithDetails> {
+    try {
+      // 1. Crear el movimiento usando el método existente
+      const movementId = await this.crearMovimiento(data);
+      
+      if (!movementId) {
+        throw new Error('Error al crear movimiento');
+      }
+      
+      // 2. Obtener el movimiento completo con todos los joins
+      const { data: movement, error } = await supabase
+        .from('movimientos')
+        .select(`
+          *,
+          producto:productos!inner(id, nombre, unidad_medida:unidades_medida(abreviatura), categoria:categorias(nombre)),
+          contenedor:contenedores!inner(id, nombre),
+          motivo:motivos_movimiento!inner(id, nombre, tipo_movimiento)
+        `)
+        .eq('id', movementId)
+        .single();
+      
+      if (error) throw error;
+      
+      // 3. Buscar empaquetado en detalle_contenedor si es entrada
+      let empaquetado = data.empaquetado;
+      if (movement.motivo.tipo_movimiento === 'entrada' && !empaquetado) {
+        const { data: detalle } = await supabase
+          .from('detalle_contenedor')
+          .select('empaquetado')
+          .eq('producto_id', movement.producto_id)
+          .eq('contenedor_id', movement.contenedor_id)
+          .gte('created_at', movement.fecha_movimiento)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .single();
+        
+        empaquetado = detalle?.empaquetado;
+      }
+      
+      // 4. Formatear resultado
+      const movementWithDetails: MovementWithDetails = {
+        id: movement.id,
+        tipo_movimiento: movement.motivo.tipo_movimiento,
+        cantidad: movement.cantidad,
+        stock_anterior: movement.stock_anterior,
+        stock_nuevo: movement.stock_nuevo,
+        precio_real: movement.precio_real,
+        empaquetado: empaquetado || undefined,
+        numero_documento: movement.numero_documento,
+        observacion: movement.observacion,
+        fecha_movimiento: movement.fecha_movimiento,
+        created_by: movement.created_by,
+        
+        producto: {
+          id: movement.producto.id,
+          nombre: movement.producto.nombre,
+          unidad_medida: movement.producto.unidad_medida.abreviatura,
+          categoria: movement.producto.categoria.nombre
+        },
+        contenedor: {
+          id: movement.contenedor.id,
+          nombre: movement.contenedor.nombre
+        },
+        motivo: {
+          id: movement.motivo.id,
+          nombre: movement.motivo.nombre,
+          tipo_movimiento: movement.motivo.tipo_movimiento
+        },
+        
+        valor_total: (movement.cantidad || 0) * (movement.precio_real || 0)
+      };
+      
+      return movementWithDetails;
+    } catch (error) {
+      console.error('Error creando movimiento completo:', error);
+      throw error;
+    }
+  }
+
+  // ============================================
+  // CREAR MOVIMIENTO CON EMPAQUETADO (MÉTODO ORIGINAL)
+  // ============================================
+  static async crearMovimiento(data: MovementFormData): Promise<string | null> {
+    try {
+      // Obtener el stock actual del producto en el contenedor específico
+      const { data: stockActual } = await supabase
+        .from('detalle_contenedor')
+        .select('cantidad')
+        .eq('producto_id', data.producto_id)
+        .eq('contenedor_id', data.contenedor_id)
+        .eq('visible', true);
+
+      const stock_anterior = stockActual?.reduce((sum, item) => sum + (item.cantidad || 0), 0) || 0;
+
+      // Calcular nuevo stock basado en el tipo de movimiento
+      let stock_nuevo = stock_anterior;
+      const motivo = await this.getMotivosMovimiento().then(motivos => 
+        motivos.find(m => m.id === data.motivo_movimiento_id)
+      );
+
+      if (motivo) {
+        switch (motivo.tipo_movimiento) {
+          case 'entrada':
+            stock_nuevo = stock_anterior + data.cantidad;
+            break;
+          case 'salida':
+            stock_nuevo = stock_anterior - data.cantidad;
+            break;
+          case 'ajuste':
+            stock_nuevo = data.cantidad;
+            break;
+        }
+      }
+
+      // Insertar el movimiento
+      const { data: movimiento, error: errorMovimiento } = await supabase
+        .from('movimientos')
+        .insert({
+          producto_id: data.producto_id,
+          contenedor_id: data.contenedor_id,
+          motivo_movimiento_id: data.motivo_movimiento_id,
+          cantidad: data.cantidad,
+          stock_anterior,
+          stock_nuevo,
+          precio_real: data.precio_real,
+          numero_documento: data.numero_documento,
+          observacion: data.observacion
+        })
+        .select()
+        .single();
+
+      if (errorMovimiento || !movimiento) throw errorMovimiento;
+
+      // Actualizar o crear detalle_contenedor CON EMPAQUETADO
+      if (motivo?.tipo_movimiento === 'entrada') {
+        // Para entradas, crear nuevo detalle_contenedor con empaquetado
+        const { error: errorDetalle } = await supabase
+          .from('detalle_contenedor')
+          .insert({
+            producto_id: data.producto_id,
+            contenedor_id: data.contenedor_id,
+            cantidad: data.cantidad,
+            empaquetado: data.empaquetado || null,
+            precio_real_unidad: data.precio_real,
+            estado_producto_id: null,
+            fecha_vencimiento: null,
+            visible: true
+          });
+
+        if (errorDetalle) {
+          console.error('Error creando detalle_contenedor:', errorDetalle);
+        }
+      } else if (motivo?.tipo_movimiento === 'salida') {
+        // Para salidas, actualizar cantidad en detalle_contenedor existente
+        const { data: detallesExistentes } = await supabase
+          .from('detalle_contenedor')
+          .select('*')
+          .eq('producto_id', data.producto_id)
+          .eq('contenedor_id', data.contenedor_id)
+          .eq('visible', true)
+          .order('created_at', { ascending: true });
+
+        if (detallesExistentes && detallesExistentes.length > 0) {
+          let cantidadRestante = data.cantidad;
+          
+          for (const detalle of detallesExistentes) {
+            if (cantidadRestante <= 0) break;
+            
+            const cantidadDescontar = Math.min(cantidadRestante, detalle.cantidad);
+            const nuevaCantidad = detalle.cantidad - cantidadDescontar;
+            
+            if (nuevaCantidad <= 0) {
+              await supabase
+                .from('detalle_contenedor')
+                .update({ cantidad: 0, visible: false })
+                .eq('id', detalle.id);
+            } else {
+              await supabase
+                .from('detalle_contenedor')
+                .update({ cantidad: nuevaCantidad })
+                .eq('id', detalle.id);
+            }
+            
+            cantidadRestante -= cantidadDescontar;
+          }
+        }
+      } else if (motivo?.tipo_movimiento === 'ajuste') {
+        // Para ajustes, actualizar todos los detalles del producto en el contenedor
+        await supabase
+          .from('detalle_contenedor')
+          .update({ visible: false })
+          .eq('producto_id', data.producto_id)
+          .eq('contenedor_id', data.contenedor_id);
+        
+        if (data.cantidad > 0) {
+          await supabase
+            .from('detalle_contenedor')
+            .insert({
+              producto_id: data.producto_id,
+              contenedor_id: data.contenedor_id,
+              cantidad: data.cantidad,
+              empaquetado: data.empaquetado || null,
+              precio_real_unidad: data.precio_real,
+              visible: true
+            });
+        }
+      }
+
+      // Log del evento
+      await supabase
+        .from('log_eventos')
+        .insert({
+          accion: 'CREAR_MOVIMIENTO',
+          tabla_afectada: 'movimientos',
+          registro_afectado_id: movimiento.id,
+          descripcion: `Movimiento ${motivo?.tipo_movimiento} - ${motivo?.nombre}: ${data.cantidad} unidades${data.empaquetado ? ` (${data.empaquetado})` : ''}`
+        });
+
+      return movimiento.id;
+    } catch (error) {
+      console.error('Error creando movimiento:', error);
+      return null;
+    }
+  }
+
+  // ============================================
   // OBTENER MOVIMIENTOS CON FILTROS
   // ============================================
   static async getMovimientos(filtros?: MovementFilters): Promise<Movement[]> {
@@ -173,7 +402,7 @@ export class MovementsService {
         precio_real: item.precio_real,
         numero_documento: item.numero_documento,
         observacion: item.observacion,
-        empaquetado: item.empaquetado, // AGREGADO
+        empaquetado: item.empaquetado,
         created_by: item.created_by,
         
         // Datos joined
@@ -187,157 +416,6 @@ export class MovementsService {
     } catch (error) {
       console.error('Error obteniendo movimientos:', error);
       return [];
-    }
-  }
-
-  // ============================================
-  // CREAR MOVIMIENTO CON EMPAQUETADO
-  // ============================================
-  static async crearMovimiento(data: MovementFormData): Promise<string | null> {
-    try {
-      // Obtener el stock actual del producto en el contenedor específico
-      const { data: stockActual } = await supabase
-        .from('detalle_contenedor')
-        .select('cantidad')
-        .eq('producto_id', data.producto_id)
-        .eq('contenedor_id', data.contenedor_id)
-        .eq('visible', true);
-
-      const stock_anterior = stockActual?.reduce((sum, item) => sum + (item.cantidad || 0), 0) || 0;
-
-      // Calcular nuevo stock basado en el tipo de movimiento
-      let stock_nuevo = stock_anterior;
-      const motivo = await this.getMotivosMovimiento().then(motivos => 
-        motivos.find(m => m.id === data.motivo_movimiento_id)
-      );
-
-      if (motivo) {
-        switch (motivo.tipo_movimiento) {
-          case 'entrada':
-            stock_nuevo = stock_anterior + data.cantidad;
-            break;
-          case 'salida':
-            stock_nuevo = stock_anterior - data.cantidad;
-            break;
-          case 'ajuste':
-            stock_nuevo = data.cantidad;
-            break;
-        }
-      }
-
-      // Insertar el movimiento (nota: la tabla movimientos no tiene campo empaquetado)
-      const { data: movimiento, error: errorMovimiento } = await supabase
-        .from('movimientos')
-        .insert({
-          producto_id: data.producto_id,
-          contenedor_id: data.contenedor_id,
-          motivo_movimiento_id: data.motivo_movimiento_id,
-          cantidad: data.cantidad,
-          stock_anterior,
-          stock_nuevo,
-          precio_real: data.precio_real,
-          numero_documento: data.numero_documento,
-          observacion: data.observacion
-        })
-        .select()
-        .single();
-
-      if (errorMovimiento || !movimiento) throw errorMovimiento;
-
-      // Actualizar o crear detalle_contenedor CON EMPAQUETADO
-      if (motivo?.tipo_movimiento === 'entrada') {
-        // Para entradas, crear nuevo detalle_contenedor con empaquetado
-        const { error: errorDetalle } = await supabase
-          .from('detalle_contenedor')
-          .insert({
-            producto_id: data.producto_id,
-            contenedor_id: data.contenedor_id,
-            cantidad: data.cantidad,
-            empaquetado: data.empaquetado || null, // AGREGADO: guardar empaquetado
-            precio_real_unidad: data.precio_real,
-            estado_producto_id: null, // Puedes obtener un estado por defecto si lo necesitas
-            fecha_vencimiento: null, // Podrías agregar esto al formulario también
-            visible: true
-          });
-
-        if (errorDetalle) {
-          console.error('Error creando detalle_contenedor:', errorDetalle);
-        }
-      } else if (motivo?.tipo_movimiento === 'salida') {
-        // Para salidas, actualizar cantidad en detalle_contenedor existente
-        // Aquí podrías implementar lógica FIFO/LIFO si lo necesitas
-        const { data: detallesExistentes } = await supabase
-          .from('detalle_contenedor')
-          .select('*')
-          .eq('producto_id', data.producto_id)
-          .eq('contenedor_id', data.contenedor_id)
-          .eq('visible', true)
-          .order('created_at', { ascending: true }); // FIFO
-
-        if (detallesExistentes && detallesExistentes.length > 0) {
-          let cantidadRestante = data.cantidad;
-          
-          for (const detalle of detallesExistentes) {
-            if (cantidadRestante <= 0) break;
-            
-            const cantidadDescontar = Math.min(cantidadRestante, detalle.cantidad);
-            const nuevaCantidad = detalle.cantidad - cantidadDescontar;
-            
-            if (nuevaCantidad <= 0) {
-              // Si se agota el detalle, marcarlo como no visible
-              await supabase
-                .from('detalle_contenedor')
-                .update({ cantidad: 0, visible: false })
-                .eq('id', detalle.id);
-            } else {
-              // Actualizar la cantidad restante
-              await supabase
-                .from('detalle_contenedor')
-                .update({ cantidad: nuevaCantidad })
-                .eq('id', detalle.id);
-            }
-            
-            cantidadRestante -= cantidadDescontar;
-          }
-        }
-      } else if (motivo?.tipo_movimiento === 'ajuste') {
-        // Para ajustes, actualizar todos los detalles del producto en el contenedor
-        // Primero marcar todos como no visibles
-        await supabase
-          .from('detalle_contenedor')
-          .update({ visible: false })
-          .eq('producto_id', data.producto_id)
-          .eq('contenedor_id', data.contenedor_id);
-        
-        // Luego crear un nuevo registro con la cantidad ajustada
-        if (data.cantidad > 0) {
-          await supabase
-            .from('detalle_contenedor')
-            .insert({
-              producto_id: data.producto_id,
-              contenedor_id: data.contenedor_id,
-              cantidad: data.cantidad,
-              empaquetado: data.empaquetado || null, // AGREGADO
-              precio_real_unidad: data.precio_real,
-              visible: true
-            });
-        }
-      }
-
-      // Log del evento
-      await supabase
-        .from('log_eventos')
-        .insert({
-          accion: 'CREAR_MOVIMIENTO',
-          tabla_afectada: 'movimientos',
-          registro_afectado_id: movimiento.id,
-          descripcion: `Movimiento ${motivo?.tipo_movimiento} - ${motivo?.nombre}: ${data.cantidad} unidades${data.empaquetado ? ` (${data.empaquetado})` : ''}`
-        });
-
-      return movimiento.id;
-    } catch (error) {
-      console.error('Error creando movimiento:', error);
-      return null;
     }
   }
 
@@ -389,7 +467,7 @@ export class MovementsService {
             precio_real: item.precio_real,
             numero_documento: item.numero_documento,
             observacion: item.observacion,
-            empaquetado, // AGREGADO
+            empaquetado,
             created_by: item.created_by,
             contenedor_nombre: item.contenedor?.nombre,
             motivo: item.motivo,
