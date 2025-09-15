@@ -1,29 +1,30 @@
 // src/features/containers/components/ContainerForm.tsx
 
-import React, { useState } from 'react';
-import { X, Container, Thermometer, Package } from 'lucide-react';
-import type { ContainerFormData } from '../../types/container.types';
+import React, { useState, useEffect } from 'react';
+import { X, Container } from 'lucide-react';
+import type { ContainerFormData, TipoContenedor } from '../../types/container.types';
 
 interface ContainerFormProps {
   onSubmit: (data: ContainerFormData) => void;
   onClose: () => void;
   initialData?: Partial<ContainerFormData>;
   isEdit?: boolean;
+  tiposContenedor?: TipoContenedor[];
 }
 
 const ContainerForm: React.FC<ContainerFormProps> = ({
   onSubmit,
   onClose,
   initialData = {},
-  isEdit = false
+  isEdit = false,
+  tiposContenedor = []
 }) => {
   const [formData, setFormData] = useState<ContainerFormData>({
-    name: initialData.name || '',
-    type: initialData.type || 'almacen-seco',
-    capacity: initialData.capacity || undefined,
-    temperature: initialData.temperature || undefined,
-    humidity: initialData.humidity || undefined,
-    description: initialData.description || '',
+    nombre: initialData.nombre || '',
+    tipo_contenedor_id: initialData.tipo_contenedor_id || '',
+    codigo: initialData.codigo || '',
+    capacidad: initialData.capacidad || undefined,
+    descripcion: initialData.descripcion || '',
     ...initialData
   });
 
@@ -35,7 +36,7 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
     const { name, value } = e.target;
     
     // Handle numeric fields
-    const numericFields = ['capacity', 'temperature', 'humidity'];
+    const numericFields = ['capacidad'];
     const processedValue = numericFields.includes(name) && value !== '' 
       ? parseFloat(value) 
       : value;
@@ -55,35 +56,17 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
     const newErrors: Record<string, string> = {};
 
     // Required fields
-    if (!formData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
+    if (!formData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es requerido';
     }
 
-    if (!formData.type) {
-      newErrors.type = 'El tipo es requerido';
-    }
-
-    // Validate temperature ranges based on type
-    if (formData.type === 'frigider' && formData.temperature !== undefined) {
-      if (formData.temperature < 0 || formData.temperature > 8) {
-        newErrors.temperature = 'La temperatura para refrigerador debe estar entre 0°C y 8°C';
-      }
-    }
-
-    if (formData.type === 'congelador' && formData.temperature !== undefined) {
-      if (formData.temperature < -25 || formData.temperature > -15) {
-        newErrors.temperature = 'La temperatura para congelador debe estar entre -25°C y -15°C';
-      }
+    if (!formData.tipo_contenedor_id) {
+      newErrors.tipo_contenedor_id = 'El tipo es requerido';
     }
 
     // Validate capacity
-    if (formData.capacity !== undefined && formData.capacity <= 0) {
-      newErrors.capacity = 'La capacidad debe ser mayor a 0';
-    }
-
-    // Validate humidity
-    if (formData.humidity !== undefined && (formData.humidity < 0 || formData.humidity > 100)) {
-      newErrors.humidity = 'La humedad debe estar entre 0% y 100%';
+    if (formData.capacidad !== undefined && formData.capacidad <= 0) {
+      newErrors.capacidad = 'La capacidad debe ser mayor a 0';
     }
 
     setErrors(newErrors);
@@ -98,15 +81,20 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
     }
   };
 
-  const containerTypes = [
-    { value: 'almacen-seco', label: 'Almacén Seco', icon: Package },
-    { value: 'almacen-humedo', label: 'Almacén Húmedo', icon: Package },
-    { value: 'frigider', label: 'Refrigerador', icon: Thermometer },
-    { value: 'congelador', label: 'Congelador', icon: Thermometer },
-  ];
-
-  const showTemperatureField = ['frigider', 'congelador'].includes(formData.type);
-  const showHumidityField = ['almacen-humedo', 'frigider'].includes(formData.type);
+  // Generar código automático si no existe
+  useEffect(() => {
+    if (!isEdit && !formData.codigo && formData.nombre) {
+      const codigoGenerado = formData.nombre
+        .toUpperCase()
+        .replace(/[^A-Z0-9]/g, '')
+        .substring(0, 10);
+      
+      setFormData(prev => ({
+        ...prev,
+        codigo: codigoGenerado
+      }));
+    }
+  }, [formData.nombre, isEdit, formData.codigo]);
 
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
@@ -145,17 +133,35 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
               </label>
               <input
                 type="text"
-                name="name"
-                value={formData.name}
+                name="nombre"
+                value={formData.nombre}
                 onChange={handleInputChange}
                 placeholder="Ej: Refrigerador Principal A"
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.name ? 'border-red-500' : 'border-gray-300'
+                  errors.nombre ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.name && (
-                <p className="mt-1 text-sm text-red-600">{errors.name}</p>
+              {errors.nombre && (
+                <p className="mt-1 text-sm text-red-600">{errors.nombre}</p>
               )}
+            </div>
+
+            {/* Code */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Código
+              </label>
+              <input
+                type="text"
+                name="codigo"
+                value={formData.codigo || ''}
+                onChange={handleInputChange}
+                placeholder="Ej: REF-001"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Se genera automáticamente si se deja vacío
+              </p>
             </div>
 
             {/* Type */}
@@ -164,27 +170,28 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
                 Tipo de Contenedor *
               </label>
               <select
-                name="type"
-                value={formData.type}
+                name="tipo_contenedor_id"
+                value={formData.tipo_contenedor_id}
                 onChange={handleInputChange}
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.type ? 'border-red-500' : 'border-gray-300'
+                  errors.tipo_contenedor_id ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
-                {containerTypes.map(type => (
-                  <option key={type.value} value={type.value}>
-                    {type.label}
+                <option value="">Seleccionar tipo...</option>
+                {tiposContenedor.map(tipo => (
+                  <option key={tipo.id} value={tipo.id}>
+                    {tipo.nombre}
                   </option>
                 ))}
               </select>
-              {errors.type && (
-                <p className="mt-1 text-sm text-red-600">{errors.type}</p>
+              {errors.tipo_contenedor_id && (
+                <p className="mt-1 text-sm text-red-600">{errors.tipo_contenedor_id}</p>
               )}
             </div>
           </div>
 
           {/* Technical Specifications */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {/* Capacity */}
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">
@@ -192,73 +199,19 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
               </label>
               <input
                 type="number"
-                name="capacity"
-                value={formData.capacity || ''}
+                name="capacidad"
+                value={formData.capacidad || ''}
                 onChange={handleInputChange}
                 placeholder="Ej: 100"
                 min="1"
                 className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                  errors.capacity ? 'border-red-500' : 'border-gray-300'
+                  errors.capacidad ? 'border-red-500' : 'border-gray-300'
                 }`}
               />
-              {errors.capacity && (
-                <p className="mt-1 text-sm text-red-600">{errors.capacity}</p>
+              {errors.capacidad && (
+                <p className="mt-1 text-sm text-red-600">{errors.capacidad}</p>
               )}
             </div>
-
-            {/* Temperature */}
-            {showTemperatureField && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Temperatura (°C)
-                </label>
-                <input
-                  type="number"
-                  name="temperature"
-                  value={formData.temperature || ''}
-                  onChange={handleInputChange}
-                  placeholder={formData.type === 'congelador' ? 'Ej: -20' : 'Ej: 4'}
-                  step="0.1"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.temperature ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.temperature && (
-                  <p className="mt-1 text-sm text-red-600">{errors.temperature}</p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  {formData.type === 'frigider' && 'Rango recomendado: 0°C a 8°C'}
-                  {formData.type === 'congelador' && 'Rango recomendado: -25°C a -15°C'}
-                </p>
-              </div>
-            )}
-
-            {/* Humidity */}
-            {showHumidityField && (
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Humedad (%)
-                </label>
-                <input
-                  type="number"
-                  name="humidity"
-                  value={formData.humidity || ''}
-                  onChange={handleInputChange}
-                  placeholder="Ej: 60"
-                  min="0"
-                  max="100"
-                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                    errors.humidity ? 'border-red-500' : 'border-gray-300'
-                  }`}
-                />
-                {errors.humidity && (
-                  <p className="mt-1 text-sm text-red-600">{errors.humidity}</p>
-                )}
-                <p className="mt-1 text-xs text-gray-500">
-                  Rango: 0% a 100%
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Description */}
@@ -267,8 +220,8 @@ const ContainerForm: React.FC<ContainerFormProps> = ({
               Descripción
             </label>
             <textarea
-              name="description"
-              value={formData.description}
+              name="descripcion"
+              value={formData.descripcion || ''}
               onChange={handleInputChange}
               rows={3}
               placeholder="Descripción adicional del contenedor..."

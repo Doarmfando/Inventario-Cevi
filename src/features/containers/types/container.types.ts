@@ -1,72 +1,154 @@
 // src/features/containers/types/container.types.ts
+// TIPOS ACTUALIZADOS PARA BASE DE DATOS REAL
 
+// Tipos base de la BD
 export interface Container {
   id: string;
-  name: string;
-  type: 'frigider' | 'congelador' | 'almacen-seco' | 'almacen-humedo';
-  capacity: number; // Capacidad máxima en kg
-  currentLoad: number; // Carga actual en kg
-  location?: string;
-  temperature?: number;
-  humidity?: number;
-  status: 'activo' | 'mantenimiento' | 'inactivo';
-  createdAt: Date;
-  updatedAt?: Date;
-  description?: string;
+  codigo?: string;
+  nombre: string;
+  descripcion?: string;
+  capacidad?: number;
+  tipo_contenedor_id: string;
+  visible: boolean;
+  created_at: string;
+  updated_at?: string;
+  created_by?: string;
+  updated_by?: string;
+  
+  // Datos joined
+  tipo_contenedor?: {
+    id: string;
+    nombre: string;
+    descripcion?: string;
+  };
+}
+
+export interface TipoContenedor {
+  id: string;
+  nombre: string;
+  descripcion?: string;
+  visible: boolean;
+}
+
+export interface DetalleContenedor {
+  id: string;
+  producto_id: string;
+  contenedor_id: string;
+  empaquetado?: string;
+  fecha_vencimiento?: string;
+  estado_producto_id?: string;
+  precio_real_unidad?: number;
+  cantidad: number;
+  visible: boolean;
+  created_at: string;
+  updated_at?: string;
+  created_by?: string;
+  
+  // Datos joined
+  producto?: {
+    id: string;
+    nombre: string;
+    categoria: string;
+    unidad_medida: string;
+  };
+  estado_producto?: {
+    id: string;
+    nombre: string;
+  };
+}
+
+// Tipos para vistas y formularios
+export interface ContainerWithDetails {
+  id: string;
+  codigo?: string;
+  nombre: string;
+  descripcion?: string;
+  capacidad?: number;
+  tipo_contenedor_nombre: string;
+  tipo_contenedor_descripcion?: string;
+  
+  // Stats calculados
+  total_productos: number;
+  cantidad_total: number;
+  valor_total: number;
+  productos_vencidos: number;
+  productos_por_vencer: number;
+  ocupacion_porcentaje: number;
 }
 
 export interface ContainerProduct {
   id: string;
-  productId: string;
-  productName: string;
-  containerId: string;
-  containerName: string;
-  category: string;
-  totalQuantity: number;
-  unit: string;
-  packagedUnits: number;
-  quantityPerPackage: number;
-  expiryDate?: Date;
-  state: ProductState;
-  price: number;
-  createdAt: Date;
-  updatedAt?: Date;
+  producto_id: string;
+  producto_nombre: string;
+  categoria: string;
+  unidad_medida: string;
+  cantidad: number;
+  empaquetado?: string;
+  fecha_vencimiento?: string;
+  estado_producto?: string;
+  precio_real_unidad?: number;
+  valor_total: number;
+  dias_vencimiento?: number;
+  estado_calculado: 'fresco' | 'por_vencer' | 'vencido';
 }
-
-export type ProductState = 'fresco' | 'congelado' | 'por-vencer' | 'vencido';
 
 export interface ContainerStats {
   totalProducts: number;
-  frescos: number;
-  congelados: number;
-  porVencer: number;
-  vencidos: number;
+  totalQuantity: number;
   totalValue: number;
+  vencidos: number;
+  porVencer: number;
+  frescos: number;
   capacityUsed: number;
   capacityPercentage: number;
 }
 
-export interface ContainerSummary extends Container {
-  stats: ContainerStats;
-  products: ContainerProduct[];
-}
-
-export interface ContainerFormData {
+export interface ContainerSummary {
+  id: string;
   name: string;
-  type: Container['type'];
+  type: string;
   capacity?: number;
-  location?: string;
-  temperature?: number;
-  humidity?: number;
-  description?: string;
+  status: 'activo' | 'mantenimiento' | 'inactivo';
+  stats: ContainerStats;
 }
 
+// Formularios
+export interface ContainerFormData {
+  codigo?: string;
+  nombre: string;
+  descripcion?: string;
+  capacidad?: number;
+  tipo_contenedor_id: string;
+}
+
+export interface ProductToContainerFormData {
+  producto_id: string;
+  contenedor_id: string;
+  cantidad: number;
+  empaquetado?: string;
+  fecha_vencimiento?: string;
+  estado_producto_id?: string;
+  precio_real_unidad?: number;
+}
+
+// NUEVO: Tipos para el formulario de productos en vista
 export interface ProductFormData {
   productId: string;
   containerId: string;
   totalQuantity: number;
   packagedUnits: number;
   expiryDate?: string;
-  state: ProductState;
+  state: string;
   price: number;
+}
+
+// Filtros
+export interface ContainerFilters {
+  tipo_contenedor_id?: string;
+  estado?: 'activo' | 'mantenimiento' | 'inactivo';
+  tiene_productos?: boolean;
+  tiene_vencidos?: boolean;
+  capacidad_min?: number;
+  capacidad_max?: number;
+  search?: string;
 }

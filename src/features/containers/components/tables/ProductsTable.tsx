@@ -30,7 +30,7 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
         return <CheckCircle className="w-4 h-4 text-green-500" />;
       case 'congelado':
         return <Snowflake className="w-4 h-4 text-blue-500" />;
-      case 'por-vencer':
+      case 'por_vencer':
         return <Clock className="w-4 h-4 text-orange-500" />;
       case 'vencido':
         return <XCircle className="w-4 h-4 text-red-500" />;
@@ -43,24 +43,35 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
     const badges = {
       fresco: 'bg-green-100 text-green-800',
       congelado: 'bg-blue-100 text-blue-800',
-      'por-vencer': 'bg-orange-100 text-orange-800',
+      por_vencer: 'bg-orange-100 text-orange-800',
       vencido: 'bg-red-100 text-red-800',
     };
     return badges[state as keyof typeof badges] || 'bg-gray-100 text-gray-800';
   };
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('es-PE', {
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('es-PE', {
       day: '2-digit',
       month: '2-digit',
       year: 'numeric',
     });
   };
 
-  const calculateDaysToExpiry = (expiryDate: Date) => {
+  const calculateDaysToExpiry = (dateString: string) => {
     const now = new Date();
+    const expiryDate = new Date(dateString);
     const diffTime = expiryDate.getTime() - now.getTime();
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  };
+
+  const getStateDisplayName = (state: string) => {
+    const stateNames = {
+      fresco: 'Fresco',
+      congelado: 'Congelado',
+      por_vencer: 'Por vencer',
+      vencido: 'Vencido'
+    };
+    return stateNames[state as keyof typeof stateNames] || state;
   };
 
   return (
@@ -103,38 +114,38 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                     <Package className="w-5 h-5 text-gray-400 mr-3" />
                     <div>
                       <div className="text-sm font-medium text-gray-900">
-                        {product.productName}
+                        {product.producto_nombre}
                       </div>
                       <div className="text-sm text-gray-500">
-                        ID: {product.productId}
+                        ID: {product.producto_id}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {product.category}
+                  {product.categoria}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {product.totalQuantity} {product.unit}
+                  {product.cantidad} {product.unidad_medida}
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
-                    <span className="font-medium">{product.packagedUnits}</span> empaquetados
+                    <span className="font-medium">{product.empaquetado || 'N/A'}</span>
                   </div>
                   <div className="text-xs text-gray-500">
-                    {product.quantityPerPackage} {product.unit} c/u
+                    Individual
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {product.expiryDate ? (
+                  {product.fecha_vencimiento ? (
                     <div>
                       <div className="flex items-center space-x-1">
                         <Calendar className="w-4 h-4 text-gray-400" />
-                        <span>{formatDate(product.expiryDate)}</span>
+                        <span>{formatDate(product.fecha_vencimiento)}</span>
                       </div>
                       <div className="text-xs text-gray-500">
                         {(() => {
-                          const days = calculateDaysToExpiry(product.expiryDate);
+                          const days = calculateDaysToExpiry(product.fecha_vencimiento);
                           if (days < 0) return `Vencido hace ${Math.abs(days)} días`;
                           if (days === 0) return 'Vence hoy';
                           return `${days} días restantes`;
@@ -147,19 +158,19 @@ const ProductsTable: React.FC<ProductsTableProps> = ({
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap">
                   <div className="flex items-center space-x-2">
-                    {getStateIcon(product.state)}
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStateBadge(product.state)}`}>
-                      {product.state.charAt(0).toUpperCase() + product.state.slice(1).replace('-', ' ')}
+                    {getStateIcon(product.estado_calculado)}
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStateBadge(product.estado_calculado)}`}>
+                      {getStateDisplayName(product.estado_calculado)}
                     </span>
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   <div>
-                    <span className="font-medium">S/ {product.price.toFixed(2)}</span>
-                    <div className="text-xs text-gray-500">por {product.unit}</div>
+                    <span className="font-medium">S/ {(product.precio_real_unidad || 0).toFixed(2)}</span>
+                    <div className="text-xs text-gray-500">por {product.unidad_medida}</div>
                   </div>
                   <div className="text-xs text-green-600 font-medium">
-                    Total: S/ {(product.totalQuantity * product.price).toFixed(2)}
+                    Total: S/ {product.valor_total.toFixed(2)}
                   </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">

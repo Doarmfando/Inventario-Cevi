@@ -8,60 +8,28 @@ import {
   Plus, 
   Calendar, 
   DollarSign,
-  Hash,
   Scale,
-  Tag,
-  AlertCircle,
-  CheckCircle,
-  
+  Star,
+  Archive,
+  Thermometer
 } from 'lucide-react';
-import type { ProductFormData, Container } from '../../types/container.types';
-import type { InventoryProduct } from '../../data/mockProductData';
-import { 
-  getRecommendedProducts, 
-  searchProducts, 
-} from '../../data/mockProductData';
+import type { ContainerWithDetails, ProductToContainerFormData } from '../../types/container.types';
+import { useProducts } from '../../hooks/useProducts';
+import { useInventoryProducts } from '../../hooks/useInventoryProducts';
 
 interface ProductFormProps {
-  container: Container;
-  onSubmit: (data: ProductFormData) => void;
+  container: ContainerWithDetails;
+  onSubmit: (data: ProductToContainerFormData) => void;
   onClose: () => void;
-  onCreateNewProduct?: (productData: Partial<InventoryProduct>) => void;
 }
 
-// Tipos para el formulario de nuevo producto - usando las mismas categorías de inventario
-type ProductCategory = 
-  | 'Pescados'
-  | 'Mariscos' 
-  | 'Causa'
-  | 'Tubérculos'
-  | 'Cítricos'
-  | 'Condimentos'
-  | 'Verduras'
-  | 'Bebidas'
-  | 'Bebidas Alcohólicas'
-  | 'Aceites'
-  | 'Granos'
-  | 'Harinas'
-  | 'Suministros'
-  | 'Limpieza';
-
-type ProductUnit = 
-  | 'kg' 
-  | 'porciones'
-  | 'litros'
-  | 'unidades'
-  | 'botellas'
-  | 'rollos'
-  | 'paquetes';
-
-interface NewProductData {
-  name: string;
-  category: ProductCategory;
-  basePrice: number;
-  unit: ProductUnit;
-  description: string;
-  isPerishable: boolean;
+interface ProductOption {
+  id: string;
+  nombre: string;
+  categoria: string;
+  precio_base: number;
+  unidad_medida: string;
+  isFromInventory?: boolean;
 }
 
 // Componente FormField reutilizable
@@ -92,116 +60,150 @@ const FormField: React.FC<FormFieldProps> = ({
   );
 };
 
+// Componente para mostrar productos por sección
+interface ProductSectionProps {
+  title: string;
+  products: ProductOption[];
+  icon: typeof Archive;
+  onProductSelect: (product: ProductOption) => void;
+  badge?: string;
+}
+
+const ProductSection: React.FC<ProductSectionProps> = ({
+  title,
+  products,
+  icon: Icon,
+  onProductSelect,
+  badge
+}) => {
+  if (products.length === 0) return null;
+
+  return (
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-3">
+        <Icon className="w-5 h-5 text-blue-600" />
+        <h4 className="font-medium text-gray-900">{title}</h4>
+        {badge && (
+          <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
+            {badge}
+          </span>
+        )}
+      </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            onClick={() => onProductSelect(product)}
+            className={`border rounded-lg p-4 cursor-pointer transition-colors ${
+              product.isFromInventory 
+                ? 'border-green-200 hover:border-green-500 hover:bg-green-50 bg-green-25' 
+                : 'border-gray-200 hover:border-blue-500 hover:bg-blue-50'
+            }`}
+          >
+            <div className="flex items-start justify-between">
+              <div className="flex-1">
+                <div className="flex items-center gap-2">
+                  <h5 className="font-medium text-gray-900">{product.nombre}</h5>
+                  {product.isFromInventory && (
+                    <Star className="w-4 h-4 text-green-600 fill-current" />
+                  )}
+                </div>
+                <p className="text-sm text-gray-500">{product.categoria}</p>
+                <p className="text-sm font-medium text-green-600 mt-1">
+                  S/ {product.precio_base.toFixed(2)} / {product.unidad_medida}
+                </p>
+              </div>
+              <Package className="w-5 h-5 text-gray-400" />
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 const ProductForm: React.FC<ProductFormProps> = ({
   container,
   onSubmit,
   onClose,
-  onCreateNewProduct
 }) => {
-  const [selectedProduct, setSelectedProduct] = useState<InventoryProduct | null>(null);
+  const { inventoryProducts, recommendedProducts, loading } = useProducts();
+  const { 
+    categories, 
+    units, 
+    productStates,
+    createProduct: createInventoryProduct,
+    addProductToContainer 
+  } = useInventoryProducts();
+  
+  const [selectedProduct, setSelectedProduct] = useState<ProductOption | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [showCreateProduct, setShowCreateProduct] = useState(false);
-  const [filteredProducts, setFilteredProducts] = useState<InventoryProduct[]>([]);
+  const [filteredInventoryProducts, setFilteredInventoryProducts] = useState<ProductOption[]>([]);
+  const [filteredRecommendedProducts, setFilteredRecommendedProducts] = useState<ProductOption[]>([]);
   
-  const [formData, setFormData] = useState<ProductFormData>({
-    productId: '',
-    containerId: container.id,
-    totalQuantity: 0,
-    packagedUnits: 1,
-    expiryDate: '',
-    state: 'fresco',
-    price: 0,
+  const [formData, setFormData] = useState<ProductToContainerFormData>({
+    producto_id: '',
+    contenedor_id: container.id,
+    cantidad: 0,
+    empaquetado: '1 unidad',
+    fecha_vencimiento: '',
+    estado_producto_id: '',
+    precio_real_unidad: 0,
   });
 
-  const [newProductData, setNewProductData] = useState<NewProductData>({
-    name: '',
-    category: 'Pescados',
-    basePrice: 0,
-    unit: 'kg',
-    description: '',
-    isPerishable: true,
+  const [newProductData, setNewProductData] = useState({
+    nombre: '',
+    categoria_id: '',
+    precio_estimado: 0,
+    unidad_medida_id: '',
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [step, setStep] = useState<'select' | 'configure'>('select');
 
-  // Categorías y unidades como en el inventario
-  const categories: ProductCategory[] = [
-    'Pescados',
-    'Mariscos',
-    'Causa',
-    'Tubérculos',
-    'Cítricos',
-    'Condimentos',
-    'Verduras',
-    'Bebidas',
-    'Bebidas Alcohólicas',
-    'Aceites',
-    'Granos'
-    // 'Harinas',
-    // 'Suministros',
-    // 'Limpieza'
-  ];
-
-  const units: ProductUnit[] = [
-    'kg',
-    'porciones',
-    'litros',
-    'unidades',
-    'botellas',
-    'rollos',
-    'paquetes'
-  ];
-
-  // Inicializar productos filtrados
-  useEffect(() => {
-    const recommended = getRecommendedProducts(container.type);
-    setFilteredProducts(recommended);
-  }, [container.type]);
-
   // Filtrar productos por búsqueda
   useEffect(() => {
     if (searchTerm.trim()) {
-      const searched = searchProducts(searchTerm);
-      setFilteredProducts(searched);
+      const filtered = (products: ProductOption[]) => 
+        products.filter(product =>
+          product.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          product.categoria.toLowerCase().includes(searchTerm.toLowerCase())
+        );
+      
+      setFilteredInventoryProducts(filtered(inventoryProducts));
+      setFilteredRecommendedProducts(filtered(recommendedProducts));
     } else {
-      const recommended = getRecommendedProducts(container.type);
-      setFilteredProducts(recommended);
+      setFilteredInventoryProducts(inventoryProducts);
+      setFilteredRecommendedProducts(recommendedProducts);
     }
-  }, [searchTerm, container.type]);
+  }, [searchTerm, inventoryProducts, recommendedProducts]);
 
-  const handleProductSelect = (product: InventoryProduct) => {
+  const handleProductSelect = (product: ProductOption) => {
     setSelectedProduct(product);
     setFormData(prev => ({
       ...prev,
-      productId: product.id,
-      price: product.basePrice,
-      state: determineInitialState(product, container.type)
+      producto_id: product.id,
+      precio_real_unidad: product.precio_base,
     }));
     setStep('configure');
   };
 
-  const determineInitialState = (product: InventoryProduct, containerType: string) => {
-    if (containerType === 'congelador') return 'congelado';
-    if (product.isPerishable) return 'fresco';
-    return 'fresco';
-  };
-
-  const handleInputChange = (field: keyof NewProductData | keyof ProductFormData) => 
+  const handleInputChange = (field: string) => 
     (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
       const { value } = e.target;
       
       if (showCreateProduct) {
-        const processedValue = field === 'basePrice' && value !== '' 
+        const processedValue = field === 'precio_estimado' && value !== '' 
           ? parseFloat(value) 
-          : field === 'isPerishable' ? value === 'true' : value;
+          : value;
         
         setNewProductData(prev => ({
           ...prev,
           [field]: processedValue
         }));
       } else {
-        const processedValue = ['totalQuantity', 'packagedUnits', 'price'].includes(field as string) && value !== '' 
+        const processedValue = ['cantidad', 'precio_real_unidad'].includes(field) && value !== '' 
           ? parseFloat(value) 
           : value;
         
@@ -212,39 +214,24 @@ const ProductForm: React.FC<ProductFormProps> = ({
       }
 
       // Clear error when user starts typing
-      if (errors[field as string]) {
-        setErrors(prev => ({ ...prev, [field as string]: '' }));
+      if (errors[field]) {
+        setErrors(prev => ({ ...prev, [field]: '' }));
       }
     };
-
-  const calculateQuantityPerPackage = () => {
-    if (formData.packagedUnits > 0 && formData.totalQuantity > 0) {
-      return (formData.totalQuantity / formData.packagedUnits).toFixed(2);
-    }
-    return '0';
-  };
 
   const validateProductForm = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!formData.productId) {
-      newErrors.productId = 'Debe seleccionar un producto';
+    if (!formData.producto_id) {
+      newErrors.producto_id = 'Debe seleccionar un producto';
     }
 
-    if (!formData.totalQuantity || formData.totalQuantity <= 0) {
-      newErrors.totalQuantity = 'La cantidad total debe ser mayor a 0';
+    if (!formData.cantidad || formData.cantidad <= 0) {
+      newErrors.cantidad = 'La cantidad debe ser mayor a 0';
     }
 
-    if (!formData.packagedUnits || formData.packagedUnits <= 0) {
-      newErrors.packagedUnits = 'Debe haber al menos 1 empaquetado';
-    }
-
-    if (!formData.price || formData.price <= 0) {
-      newErrors.price = 'El precio debe ser mayor a 0';
-    }
-
-    if (selectedProduct?.isPerishable && !formData.expiryDate) {
-      newErrors.expiryDate = 'La fecha de vencimiento es requerida para productos perecederos';
+    if (!formData.precio_real_unidad || formData.precio_real_unidad <= 0) {
+      newErrors.precio_real_unidad = 'El precio debe ser mayor a 0';
     }
 
     setErrors(newErrors);
@@ -254,46 +241,75 @@ const ProductForm: React.FC<ProductFormProps> = ({
   const validateNewProduct = (): boolean => {
     const newErrors: Record<string, string> = {};
 
-    if (!newProductData.name.trim()) {
-      newErrors.name = 'El nombre es requerido';
+    if (!newProductData.nombre.trim()) {
+      newErrors.nombre = 'El nombre es requerido';
     }
 
-    if (!newProductData.category) {
-      newErrors.category = 'La categoría es requerida';
+    if (!newProductData.categoria_id) {
+      newErrors.categoria_id = 'La categoría es requerida';
     }
 
-    if (!newProductData.basePrice || newProductData.basePrice <= 0) {
-      newErrors.basePrice = 'El precio base debe ser mayor a 0';
+    if (!newProductData.unidad_medida_id) {
+      newErrors.unidad_medida_id = 'La unidad de medida es requerida';
+    }
+
+    if (!newProductData.precio_estimado || newProductData.precio_estimado <= 0) {
+      newErrors.precio_estimado = 'El precio estimado debe ser mayor a 0';
     }
 
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (showCreateProduct) {
-      if (validateNewProduct() && onCreateNewProduct) {
-        onCreateNewProduct({
-          ...newProductData,
-          recommendedContainerTypes: [container.type],
-          createdAt: new Date(),
-        });
-        setShowCreateProduct(false);
-        // Reset form
-        setNewProductData({
-          name: '',
-          category: 'Pescados',
-          basePrice: 0,
-          unit: 'kg',
-          description: '',
-          isPerishable: true,
-        });
+      if (validateNewProduct()) {
+        try {
+          const success = await createInventoryProduct({
+            nombre: newProductData.nombre,
+            categoria_id: newProductData.categoria_id,
+            unidad_medida_id: newProductData.unidad_medida_id,
+            precio_estimado: newProductData.precio_estimado,
+            descripcion: '',
+            es_perecedero: false, // Valor por defecto
+          });
+          if (success) {
+            setShowCreateProduct(false);
+            // Reset form
+            setNewProductData({
+              nombre: '',
+              categoria_id: categories[0]?.id || '',
+              precio_estimado: 0,
+              unidad_medida_id: units[0]?.id || '',
+            });
+          }
+        } catch (error) {
+          console.error('Error creando producto:', error);
+        }
       }
     } else {
       if (validateProductForm()) {
-        onSubmit(formData);
+        if (selectedProduct?.isFromInventory) {
+          // Si es del inventario, usar el servicio de inventario
+          const success = await addProductToContainer({
+            producto_id: formData.producto_id,
+            contenedor_id: formData.contenedor_id,
+            cantidad: formData.cantidad,
+            empaquetado: formData.empaquetado,
+            fecha_vencimiento: formData.fecha_vencimiento || undefined,
+            precio_real_unidad: formData.precio_real_unidad || 0,
+            estado_producto_id: formData.estado_producto_id || undefined,
+          });
+          
+          if (success) {
+            onClose();
+          }
+        } else {
+          // Si es recomendado, usar el método original
+          onSubmit(formData);
+        }
       }
     }
   };
@@ -304,17 +320,41 @@ const ProductForm: React.FC<ProductFormProps> = ({
       setSelectedProduct(null);
       setFormData(prev => ({
         ...prev,
-        productId: '',
-        price: 0,
+        producto_id: '',
+        precio_real_unidad: 0,
       }));
     } else if (showCreateProduct) {
       setShowCreateProduct(false);
     }
   };
 
+  // Inicializar valores por defecto para nuevo producto
+  useEffect(() => {
+    if (categories.length > 0 && units.length > 0 && !newProductData.categoria_id) {
+      setNewProductData(prev => ({
+        ...prev,
+        categoria_id: categories[0].id,
+        unidad_medida_id: units[0].id,
+      }));
+    }
+  }, [categories, units, newProductData.categoria_id]);
+
+  if (loading) {
+    return (
+      <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+        <div className="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-lg bg-white mb-10">
+          <div className="flex justify-center items-center py-12">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+            <span className="ml-3 text-gray-700">Cargando productos...</span>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-      <div className="relative top-10 mx-auto p-5 border w-full max-w-4xl shadow-lg rounded-lg bg-white mb-10">
+      <div className="relative top-10 mx-auto p-5 border w-full max-w-5xl shadow-lg rounded-lg bg-white mb-10">
         {/* Header */}
         <div className="flex items-center justify-between pb-4 border-b border-gray-200">
           <div className="flex items-center space-x-3">
@@ -327,8 +367,8 @@ const ProductForm: React.FC<ProductFormProps> = ({
               </h3>
               <p className="text-sm text-gray-500">
                 {showCreateProduct 
-                  ? 'Información básica del producto - Stock se llenará con movimientos'
-                  : `${container.name} - ${step === 'select' ? 'Selecciona el producto' : 'Configura las cantidades'}`
+                  ? 'Información básica del producto'
+                  : `${container.nombre} - ${step === 'select' ? 'Selecciona el producto' : 'Configura las cantidades'}`
                 }
               </p>
             </div>
@@ -344,113 +384,84 @@ const ProductForm: React.FC<ProductFormProps> = ({
         {/* Form Content */}
         <div className="mt-6">
           {showCreateProduct ? (
-            /* Create New Product Form - Estilo SimplifiedBasicInfo */
+            /* Create New Product Form */
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Nombre del producto */}
               <FormField
                 label="Nombre del Producto"
-                error={errors.name}
+                error={errors.nombre}
                 required
               >
                 <input
                   type="text"
-                  value={newProductData.name}
-                  onChange={handleInputChange("name")}
+                  value={newProductData.nombre}
+                  onChange={handleInputChange("nombre")}
                   className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                    errors.name ? 'border-red-300' : 'border-gray-300'
+                    errors.nombre ? 'border-red-300' : 'border-gray-300'
                   }`}
                   placeholder="Ej: Lenguado filetes, Inca Kola, Aceite vegetal..."
                   autoFocus
                 />
               </FormField>
 
-              {/* Categoría y Unidad en una fila */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <FormField
                   label="Categoría"
+                  error={errors.categoria_id}
                   required
                 >
                   <select
-                    value={newProductData.category}
-                    onChange={handleInputChange("category")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    value={newProductData.categoria_id}
+                    onChange={handleInputChange("categoria_id")}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                      errors.categoria_id ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   >
+                    <option value="">Seleccionar categoría...</option>
                     {categories.map(category => (
-                      <option key={category} value={category}>{category}</option>
+                      <option key={category.id} value={category.id}>{category.nombre}</option>
                     ))}
                   </select>
                 </FormField>
 
                 <FormField
                   label="Unidad de Medida"
+                  error={errors.unidad_medida_id}
                   required
                   icon={Scale}
                 >
                   <select
-                    value={newProductData.unit}
-                    onChange={handleInputChange("unit")}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                    value={newProductData.unidad_medida_id}
+                    onChange={handleInputChange("unidad_medida_id")}
+                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                      errors.unidad_medida_id ? 'border-red-300' : 'border-gray-300'
+                    }`}
                   >
+                    <option value="">Seleccionar unidad...</option>
                     {units.map(unit => (
-                      <option key={unit} value={unit}>{unit}</option>
+                      <option key={unit.id} value={unit.id}>{unit.nombre} ({unit.abreviatura})</option>
                     ))}
                   </select>
                 </FormField>
               </div>
 
-              {/* Precio Estimado */}
-              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
-                <FormField
-                  label="Precio Unitario Estimado (S/)"
-                  error={errors.basePrice}
-                  required
-                  icon={DollarSign}
-                >
-                  <input
-                    type="number"
-                    value={newProductData.basePrice || ''}
-                    onChange={handleInputChange("basePrice")}
-                    min="0"
-                    step="0.01"
-                    className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
-                      errors.basePrice ? 'border-red-300' : 'border-gray-300'
-                    }`}
-                    placeholder="0.00"
-                  />
-                  <p className="text-xs text-gray-500 mt-1">
-                    Este precio se usará para estimaciones. El precio real se actualizará con las compras.
-                  </p>
-                </FormField>
-              </div>
-
-              {/* Descripción */}
-              {/* <FormField
-                label="Descripción"
+              <FormField
+                label="Precio Unitario Estimado (S/)"
+                error={errors.precio_estimado}
+                required
+                icon={DollarSign}
               >
-                <textarea
-                  value={newProductData.description}
-                  onChange={handleInputChange("description")}
-                  rows={3}
-                  placeholder="Descripción del producto..."
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
+                <input
+                  type="number"
+                  value={newProductData.precio_estimado || ''}
+                  onChange={handleInputChange("precio_estimado")}
+                  min="0"
+                  step="0.01"
+                  className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent ${
+                    errors.precio_estimado ? 'border-red-300' : 'border-gray-300'
+                  }`}
+                  placeholder="0.00"
                 />
-              </FormField> */}
-
-              {/* Proceso simplificado - Info */}
-              <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                <div className="flex items-start">
-                  <Package className="w-5 h-5 text-blue-600 mt-0.5 mr-3 flex-shrink-0" />
-                  <div>
-                    <h4 className="text-sm font-medium text-blue-900 mb-2">Proceso simplificado:</h4>
-                    <ul className="text-xs text-blue-800 space-y-1">
-                      <li>• El <strong>stock</strong> iniciará en 0 y se llenará con movimientos/entradas</li>
-                      <li>• Los <strong>empaquetados</strong> se agregarán desde otras vistas</li>
-                      <li>• El <strong>precio real</strong> se actualizará con las compras</li>
-                      <li>• Los datos de <strong>vencimiento</strong> se calcularán automáticamente</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
+              </FormField>
 
               <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
                 <button
@@ -497,36 +508,32 @@ const ProductForm: React.FC<ProductFormProps> = ({
                     </button>
                   </div>
 
-                  {/* Product Grid */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-96 overflow-y-auto">
-                    {filteredProducts.map((product) => (
-                      <div
-                        key={product.id}
-                        onClick={() => handleProductSelect(product)}
-                        className="border border-gray-200 rounded-lg p-4 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition-colors"
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1">
-                            <h4 className="font-medium text-gray-900">{product.name}</h4>
-                            <p className="text-sm text-gray-500">{product.category}</p>
-                            <p className="text-sm font-medium text-green-600 mt-1">
-                              S/ {product.basePrice.toFixed(2)} / {product.unit}
-                            </p>
-                          </div>
-                          <Package className="w-5 h-5 text-gray-400" />
-                        </div>
-                      </div>
-                    ))}
+                  {/* Products Display */}
+                  <div className="max-h-96 overflow-y-auto space-y-6">
+                    <ProductSection
+                      title="Productos en Inventario"
+                      products={filteredInventoryProducts}
+                      icon={Star}
+                      onProductSelect={handleProductSelect}
+                      badge="Preferidos"
+                    />
+                    
+                    <ProductSection
+                      title="Productos Recomendados"
+                      products={filteredRecommendedProducts}
+                      icon={Archive}
+                      onProductSelect={handleProductSelect}
+                    />
                   </div>
 
-                  {filteredProducts.length === 0 && (
+                  {!loading && filteredInventoryProducts.length === 0 && filteredRecommendedProducts.length === 0 && (
                     <div className="text-center py-8">
                       <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
                       <h3 className="text-lg font-medium text-gray-900 mb-2">
                         No se encontraron productos
                       </h3>
                       <p className="text-gray-600">
-                        {searchTerm ? 'Intenta con otros términos de búsqueda' : 'No hay productos recomendados para este tipo de contenedor'}
+                        {searchTerm ? 'Intenta con otros términos de búsqueda' : 'No hay productos disponibles'}
                       </p>
                     </div>
                   )}
@@ -536,19 +543,42 @@ const ProductForm: React.FC<ProductFormProps> = ({
               {step === 'configure' && selectedProduct && (
                 <form onSubmit={handleSubmit} className="space-y-6">
                   {/* Selected Product Info */}
-                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                  <div className={`border rounded-lg p-4 ${
+                    selectedProduct.isFromInventory 
+                      ? 'bg-green-50 border-green-200' 
+                      : 'bg-blue-50 border-blue-200'
+                  }`}>
                     <div className="flex items-center justify-between">
                       <div>
-                        <h4 className="font-medium text-blue-900">{selectedProduct.name}</h4>
-                        <p className="text-sm text-blue-700">{selectedProduct.category}</p>
-                        <p className="text-sm font-medium text-blue-800">
-                          S/ {selectedProduct.basePrice.toFixed(2)} / {selectedProduct.unit}
+                        <div className="flex items-center gap-2">
+                          <h4 className={`font-medium ${
+                            selectedProduct.isFromInventory ? 'text-green-900' : 'text-blue-900'
+                          }`}>
+                            {selectedProduct.nombre}
+                          </h4>
+                          {selectedProduct.isFromInventory && (
+                            <Star className="w-4 h-4 text-green-600 fill-current" />
+                          )}
+                        </div>
+                        <p className={`text-sm ${
+                          selectedProduct.isFromInventory ? 'text-green-700' : 'text-blue-700'
+                        }`}>
+                          {selectedProduct.categoria}
+                        </p>
+                        <p className={`text-sm font-medium ${
+                          selectedProduct.isFromInventory ? 'text-green-800' : 'text-blue-800'
+                        }`}>
+                          S/ {selectedProduct.precio_base.toFixed(2)} / {selectedProduct.unidad_medida}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={handleBack}
-                        className="text-blue-600 hover:text-blue-700 text-sm font-medium"
+                        className={`text-sm font-medium ${
+                          selectedProduct.isFromInventory 
+                            ? 'text-green-600 hover:text-green-700' 
+                            : 'text-blue-600 hover:text-blue-700'
+                        }`}
                       >
                         Cambiar producto
                       </button>
@@ -558,163 +588,97 @@ const ProductForm: React.FC<ProductFormProps> = ({
                   {/* Configuration Form */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <FormField
-                      label="Cantidad Total"
-                      error={errors.totalQuantity}
+                      label="Cantidad"
+                      error={errors.cantidad}
                       required
                       icon={Scale}
                     >
                       <div className="relative">
                         <input
                           type="number"
-                          value={formData.totalQuantity || ''}
-                          onChange={handleInputChange("totalQuantity")}
+                          value={formData.cantidad || ''}
+                          onChange={handleInputChange("cantidad")}
                           placeholder="0"
                           step="0.01"
                           min="0"
-                          className={`w-full px-3 py-2 pr-12 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                            errors.totalQuantity ? 'border-red-500' : 'border-gray-300'
+                          className={`w-full px-3 py-2 pr-16 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
+                            errors.cantidad ? 'border-red-500' : 'border-gray-300'
                           }`}
                         />
                         <span className="absolute right-3 top-1/2 transform -translate-y-1/2 text-sm text-gray-500">
-                          {selectedProduct.unit}
+                          {selectedProduct.unidad_medida}
                         </span>
                       </div>
                     </FormField>
 
                     <FormField
-                      label="Número de Empaquetados"
-                      error={errors.packagedUnits}
-                      required
-                      icon={Hash}
-                    >
-                      <input
-                        type="number"
-                        value={formData.packagedUnits || ''}
-                        onChange={handleInputChange("packagedUnits")}
-                        placeholder="1"
-                        min="1"
-                        className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.packagedUnits ? 'border-red-500' : 'border-gray-300'
-                        }`}
-                      />
-                      {/* Auto-calculated quantity per package */}
-                      {formData.totalQuantity > 0 && formData.packagedUnits > 0 && (
-                        <div className="mt-2 p-2 bg-green-50 border border-green-200 rounded text-sm">
-                          <CheckCircle className="w-4 h-4 inline text-green-600 mr-1" />
-                          <span className="text-green-800">
-                            Cada empaquetado tendrá: <strong>{calculateQuantityPerPackage()} {selectedProduct.unit}</strong>
-                          </span>
-                        </div>
-                      )}
-                    </FormField>
-
-                    <FormField
-                      label={`Precio por ${selectedProduct.unit}`}
-                      error={errors.price}
+                      label={`Precio por ${selectedProduct.unidad_medida}`}
+                      error={errors.precio_real_unidad}
                       required
                       icon={DollarSign}
                     >
                       <input
                         type="number"
-                        value={formData.price || ''}
-                        onChange={handleInputChange("price")}
+                        value={formData.precio_real_unidad || ''}
+                        onChange={handleInputChange("precio_real_unidad")}
                         placeholder="0.00"
                         step="0.01"
                         min="0"
                         className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                          errors.price ? 'border-red-500' : 'border-gray-300'
+                          errors.precio_real_unidad ? 'border-red-500' : 'border-gray-300'
                         }`}
                       />
                       {/* Total value calculation */}
-                      {formData.totalQuantity > 0 && formData.price > 0 && (
+                      {formData.cantidad > 0 && formData.precio_real_unidad && formData.precio_real_unidad > 0 && (
                         <p className="mt-1 text-sm text-gray-600">
-                          Valor total: <strong>S/ {(formData.totalQuantity * formData.price).toFixed(2)}</strong>
+                          Valor total: <strong>S/ {(formData.cantidad * formData.precio_real_unidad).toFixed(2)}</strong>
                         </p>
                       )}
                     </FormField>
 
                     <FormField
-                      label="Estado Inicial"
-                      icon={Tag}
+                      label="Estado del Producto"
+                      icon={Thermometer}
                     >
                       <select
-                        value={formData.state}
-                        onChange={handleInputChange("state")}
+                        value={formData.estado_producto_id}
+                        onChange={handleInputChange("estado_producto_id")}
                         className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                       >
-                        <option value="fresco">Fresco</option>
-                        <option value="congelado">Congelado</option>
-                        <option value="por-vencer">Por vencer</option>
+                        <option value="">Seleccionar estado...</option>
+                        {productStates.map(state => (
+                          <option key={state.id} value={state.id}>{state.nombre}</option>
+                        ))}
                       </select>
                     </FormField>
 
-                    {selectedProduct.isPerishable && (
-                      <div className="md:col-span-2">
-                        <FormField
-                          label="Fecha de Vencimiento"
-                          error={errors.expiryDate}
-                          required
-                          icon={Calendar}
-                        >
-                          <input
-                            type="date"
-                            value={formData.expiryDate}
-                            onChange={handleInputChange("expiryDate")}
-                            min={new Date().toISOString().split('T')[0]}
-                            className={`w-full px-3 py-2 border rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 ${
-                              errors.expiryDate ? 'border-red-500' : 'border-gray-300'
-                            }`}
-                          />
-                          
-                          <div className="mt-2 p-3 bg-amber-50 border border-amber-200 rounded-lg">
-                            <div className="flex items-start">
-                              <AlertCircle className="w-4 h-4 text-amber-600 mt-0.5 mr-2 flex-shrink-0" />
-                              <div className="text-sm text-amber-800">
-                                <p className="font-medium mb-1">Estados automáticos por vencimiento:</p>
-                                <ul className="text-xs space-y-0.5">
-                                  <li>• <strong>Fresco:</strong> 15+ días para vencer</li>
-                                  <li>• <strong>Por vencer:</strong> 10-15 días para vencer</li>
-                                  <li>• <strong>Vencido:</strong> fecha pasada</li>
-                                </ul>
-                              </div>
-                            </div>
-                          </div>
-                        </FormField>
-                      </div>
-                    )}
-                  </div>
+                    <FormField
+                      label="Fecha de Vencimiento"
+                      icon={Calendar}
+                    >
+                      <input
+                        type="date"
+                        value={formData.fecha_vencimiento}
+                        onChange={handleInputChange("fecha_vencimiento")}
+                        min={new Date().toISOString().split('T')[0]}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                      <p className="mt-1 text-xs text-gray-500">Opcional - Dejar vacío si no aplica</p>
+                    </FormField>
 
-                  {/* Summary Box */}
-                  {formData.totalQuantity > 0 && formData.packagedUnits > 0 && (
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-medium text-gray-900 mb-3">Resumen del ingreso:</h4>
-                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                          <span className="text-gray-600">Producto:</span>
-                          <p className="font-medium">{selectedProduct.name}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Cantidad total:</span>
-                          <p className="font-medium">{formData.totalQuantity} {selectedProduct.unit}</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Empaquetados:</span>
-                          <p className="font-medium">{formData.packagedUnits} unidades</p>
-                        </div>
-                        <div>
-                          <span className="text-gray-600">Valor total:</span>
-                          <p className="font-medium text-green-600">S/ {(formData.totalQuantity * formData.price).toFixed(2)}</p>
-                        </div>
-                      </div>
-                      
-                      <div className="mt-3 p-2 bg-blue-50 rounded border-l-4 border-blue-400">
-                        <p className="text-sm text-blue-800">
-                          Se crearán <strong>{formData.packagedUnits} registros</strong> en la tabla, 
-                          cada uno con <strong>{calculateQuantityPerPackage()} {selectedProduct.unit}</strong>
-                        </p>
-                      </div>
-                    </div>
-                  )}
+                    <FormField
+                      label="Empaquetado"
+                      icon={Package}
+                    >
+                      <input
+                        type="text"
+                        value={formData.empaquetado || ''}
+                        onChange={handleInputChange("empaquetado")}
+                        placeholder="Ej: 1 bolsa, 2 kg, etc."
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                      />
+                    </FormField>
+                  </div>
 
                   <div className="flex justify-between space-x-3 pt-4 border-t border-gray-200">
                     <button
@@ -735,9 +699,13 @@ const ProductForm: React.FC<ProductFormProps> = ({
                       </button>
                       <button
                         type="submit"
-                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 border border-transparent rounded-lg hover:bg-blue-700 transition-colors"
+                        className={`px-4 py-2 text-sm font-medium text-white border border-transparent rounded-lg transition-colors ${
+                          selectedProduct.isFromInventory
+                            ? 'bg-green-600 hover:bg-green-700'
+                            : 'bg-blue-600 hover:bg-blue-700'
+                        }`}
                       >
-                        Agregar al Contenedor
+                        {selectedProduct.isFromInventory ? 'Agregar desde Inventario' : 'Agregar al Contenedor'}
                       </button>
                     </div>
                   </div>

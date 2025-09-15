@@ -1,31 +1,73 @@
 // src/features/containers/components/cards/ContainerCard.tsx
+// ACTUALIZADO PARA BASE DE DATOS REAL CON NAVEGACIÓN A PRODUCTOS
 
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { 
   Package, 
   AlertTriangle, 
   Eye, 
   Edit, 
-  Trash2 
+  Trash2,
+  Thermometer,
+  Archive
 } from 'lucide-react';
 import type { ContainerSummary } from '../../types/container.types';
-import StatusBadge from '../shared/StatusBadge';
-import TypeIcon, { getTypeLabel } from '../shared/TypeIcon';
 
 interface ContainerCardProps {
   container: ContainerSummary;
-  onView: () => void;
   onEdit: () => void;
   onDelete: () => void;
 }
 
 const ContainerCard: React.FC<ContainerCardProps> = ({
   container,
-  onView,
   onEdit,
   onDelete
 }) => {
+  const navigate = useNavigate();
   const hasAlerts = container.stats.vencidos > 0 || container.stats.porVencer > 0;
+
+  // Función para navegar a los productos del contenedor
+  const handleViewProducts = () => {
+    navigate(`/containers/${container.id}/products`);
+  };
+
+  const getTypeIcon = (type: string) => {
+    if (type.toLowerCase().includes('congelador') || type.toLowerCase().includes('congelación')) {
+      return <Thermometer className="w-5 h-5 text-blue-600" />;
+    }
+    if (type.toLowerCase().includes('refrigerador') || type.toLowerCase().includes('refrigeración')) {
+      return <Thermometer className="w-5 h-5 text-green-600" />;
+    }
+    return <Archive className="w-5 h-5 text-gray-600" />;
+  };
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'activo':
+        return 'bg-green-100 text-green-800';
+      case 'mantenimiento':
+        return 'bg-yellow-100 text-yellow-800';
+      case 'inactivo':
+        return 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'activo':
+        return 'Activo';
+      case 'mantenimiento':
+        return 'Mantenimiento';
+      case 'inactivo':
+        return 'Inactivo';
+      default:
+        return status;
+    }
+  };
 
   return (
     <div className="bg-white rounded-lg shadow-sm border hover:shadow-md transition-shadow duration-200">
@@ -34,14 +76,14 @@ const ContainerCard: React.FC<ContainerCardProps> = ({
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
             <div className="flex-shrink-0">
-              <TypeIcon type={container.type} />
+              {getTypeIcon(container.type)}
             </div>
             <div className="min-w-0 flex-1">
               <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                 {container.name}
               </h3>
               <p className="text-xs sm:text-sm text-gray-500 truncate">
-                {getTypeLabel(container.type)}
+                {container.type}
               </p>
             </div>
           </div>
@@ -52,7 +94,9 @@ const ContainerCard: React.FC<ContainerCardProps> = ({
 
         {/* Status */}
         <div className="mt-2 sm:mt-3">
-          <StatusBadge status={container.status} />
+          <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(container.status)}`}>
+            {getStatusLabel(container.status)}
+          </span>
         </div>
       </div>
 
@@ -67,6 +111,12 @@ const ContainerCard: React.FC<ContainerCardProps> = ({
             </div>
             <p className="text-lg sm:text-xl font-semibold text-gray-900">
               {container.stats.totalProducts}
+            </p>
+            <p className="text-xs text-gray-500">
+              {container.stats.totalQuantity.toLocaleString('es-PE', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 1
+              })} unidades
             </p>
           </div>
           
@@ -111,33 +161,53 @@ const ContainerCard: React.FC<ContainerCardProps> = ({
         )}
 
         {/* Capacity - Responsive */}
-        {container.capacity && (
+        {container.capacity && container.capacity > 0 && (
           <div className="mb-3 sm:mb-4">
             <div className="flex justify-between text-xs sm:text-sm text-gray-600 mb-1">
               <span>Ocupación</span>
-              <span>{Math.round((container.stats.totalProducts / container.capacity) * 100)}%</span>
+              <span>{container.stats.capacityPercentage.toFixed(1)}%</span>
             </div>
             <div className="w-full bg-gray-200 rounded-full h-1.5 sm:h-2">
               <div 
                 className="bg-blue-600 h-1.5 sm:h-2 rounded-full transition-all duration-300"
                 style={{ 
-                  width: `${Math.min((container.stats.totalProducts / container.capacity) * 100, 100)}%` 
+                  width: `${Math.min(container.stats.capacityPercentage, 100)}%` 
                 }}
               ></div>
             </div>
             <div className="mt-1 text-xs text-gray-500 text-center">
-              {container.stats.totalProducts} / {container.capacity} productos
+              {container.stats.capacityUsed.toLocaleString('es-PE', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 1
+              })} / {container.capacity} kg
             </div>
           </div>
         )}
+
+        {/* Distribución de productos */}
+        <div className="flex justify-between text-xs text-gray-600">
+          <span className="text-green-600">
+            {container.stats.frescos} frescos
+          </span>
+          {container.stats.porVencer > 0 && (
+            <span className="text-yellow-600">
+              {container.stats.porVencer} por vencer
+            </span>
+          )}
+          {container.stats.vencidos > 0 && (
+            <span className="text-red-600">
+              {container.stats.vencidos} vencidos
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Actions - Responsive */}
       <div className="px-3 py-2 sm:px-4 sm:py-3 bg-gray-50 rounded-b-lg border-t border-gray-100">
         <div className="flex justify-between items-center gap-2">
           <button
-            onClick={onView}
-            className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-none justify-center sm:justify-start"
+            onClick={handleViewProducts}
+            className="inline-flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-xs sm:text-sm font-medium transition-colors flex-1 sm:flex-none justify-center sm:justify-start hover:bg-blue-50 px-2 py-1 rounded-md"
           >
             <Eye className="w-3 h-3 sm:w-4 sm:h-4" />
             <span className="hidden xs:inline">Ver productos</span>

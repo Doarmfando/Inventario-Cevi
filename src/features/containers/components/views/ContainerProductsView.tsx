@@ -9,39 +9,60 @@ import {
   Search, 
   Filter
 } from 'lucide-react';
-import type { ContainerProduct, Container, ProductFormData } from '../../types/container.types';
-import type { InventoryProduct } from '../../data/mockProductData';
-import { mockContainers, getContainerProducts } from '../../data/mockContainerData';
-import { mockInventoryProducts } from '../../data/mockProductData';
-import ProductForm from '../forms/ProductForm';
+import { ContainerService } from '../../services/ContainerService';
+import type { ContainerProduct, ContainerWithDetails, ProductToContainerFormData } from '../../types/container.types';
 import ProductsTable from '../tables/ProductsTable';
-import SummaryStats from '../ui/SummaryStats';
-import StatusBadge from '../shared/StatusBadge';
+import ProductForm from '../forms/ProductForm';
 
 const ContainerProductsView: React.FC = () => {
   const { containerId } = useParams<{ containerId: string }>();
   const navigate = useNavigate();
   
-  const [container, setContainer] = useState<Container | null>(null);
+  const [container, setContainer] = useState<ContainerWithDetails | null>(null);
   const [products, setProducts] = useState<ContainerProduct[]>([]);
   const [filteredProducts, setFilteredProducts] = useState<ContainerProduct[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [stateFilter, setStateFilter] = useState<string>('all');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [showProductForm, setShowProductForm] = useState(false);
-  const [inventoryProducts, setInventoryProducts] = useState<InventoryProduct[]>(mockInventoryProducts);
 
+  // Cargar datos del contenedor y productos
   useEffect(() => {
     if (containerId) {
-      // Cargar datos del contenedor
-      const containerData = mockContainers.find(c => c.id === containerId);
-      setContainer(containerData || null);
-      
-      // Cargar productos del contenedor
-      const containerProducts = getContainerProducts(containerId);
-      setProducts(containerProducts);
-      setFilteredProducts(containerProducts);
+      loadContainerData();
     }
   }, [containerId]);
+
+  const loadContainerData = async () => {
+    if (!containerId) return;
+    
+    try {
+      setLoading(true);
+      setError(null);
+
+      // Cargar datos del contenedor
+      const containers = await ContainerService.getContenedores();
+      const containerData = containers.find(c => c.id === containerId);
+      
+      if (!containerData) {
+        setError('Contenedor no encontrado');
+        return;
+      }
+
+      setContainer(containerData);
+      
+      // Cargar productos del contenedor
+      const containerProducts = await ContainerService.getContainerProducts(containerId);
+      setProducts(containerProducts);
+      setFilteredProducts(containerProducts);
+    } catch (err) {
+      console.error('Error cargando datos del contenedor:', err);
+      setError('Error al cargar los datos del contenedor');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Filtrar productos
   useEffect(() => {
@@ -50,14 +71,14 @@ const ContainerProductsView: React.FC = () => {
     // Filtro por término de búsqueda
     if (searchTerm) {
       filtered = filtered.filter(product =>
-        product.productName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        product.category.toLowerCase().includes(searchTerm.toLowerCase())
+        product.producto_nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        product.categoria.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
     // Filtro por estado
     if (stateFilter !== 'all') {
-      filtered = filtered.filter(product => product.state === stateFilter);
+      filtered = filtered.filter(product => product.estado_calculado === stateFilter);
     }
 
     setFilteredProducts(filtered);
@@ -67,101 +88,68 @@ const ContainerProductsView: React.FC = () => {
     setShowProductForm(true);
   };
 
-  const handleCreateNewProduct = (productData: Partial<InventoryProduct>) => {
-    // Generar ID único para el nuevo producto
-    const newId = (Math.max(...inventoryProducts.map(p => parseInt(p.id))) + 1).toString();
-    
-    const newProduct: InventoryProduct = {
-      id: newId,
-      name: productData.name || '',
-      category: productData.category || '',
-      basePrice: productData.basePrice || 0,
-      unit: productData.unit || 'kg',
-      description: productData.description || '',
-      isPerishable: productData.isPerishable || false,
-      recommendedContainerTypes: productData.recommendedContainerTypes || [],
-      createdAt: new Date(),
-    };
-
-    // Actualizar lista de productos del inventario
-    setInventoryProducts(prev => [...prev, newProduct]);
-    
-    console.log('Nuevo producto creado:', newProduct);
-    // TODO: Aquí se podría hacer la llamada al backend para guardar el producto
+  const handleSubmitProduct = async (formData: ProductToContainerFormData) => {
+    try {
+      const success = await ContainerService.agregarProductoAContenedor(formData);
+      
+      if (success) {
+        setShowProductForm(false);
+        // Recargar productos del contenedor
+        await loadContainerData();
+      } else {
+        alert('Error al agregar el producto al contenedor');
+      }
+    } catch (error) {
+      console.error('Error agregando producto:', error);
+      alert('Error al agregar el producto al contenedor');
+    }
   };
 
-  const handleSubmitProduct = (formData: ProductFormData) => {
-    if (!container) return;
-
-    // Encontrar el producto del inventario
-    const inventoryProduct = inventoryProducts.find(p => p.id === formData.productId);
-    if (!inventoryProduct) {
-      console.error('Producto no encontrado en inventario');
-      return;
-    }
-
-    // Calcular la cantidad por empaquetado
-    const quantityPerPackage = formData.totalQuantity / formData.packagedUnits;
-
-    // Determinar estado basado en fecha de vencimiento si no se especifica
-    let finalState = formData.state;
-    if (formData.expiryDate && inventoryProduct.isPerishable) {
-      // Aquí podrías llamar a una función calculateProductState si existe
-      // finalState = calculateProductState(new Date(formData.expiryDate));
-    }
-
-    // Crear los registros de productos empaquetados
-    const newProducts: ContainerProduct[] = [];
-    for (let i = 0; i < formData.packagedUnits; i++) {
-      const newProductId = `${Date.now()}-${i}`;
-      
-      const newProduct: ContainerProduct = {
-        id: newProductId,
-        productId: formData.productId,
-        productName: inventoryProduct.name,
-        containerId: container.id,
-        containerName: container.name,
-        category: inventoryProduct.category,
-        totalQuantity: quantityPerPackage,
-        unit: inventoryProduct.unit,
-        packagedUnits: 1, // Cada registro representa 1 empaquetado
-        quantityPerPackage: quantityPerPackage,
-        expiryDate: formData.expiryDate ? new Date(formData.expiryDate) : undefined,
-        state: finalState,
-        price: formData.price,
-        createdAt: new Date(),
-      };
-
-      newProducts.push(newProduct);
-    }
-
-    // Actualizar la lista de productos
-    setProducts(prev => [...prev, ...newProducts]);
+  const handleCloseProductForm = () => {
     setShowProductForm(false);
-    
-    console.log('Productos agregados:', newProducts);
-    // TODO: Aquí se haría la llamada al backend para guardar los productos
   };
 
   const handleEditProduct = (productId: string) => {
     console.log('Editar producto:', productId);
-    // TODO: Implementar edición de producto
+    // Implementar edición de producto
+    alert('Funcionalidad de editar producto en desarrollo');
   };
 
-  const handleDeleteProduct = (productId: string) => {
+  const handleDeleteProduct = async (productId: string) => {
     if (window.confirm('¿Estás seguro de que quieres eliminar este producto?')) {
-      setProducts(prev => prev.filter(p => p.id !== productId));
-      console.log('Producto eliminado:', productId);
-      // TODO: Hacer llamada al backend para eliminar
+      try {
+        // Aquí iría la llamada al servicio para eliminar
+        // await ContainerService.eliminarProductoDeContenedor(productId);
+        
+        // Por ahora solo eliminar del estado local
+        setProducts(prev => prev.filter(p => p.id !== productId));
+        console.log('Producto eliminado:', productId);
+      } catch (err) {
+        console.error('Error eliminando producto:', err);
+        alert('Error al eliminar el producto');
+      }
     }
   };
 
-  if (!container) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="flex items-center space-x-3">
+          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
+          <span className="text-gray-700">Cargando contenedor...</span>
+        </div>
+      </div>
+    );
+  }
+
+  if (error || !container) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <Package className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Contenedor no encontrado</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">
+            {error || 'Contenedor no encontrado'}
+          </h3>
           <button
             onClick={() => navigate('/containers')}
             className="text-blue-600 hover:text-blue-700"
@@ -185,7 +173,7 @@ const ContainerProductsView: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
           </button>
           <div className="flex-1">
-            <h1 className="text-2xl font-bold text-gray-900">{container.name}</h1>
+            <h1 className="text-2xl font-bold text-gray-900">{container.nombre}</h1>
             <p className="text-gray-600">
               Productos almacenados • {filteredProducts.length} de {products.length} productos
             </p>
@@ -205,33 +193,86 @@ const ContainerProductsView: React.FC = () => {
             <div>
               <p className="text-sm text-gray-500">Capacidad</p>
               <p className="font-semibold text-gray-900">
-                {container.currentLoad} / {container.capacity} kg
+                {container.cantidad_total} / {container.capacidad || 'N/A'} unidades
               </p>
-              <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
-                <div 
-                  className="bg-blue-500 h-2 rounded-full"
-                  style={{ width: `${(container.currentLoad / container.capacity) * 100}%` }}
-                />
-              </div>
+              {container.capacidad && (
+                <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                  <div 
+                    className="bg-blue-500 h-2 rounded-full"
+                    style={{ width: `${Math.min((container.cantidad_total / container.capacidad) * 100, 100)}%` }}
+                  />
+                </div>
+              )}
             </div>
             
-            {container.temperature !== undefined && (
-              <div>
-                <p className="text-sm text-gray-500">Temperatura</p>
-                <p className="font-semibold text-gray-900">{container.temperature}°C</p>
-              </div>
-            )}
-            
-            {container.humidity !== undefined && (
-              <div>
-                <p className="text-sm text-gray-500">Humedad</p>
-                <p className="font-semibold text-gray-900">{container.humidity}%</p>
-              </div>
-            )}
+            <div>
+              <p className="text-sm text-gray-500">Tipo</p>
+              <p className="font-semibold text-gray-900">{container.tipo_contenedor_nombre}</p>
+            </div>
             
             <div>
-              <p className="text-sm text-gray-500">Estado</p>
-              <StatusBadge status={container.status} />
+              <p className="text-sm text-gray-500">Total Productos</p>
+              <p className="font-semibold text-gray-900">{container.total_productos}</p>
+            </div>
+            
+            <div>
+              <p className="text-sm text-gray-500">Valor Total</p>
+              <p className="font-semibold text-green-600">
+                S/ {container.valor_total.toLocaleString('es-PE', { minimumFractionDigits: 2 })}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Frescos</p>
+                <p className="text-xl font-semibold text-green-600">
+                  {container.total_productos - container.productos_vencidos - container.productos_por_vencer}
+                </p>
+              </div>
+              <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                <Package className="w-4 h-4 text-green-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Por Vencer</p>
+                <p className="text-xl font-semibold text-orange-600">{container.productos_por_vencer}</p>
+              </div>
+              <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
+                <Package className="w-4 h-4 text-orange-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Vencidos</p>
+                <p className="text-xl font-semibold text-red-600">{container.productos_vencidos}</p>
+              </div>
+              <div className="w-8 h-8 bg-red-100 rounded-full flex items-center justify-center">
+                <Package className="w-4 h-4 text-red-600" />
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-4 rounded-lg shadow-sm border">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-500">Cantidad Total</p>
+                <p className="text-xl font-semibold text-blue-600">{container.cantidad_total}</p>
+              </div>
+              <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                <Package className="w-4 h-4 text-blue-600" />
+              </div>
             </div>
           </div>
         </div>
@@ -261,8 +302,7 @@ const ContainerProductsView: React.FC = () => {
               >
                 <option value="all">Todos los estados</option>
                 <option value="fresco">Fresco</option>
-                <option value="congelado">Congelado</option>
-                <option value="por-vencer">Por vencer</option>
+                <option value="por_vencer">Por vencer</option>
                 <option value="vencido">Vencido</option>
               </select>
             </div>
@@ -312,18 +352,12 @@ const ContainerProductsView: React.FC = () => {
           </div>
         )}
 
-        {/* Summary Footer */}
-        {filteredProducts.length > 0 && (
-          <SummaryStats filteredProducts={filteredProducts} />
-        )}
-
         {/* Product Form Modal */}
         {showProductForm && container && (
           <ProductForm
             container={container}
             onSubmit={handleSubmitProduct}
-            onClose={() => setShowProductForm(false)}
-            onCreateNewProduct={handleCreateNewProduct}
+            onClose={handleCloseProductForm}
           />
         )}
       </div>
