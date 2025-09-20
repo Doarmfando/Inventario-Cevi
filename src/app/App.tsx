@@ -72,7 +72,7 @@ PrivateLayout.displayName = 'PrivateLayout';
 
 const App: React.FC = () => {
   return (
-    <BrowserRouter basename="/Inventario-Cevi">
+    <BrowserRouter>
       <AuthProvider>
         <Routes>
           <Route path="/" element={<Navigate to="/login" replace />} />
