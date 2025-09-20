@@ -102,7 +102,6 @@ const LoginForm: React.FC = () => {
                 value={credentials.username}
                 onChange={handleInputChange('username')}
                 name="username"
-                disabled={isLoading}
               />
               
               <PasswordInput

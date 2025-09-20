@@ -38,3 +38,14 @@ export interface PasswordInputProps {
   placeholder?: string;
   disabled?: boolean;
 }
+
+// AGREGAR ESTA INTERFAZ FALTANTE:
+export interface InputWithIconProps {
+  icon: React.ReactNode;
+  type?: string;
+  placeholder?: string;
+  label?: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  name?: string;
+}

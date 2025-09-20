@@ -183,10 +183,6 @@ export function RolesList() {
             <p className="text-sm text-gray-600 mb-4">
               {role.descripcion}
             </p>
-            
-            <div className="text-xs text-gray-400">
-              Creado: {new Date(role.created_at).toLocaleDateString()}
-            </div>
           </div>
         ))}
       </div>
