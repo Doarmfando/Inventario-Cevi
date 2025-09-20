@@ -15,18 +15,20 @@ export class UserService {
         visible,
         created_at,
         updated_at,
-        rol:roles!usuarios_rol_id_fkey(
+        roles!usuarios_rol_id_fkey(
           id,
           nombre,
           descripcion,
-          visible,
-          created_at
+          visible
         )
       `)
       .eq('visible', true)
       .order('created_at', { ascending: false });
     
-    if (error) throw error;
+    if (error) {
+      console.error('Error en getUsers:', error);
+      throw error;
+    }
     
     // Formatear datos para el tipo correcto
     const formattedUsers: UserWithRole[] = (data || []).map(user => ({
@@ -34,7 +36,7 @@ export class UserService {
       nombre_usuario: user.nombre_usuario,
       nombre: user.nombre,
       email: user.email,
-      rol: Array.isArray(user.rol) ? user.rol[0] : user.rol,
+      rol: Array.isArray(user.roles) ? user.roles[0] : user.roles,
       created_at: user.created_at,
       updated_at: user.updated_at
     }));
@@ -72,12 +74,11 @@ export class UserService {
           visible,
           created_at,
           updated_at,
-          rol:roles!usuarios_rol_id_fkey(
+          roles!usuarios_rol_id_fkey(
             id,
             nombre,
             descripcion,
-            visible,
-            created_at
+            visible
           )
         `)
         .single();
@@ -90,7 +91,7 @@ export class UserService {
         nombre_usuario: data.nombre_usuario,
         nombre: data.nombre,
         email: data.email,
-        rol: Array.isArray(data.rol) ? data.rol[0] : data.rol,
+        rol: Array.isArray(data.roles) ? data.roles[0] : data.roles,
         created_at: data.created_at,
         updated_at: data.updated_at
       };
@@ -115,12 +116,11 @@ export class UserService {
         visible,
         created_at,
         updated_at,
-        rol:roles!usuarios_rol_id_fkey(
+        roles!usuarios_rol_id_fkey(
           id,
           nombre,
           descripcion,
-          visible,
-          created_at
+          visible
         )
       `)
       .single();
@@ -133,7 +133,7 @@ export class UserService {
       nombre_usuario: data.nombre_usuario,
       nombre: data.nombre,
       email: data.email,
-      rol: Array.isArray(data.rol) ? data.rol[0] : data.rol,
+      rol: Array.isArray(data.roles) ? data.roles[0] : data.roles,
       created_at: data.created_at,
       updated_at: data.updated_at
     };

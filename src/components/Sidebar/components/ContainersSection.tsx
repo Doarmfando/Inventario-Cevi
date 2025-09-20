@@ -1,10 +1,12 @@
-// src/components/Sidebar/components/ContainersSection.tsx
+// ==============================================
+// ARCHIVO: src/components/Sidebar/components/ContainersSection.tsx
+// ==============================================
 import React from "react";
 import { NavLink } from "react-router-dom";
 import { Container, ChevronDown, ChevronRight } from "lucide-react";
 import ContainerItem from "./ContainerItem";
 import { getContainerIcon, getStatusColor, getTypeLabel, groupContainersByType } from "../utils/sidebarUtils";
-import type { ContainerSummary } from "../../../features/containers/types/container.types";
+import type { ContainerSummary } from "../types/sidebar.types";
 
 interface ContainersSectionProps {
   containers: ContainerSummary[];
@@ -20,6 +22,7 @@ const ContainersSection: React.FC<ContainersSectionProps> = ({
   onClose 
 }) => {
   const containersByType = groupContainersByType(containers);
+  const maxContainersToShow = 4;
 
   return (
     <div className="space-y-1">
@@ -57,7 +60,7 @@ const ContainersSection: React.FC<ContainersSectionProps> = ({
         )}
       </div>
 
-      {/* Lista de Contenedores con scrollbar personalizado */}
+      {/* Lista de Contenedores expandible */}
       {containersExpanded && containers.length > 0 && (
         <div className="ml-4 space-y-2 max-h-80 overflow-y-auto scrollbar-custom">
           {Object.entries(containersByType).map(([type, typeContainers]) => (
@@ -69,7 +72,7 @@ const ContainersSection: React.FC<ContainersSectionProps> = ({
               
               {/* Contenedores de este tipo */}
               <div className="space-y-1">
-                {typeContainers.slice(0, 4).map((container) => (
+                {typeContainers.slice(0, maxContainersToShow).map((container) => (
                   <ContainerItem
                     key={container.id}
                     container={container}
@@ -79,10 +82,10 @@ const ContainersSection: React.FC<ContainersSectionProps> = ({
                   />
                 ))}
                 
-                {/* Si hay más de 4 contenedores del mismo tipo */}
-                {typeContainers.length > 4 && (
+                {/* Si hay más contenedores del mismo tipo */}
+                {typeContainers.length > maxContainersToShow && (
                   <div className="px-4 py-2 text-xs text-gray-500 italic bg-slate-800/30 rounded-md">
-                    +{typeContainers.length - 4} contenedores más...
+                    +{typeContainers.length - maxContainersToShow} contenedores más...
                   </div>
                 )}
               </div>

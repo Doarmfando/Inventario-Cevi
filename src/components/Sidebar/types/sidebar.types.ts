@@ -1,11 +1,9 @@
-
 // ==============================================
 // ARCHIVO: src/components/Sidebar/types/sidebar.types.ts
-// Tipos corregidos para el sidebar
 // ==============================================
-
 import type { LucideIcon } from "lucide-react";
 import type { User } from "../../../features/auth/types";
+import type { ReactElement } from "react";
 
 export interface SidebarProps {
   user: User;
@@ -20,4 +18,31 @@ export interface NavItem {
   icon: LucideIcon;
   label: string;
   badge?: number;
+}
+
+// Tipos para contenedores
+export interface ContainerStats {
+  totalProducts: number;
+  vencidos: number;
+  porVencer: number;
+  stockBajo: number;
+}
+
+export interface ContainerSummary {
+  id: string;
+  name: string;
+  code: string;
+  type: string;
+  typeId: string;
+  status: 'active' | 'warning' | 'error' | 'inactive';
+  stats: ContainerStats;
+  capacity?: number;
+  description?: string;
+}
+
+export interface ContainerItemProps {
+  container: ContainerSummary;
+  onClose: () => void;
+  getContainerIcon: (type: string) => ReactElement;
+  getStatusColor: (status: string) => string;
 }

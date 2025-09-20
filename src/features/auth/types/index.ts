@@ -24,3 +24,17 @@ export interface AuthContextProps {
   logout: () => Promise<void>;
   isAdmin: boolean;
 }
+
+// Interfaz para el componente RememberMe
+export interface RememberMeProps {
+  checked: boolean;
+  onChange: (checked: boolean) => void;
+}
+
+// Interfaz para el componente PasswordInput
+export interface PasswordInputProps {
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  placeholder?: string;
+  disabled?: boolean;
+}

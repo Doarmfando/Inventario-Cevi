@@ -1,4 +1,4 @@
-// src/components/Sidebar/components/ContainerItem.tsx
+// C:\Users\Brando\Documents\Working\Noemí\inventoryVITE-system\src\components\Sidebar\components\ContainerItem.tsx
 import React from "react";
 import { NavLink } from "react-router-dom";
 import type { ContainerItemProps } from "../types/sidebar.types";

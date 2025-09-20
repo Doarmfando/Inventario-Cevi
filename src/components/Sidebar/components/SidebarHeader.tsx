@@ -1,4 +1,4 @@
-// src/components/Sidebar/components/SidebarHeader.tsx
+// C:\Users\Brando\Documents\Working\Noemí\inventoryVITE-system\src\components\Sidebar\components\SidebarHeader.tsx
 import React from "react";
 import { X } from "lucide-react";
 import logo2 from "../../../assets/logo2.png";

@@ -1,14 +1,14 @@
 // ==============================================
 // ARCHIVO: src/components/Sidebar/Sidebar.tsx
-// Sidebar corregido SIN mocks de contenedores
+// VERSIÓN ACTUALIZADA CON CONTENEDORES REALES
 // ==============================================
 import React, { useState } from "react";
-import { Container } from "lucide-react";
-import { NavLink } from "react-router-dom";
 import SidebarHeader from "./components/SidebarHeader";
 import NavItem from "./components/NavItem";
 import UserProfile from "./components/UserProfile";
+import ContainersSection from "./components/ContainersSection";
 import { MAIN_NAV_ITEMS, ADMIN_NAV_ITEMS } from "./constants/sidebarConstants";
+import { useContainers } from "./hooks/useContainers";
 import type { SidebarProps } from "./types/sidebar.types";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import "./styles/sidebarStyles.css";
@@ -21,7 +21,9 @@ const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const isControlled = typeof open === "boolean";
   const [localOpen, setLocalOpen] = useState<boolean>(false);
+  const [containersExpanded, setContainersExpanded] = useState<boolean>(false);
   const { isAdmin } = useAuth();
+  const { containers, loading: loadingContainers } = useContainers();
   
   const visible = isControlled ? !!open : localOpen;
 
@@ -59,22 +61,21 @@ const Sidebar: React.FC<SidebarProps> = ({
               />
             ))}
 
-            {/* Sección de contenedores */}
+            {/* Sección de contenedores con datos reales */}
             <div className="pt-2">
-              <NavLink
-                to="/containers"
-                className={({ isActive }) =>
-                  `flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-all duration-200 group ${
-                    isActive 
-                      ? "bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg" 
-                      : "text-gray-300 hover:bg-slate-800 hover:text-white"
-                  }`
-                }
-                onClick={close}
-              >
-                <Container className="w-5 h-5 group-hover:scale-110 transition-transform duration-200" />
-                <span className="font-medium">Contenedores</span>
-              </NavLink>
+              {loadingContainers ? (
+                <div className="flex items-center space-x-3 px-4 py-3 text-gray-400">
+                  <div className="w-5 h-5 border-2 border-gray-400 border-t-transparent rounded-full animate-spin"></div>
+                  <span className="font-medium">Cargando contenedores...</span>
+                </div>
+              ) : (
+                <ContainersSection
+                  containers={containers}
+                  containersExpanded={containersExpanded}
+                  setContainersExpanded={setContainersExpanded}
+                  onClose={close}
+                />
+              )}
             </div>
 
             {/* Sección de administración - Solo para admins */}

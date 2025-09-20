@@ -1,4 +1,4 @@
-// src/components/Sidebar/components/UserProfile.tsx
+// C:\Users\Brando\Documents\Working\Noemí\inventoryVITE-system\src\components\Sidebar\components\UserProfile.tsx
 import React, { useState } from "react";
 import { User, LogOut } from "lucide-react";
 import { useNavigate } from "react-router-dom";

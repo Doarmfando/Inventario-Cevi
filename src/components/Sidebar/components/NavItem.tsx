@@ -1,5 +1,5 @@
 // ==============================================
-// ARCHIVO: src/components/Sidebar/components/NavItem.tsx
+// ARCHIVO: C:\Users\Brando\Documents\Working\Noemí\inventoryVITE-system\src\components\Sidebar\components\NavItem.tsx
 // Componente NavItem corregido
 // ==============================================
 

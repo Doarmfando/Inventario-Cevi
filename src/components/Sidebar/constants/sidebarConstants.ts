@@ -1,5 +1,5 @@
 // ==============================================
-// ARCHIVO: src/components/Sidebar/constants/sidebarConstants.ts
+// ARCHIVO: C:\Users\Brando\Documents\Working\Noemí\inventoryVITE-system\src\components\Sidebar\constants\sidebarConstants.ts
 // Constantes actualizadas para el sidebar
 // ==============================================
 

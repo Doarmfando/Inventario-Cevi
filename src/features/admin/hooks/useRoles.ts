@@ -7,7 +7,6 @@ export interface Role {
   nombre: string;
   descripcion: string;
   visible: boolean;
-  created_at: string;
 }
 
 export interface CreateRole {
@@ -31,7 +30,7 @@ export function useRoles() {
   const fetchRoles = async (force = false) => {
     // Evitar llamadas concurrentes
     if (isLoadingRef.current && !force) {
-      console.log('🔄 fetchRoles ya en progreso, omitiendo...');
+      console.log('fetchRoles ya en progreso, omitiendo...');
       return;
     }
 
@@ -43,7 +42,7 @@ export function useRoles() {
     }
 
     try {
-      console.log('📥 Cargando roles...');
+      console.log('Cargando roles...');
       
       const { data, error } = await supabase
         .from('roles')
@@ -52,17 +51,17 @@ export function useRoles() {
         .order('nombre');
       
       if (error) {
-        console.error('❌ Error cargando roles:', error);
+        console.error('Error cargando roles:', error);
         throw error;
       }
 
       if (isMounted()) {
-        console.log('✅ Roles cargados:', data?.length || 0);
+        console.log('Roles cargados:', data?.length || 0);
         setRoles(data || []);
       }
       
     } catch (err) {
-      console.error('💥 Error en fetchRoles:', err);
+      console.error('Error en fetchRoles:', err);
       if (isMounted()) {
         setError(err instanceof Error ? err.message : 'Error al cargar roles');
       }
@@ -77,12 +76,12 @@ export function useRoles() {
   // Crear rol con protección
   const createRole = async (newRole: CreateRole): Promise<boolean> => {
     if (isLoadingRef.current) {
-      console.warn('⚠️ Operación en progreso, omitiendo createRole');
+      console.warn('Operación en progreso, omitiendo createRole');
       return false;
     }
 
     try {
-      console.log('➕ Creando rol:', newRole.nombre);
+      console.log('Creando rol:', newRole.nombre);
       
       const { data, error } = await supabase
         .from('roles')
@@ -95,19 +94,19 @@ export function useRoles() {
         .single();
       
       if (error) {
-        console.error('❌ Error creando rol:', error);
+        console.error('Error creando rol:', error);
         throw error;
       }
       
       if (isMounted()) {
-        console.log('✅ Rol creado:', data);
+        console.log('Rol creado:', data);
         setRoles(prev => [data, ...prev]);
         setError(null);
       }
       
       return true;
     } catch (err) {
-      console.error('💥 Error en createRole:', err);
+      console.error('Error en createRole:', err);
       if (isMounted()) {
         setError(err instanceof Error ? err.message : 'Error al crear rol');
       }
@@ -118,12 +117,12 @@ export function useRoles() {
   // Actualizar rol con protección
   const updateRole = async (id: string, updates: Partial<CreateRole>): Promise<boolean> => {
     if (isLoadingRef.current) {
-      console.warn('⚠️ Operación en progreso, omitiendo updateRole');
+      console.warn('Operación en progreso, omitiendo updateRole');
       return false;
     }
 
     try {
-      console.log('✏️ Actualizando rol:', id);
+      console.log('Actualizando rol:', id);
       
       const cleanUpdates: any = {};
       if (updates.nombre) {
@@ -141,12 +140,12 @@ export function useRoles() {
         .single();
       
       if (error) {
-        console.error('❌ Error actualizando rol:', error);
+        console.error('Error actualizando rol:', error);
         throw error;
       }
       
       if (isMounted()) {
-        console.log('✅ Rol actualizado:', data);
+        console.log('Rol actualizado:', data);
         setRoles(prev => prev.map(role => 
           role.id === id ? data : role
         ));
@@ -155,7 +154,7 @@ export function useRoles() {
       
       return true;
     } catch (err) {
-      console.error('💥 Error en updateRole:', err);
+      console.error('Error en updateRole:', err);
       if (isMounted()) {
         setError(err instanceof Error ? err.message : 'Error al actualizar rol');
       }
@@ -166,12 +165,12 @@ export function useRoles() {
   // Eliminar rol con protección y validación
   const deleteRole = async (id: string): Promise<boolean> => {
     if (isLoadingRef.current) {
-      console.warn('⚠️ Operación en progreso, omitiendo deleteRole');
+      console.warn('Operación en progreso, omitiendo deleteRole');
       return false;
     }
 
     try {
-      console.log('🗑️ Eliminando rol:', id);
+      console.log('Eliminando rol:', id);
       
       // Verificar que no haya usuarios con este rol
       const { count, error: countError } = await supabase
@@ -181,13 +180,13 @@ export function useRoles() {
         .eq('visible', true);
       
       if (countError) {
-        console.error('❌ Error verificando usuarios:', countError);
+        console.error('Error verificando usuarios:', countError);
         throw countError;
       }
       
       if (count && count > 0) {
         const errorMsg = 'No se puede eliminar un rol que tiene usuarios asignados';
-        console.error('❌', errorMsg);
+        console.error(errorMsg);
         if (isMounted()) {
           setError(errorMsg);
         }
@@ -201,19 +200,19 @@ export function useRoles() {
         .eq('id', id);
       
       if (error) {
-        console.error('❌ Error eliminando rol:', error);
+        console.error('Error eliminando rol:', error);
         throw error;
       }
       
       if (isMounted()) {
-        console.log('✅ Rol eliminado');
+        console.log('Rol eliminado');
         setRoles(prev => prev.filter(role => role.id !== id));
         setError(null);
       }
       
       return true;
     } catch (err) {
-      console.error('💥 Error en deleteRole:', err);
+      console.error('Error en deleteRole:', err);
       if (isMounted()) {
         setError(err instanceof Error ? err.message : 'Error al eliminar rol');
       }
