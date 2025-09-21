@@ -12,11 +12,12 @@ import { calcularEstadoInventario } from '../types';
 export class InventoryService {
   
   // ============================================
-  // OBTENER PRODUCTOS PARA VISTA INVENTARIO
+  // OBTENER PRODUCTOS PARA VISTA INVENTARIO - OPTIMIZADO
   // ============================================
   static async getProductosInventario(): Promise<ProductoInventario[]> {
     try {
-      const { data: productos, error } = await supabase
+      // 1. Obtener todos los productos con sus relaciones básicas
+      const { data: productos, error: productosError } = await supabase
         .from('productos')
         .select(`
           *,
@@ -26,75 +27,127 @@ export class InventoryService {
         .eq('visible', true)
         .order('nombre');
 
-      if (error) throw error;
-      if (!productos) return [];
+      if (productosError) throw productosError;
+      if (!productos || productos.length === 0) return [];
 
-      const productosCompletos = await Promise.all(
-        productos.map(async (producto) => {
-          const { data: contenedorFijo } = await supabase
-            .from('producto_contenedor')
-            .select(`
-              contenedor:contenedores!inner(id, nombre, codigo, descripcion, capacidad, visible)
-            `)
-            .eq('producto_id', producto.id)
-            .eq('es_fijo', true)
-            .single();
+      const productosIds = productos.map(p => p.id);
 
-          const { data: recomendados } = await supabase
-            .from('producto_contenedor')
-            .select(`
-              contenedor:contenedores!inner(id, nombre, codigo, descripcion, capacidad, visible)
-            `)
-            .eq('producto_id', producto.id)
-            .eq('es_fijo', false);
+      // 2. Obtener todas las relaciones producto-contenedor de una vez
+      const { data: relacionesContenedor, error: relacionesError } = await supabase
+        .from('producto_contenedor')
+        .select(`
+          producto_id,
+          es_fijo,
+          contenedor:contenedores!inner(id, nombre, codigo, descripcion, capacidad)
+        `)
+        .in('producto_id', productosIds);
 
-          const { data: detalles } = await supabase
-            .from('detalle_contenedor')
-            .select('cantidad, empaquetado, contenedor:contenedores(nombre)')
-            .eq('producto_id', producto.id)
-            .eq('visible', true);
+      if (relacionesError) {
+        console.error('Error obteniendo relaciones contenedor:', relacionesError);
+      }
 
-          const stock_actual = detalles?.reduce((sum, d) => sum + (d.cantidad || 0), 0) || 0;
-          const empaquetados = detalles?.filter(d => d.empaquetado) || [];
-          const total_empaquetados = empaquetados.length;
+      // 3. Obtener todos los detalles de contenedor de una vez
+      const { data: detallesContenedor, error: detallesError } = await supabase
+        .from('detalle_contenedor')
+        .select(`
+          producto_id,
+          cantidad,
+          empaquetado,
+          contenedor:contenedores!inner(nombre)
+        `)
+        .in('producto_id', productosIds)
+        .eq('visible', true);
 
-          const empaquetadosAgrupados = empaquetados.reduce((acc, d) => {
-            const tipo = d.empaquetado || 'sin empaque';
-            acc[tipo] = (acc[tipo] || 0) + 1;
-            return acc;
-          }, {} as Record<string, number>);
+      if (detallesError) {
+        console.error('Error obteniendo detalles contenedor:', detallesError);
+      }
 
-          const empaquetados_detalle = Object.entries(empaquetadosAgrupados)
-            .map(([tipo, cantidad]) => `${cantidad} ${tipo}`)
-            .join(', ') || 'Sin empaquetados';
+      // 4. Procesar datos agrupados por producto
+      const productosCompletos: ProductoInventario[] = productos.map((producto) => {
+        // Filtrar relaciones para este producto
+        const relacionesProducto = relacionesContenedor?.filter(r => r.producto_id === producto.id) || [];
+        const relacionFija = relacionesProducto.find(r => r.es_fijo);
+        const contenedorFijo = relacionFija?.contenedor ? 
+          (Array.isArray(relacionFija.contenedor) ? relacionFija.contenedor[0] : relacionFija.contenedor) : undefined;
+        
+        const contenedoresRecomendados = relacionesProducto
+          .filter(r => !r.es_fijo)
+          .map(r => {
+            const cont = Array.isArray(r.contenedor) ? r.contenedor[0] : r.contenedor;
+            return cont ? {
+              id: cont.id,
+              nombre: cont.nombre,
+              codigo: cont.codigo,
+              descripcion: cont.descripcion,
+              capacidad: cont.capacidad,
+              visible: true,
+              tipo_contenedor_id: '',
+              created_at: '',
+              updated_at: '',
+              created_by: null,
+              updated_by: null
+            } : null;
+          })
+          .filter(Boolean) as any[];
 
-          const valor_total = stock_actual * (producto.precio_estimado || 0);
+        // Filtrar detalles para este producto
+        const detallesProducto = detallesContenedor?.filter(d => d.producto_id === producto.id) || [];
+        
+        // Calcular stock actual
+        const stock_actual = detallesProducto.reduce((sum, d) => sum + (d.cantidad || 0), 0);
+        
+        // Procesar empaquetados
+        const empaquetados = detallesProducto.filter(d => d.empaquetado);
+        const total_empaquetados = empaquetados.length;
 
-          const estado_inventario = calcularEstadoInventario(
-            stock_actual,
-            producto.stock_min || 0
-          );
+        const empaquetadosAgrupados = empaquetados.reduce((acc, d) => {
+          const tipo = d.empaquetado || 'sin empaque';
+          acc[tipo] = (acc[tipo] || 0) + 1;
+          return acc;
+        }, {} as Record<string, number>);
 
-          return {
-            id: producto.id,
-            nombre: producto.nombre,
-            descripcion: producto.descripcion,
-            categoria: producto.categoria,
-            unidad_medida: producto.unidad_medida,
-            contenedor_fijo: contenedorFijo?.contenedor || undefined,
-            contenedores_recomendados: (recomendados?.map(r => r.contenedor) || []).flat(),
-            stock_actual,
-            stock_min: producto.stock_min || 0,
-            precio_estimado: producto.precio_estimado || 0,
-            valor_total,
-            estado_inventario,
-            total_empaquetados,
-            empaquetados_detalle,
-            created_at: producto.created_at,
-            updated_at: producto.updated_at
-          } as ProductoInventario;
-        })
-      );
+        const empaquetados_detalle = Object.entries(empaquetadosAgrupados)
+          .map(([tipo, cantidad]) => `${cantidad} ${tipo}`)
+          .join(', ') || 'Sin empaquetados';
+
+        // Calcular valores
+        const valor_total = stock_actual * (producto.precio_estimado || 0);
+        const estado_inventario = calcularEstadoInventario(
+          stock_actual,
+          producto.stock_min || 0
+        );
+
+        return {
+          id: producto.id,
+          nombre: producto.nombre,
+          descripcion: producto.descripcion,
+          categoria: Array.isArray(producto.categoria) ? producto.categoria[0] : producto.categoria,
+          unidad_medida: Array.isArray(producto.unidad_medida) ? producto.unidad_medida[0] : producto.unidad_medida,
+          contenedor_fijo: contenedorFijo ? {
+            id: contenedorFijo.id,
+            nombre: contenedorFijo.nombre,
+            codigo: contenedorFijo.codigo,
+            descripcion: contenedorFijo.descripcion,
+            capacidad: contenedorFijo.capacidad,
+            visible: true,
+            tipo_contenedor_id: '',
+            created_at: '',
+            updated_at: '',
+            created_by: null,
+            updated_by: null
+          } : undefined,
+          contenedores_recomendados: contenedoresRecomendados,
+          stock_actual,
+          stock_min: producto.stock_min || 0,
+          precio_estimado: producto.precio_estimado || 0,
+          valor_total,
+          estado_inventario,
+          total_empaquetados,
+          empaquetados_detalle,
+          created_at: producto.created_at,
+          updated_at: producto.updated_at
+        } as ProductoInventario;
+      });
 
       return productosCompletos;
     } catch (error) {
@@ -268,7 +321,7 @@ export class InventoryService {
   }
 
   // ============================================
-  // OBTENER DATOS AUXILIARES
+  // OBTENER DATOS AUXILIARES - OPTIMIZADO
   // ============================================
   static async getCategorias(): Promise<DBCategoria[]> {
     try {
@@ -365,8 +418,8 @@ export class InventoryService {
           id: producto.id,
           nombre: producto.nombre,
           codigo: producto.codigo,
-          categoria: producto.categoria?.[0]?.nombre || 'Sin categoría',
-          unidad: producto.unidad_medida?.[0]?.abreviatura || 'Sin unidad',
+          categoria: Array.isArray(producto.categoria) ? producto.categoria[0]?.nombre : producto.categoria?.nombre || 'Sin categoría',
+          unidad: Array.isArray(producto.unidad_medida) ? producto.unidad_medida[0]?.abreviatura : producto.unidad_medida?.abreviatura || 'Sin unidad',
           es_contenedor_fijo: item.es_fijo
         };
       }) || [];
@@ -375,4 +428,4 @@ export class InventoryService {
       return [];
     }
   }
-} 
+}
