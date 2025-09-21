@@ -57,13 +57,13 @@ const ProductTable: React.FC<Props> = ({
   // Categorías únicas para el filtro
   const categories = useMemo(() => 
     [...new Set(products.map(item => item.category))], 
-    [products]
+  [products.length] // Solo recalcula si cambia la cantidad
   );
 
   // Contenedores únicos para el filtro
   const containers = useMemo(() => 
     [...new Set(products.map(item => item.container))], 
-    [products]
+    [products.length]
   );
 
   // Productos filtrados

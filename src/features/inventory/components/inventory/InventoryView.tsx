@@ -27,7 +27,7 @@ const InventoryView: React.FC = () => {
   // Actualizar estados de productos al montar
   useEffect(() => {
     refreshProducts();
-  }, [refreshProducts]);
+  }, []);
 
   const handleAddProduct = async (product: FormularioProducto) => {
     console.log("🎯 handleAddProduct ejecutado con:", product);
